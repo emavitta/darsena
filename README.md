@@ -1,8 +1,35 @@
-# Darsena
+<p align="center">
+  <img src="public/brand/icon.png" width="80" height="80" alt="Darsena app icon">
+</p>
 
-A local harbor for Git worktrees and development tasks, inspired by Milan’s Darsena.
+<h1 align="center">Darsena</h1>
 
-**Electron + Nuxt 4 + Vue 3 + TypeScript.** First local version for macOS.
+<p align="center">
+  <strong>A harbor for your worktrees.</strong><br>
+  Find the right checkout. Open your tools. Know what’s running, and where.
+</p>
+
+<p align="center">
+  <a href="#use">Get started</a> ·
+  <a href="https://github.com/emavitta/darsena/releases">Releases</a> ·
+  <a href="docs/distribution.md">Build &amp; distribute</a>
+</p>
+
+<p align="center">
+  <img src="public/brand/waterfront-v12.png" width="880" alt="Milan’s Darsena illustrated in blue, with Porta Ticinese, the oak and a historic tram">
+</p>
+
+<p align="center">
+  <sub>Named after Milan’s Darsena. Made for the work happening on your Mac.</sub><br>
+  <sub>macOS · Apple Silicon · Early preview</sub>
+</p>
+
+---
+
+Darsena brings your Git worktrees, folder shortcuts and running tasks together.
+Work on branches created by you, a teammate or an agent, using the tools you already know.
+
+Built with **Electron, Nuxt 4, Vue 3 and TypeScript**.
 
 ## Use
 
@@ -132,6 +159,19 @@ DARSENA_TEST_GRADLE=/path/to/gradle/bin/gradle JAVA_HOME=/path/to/jdk \
 
 Backend edits require restarting `pnpm dev`. Frontend edits hot reload.
 The development server uses `127.0.0.1:3141`.
+
+## Builds and releases
+
+[Build macOS](https://github.com/emavitta/darsena/actions/workflows/build-macos.yml)
+is a manual GitHub Actions workflow: choose **Run workflow** to check the code,
+test the desktop app and generate a DMG and ZIP on an Apple Silicon runner.
+The download includes SHA-256 checksums and the source commit; artifacts are kept
+for 14 days. The workflow does not publish a release.
+
+For downloads you want to share, attach the installers to a
+[GitHub Release](https://github.com/emavitta/darsena/releases). They can come from
+Actions or a local `pnpm dist:mac` build. See the
+[distribution guide](docs/distribution.md) for both paths and the exact CLI commands.
 
 ## Structure and design
 
