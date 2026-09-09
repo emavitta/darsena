@@ -57,6 +57,7 @@ jobs:
         run: |
           node --import tsx tests/ui-smoke.mjs
           node --import tsx tests/project-removal-smoke.mjs
+          node --import tsx tests/mcp-smoke.mjs
 
       - name: Verify downloads and record their source
         working-directory: release

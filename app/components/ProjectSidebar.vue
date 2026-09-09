@@ -81,7 +81,7 @@ const sorted = computed(() =>
         <span class="status-dot" />Local to your Mac
       </p>
       <button
-        v-tooltip="'Choose which applications open your folders.'"
+        v-tooltip="'Choose folder applications and configure MCP access for AI tools.'"
         class="navigation-button"
         @click="emit('settings')"
       >

@@ -122,6 +122,22 @@ with the project's name and path. It forgets Darsena's saved settings for that
 project; repository files and Git worktrees remain on disk. If the project has
 active tasks, the dialog directs you to Activity to stop them first.
 
+## MCP for AI clients
+
+The development version includes a local MCP server under **Preferences → MCP**.
+Enable it, share selected projects and copy the client configuration. Clients
+can inspect worktrees, tasks, runs, recent logs and associated listening ports.
+Authorize individual tasks to allow starting and stopping them; these permissions
+are independent of favorites.
+
+MCP and the interface share the same runner and conflict checks. Agent-started
+runs appear in Activity with an **MCP** label. Closing the window keeps the
+connection and tasks available; Quit stops both. Access starts disabled, uses a
+private token and stays local to your Mac.
+
+See [MCP setup, tools and permissions](docs/mcp.md). The published **v0.1.0**
+installers predate this feature; use the development version until the next release.
+
 ## First-version scope
 
 No worktree creation/deletion, Git diff viewer, automatic worktree preparation,
@@ -163,6 +179,7 @@ node --import tsx tests/folder-smoke.mjs
 node --import tsx tests/task-sources-smoke.mjs
 node --import tsx tests/task-readability-smoke.mjs
 node --import tsx tests/project-removal-smoke.mjs
+node --import tsx tests/mcp-smoke.mjs
 pnpm pack:mac            # Generate a local Apple Silicon .app
 pnpm dist:mac            # Generate Apple Silicon DMG and ZIP; never uploads/publishes
 node scripts/icons.mjs   # Regenerate Dock PNG and ICNS from the SVG master
