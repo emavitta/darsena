@@ -15,8 +15,8 @@ if (process.platform === 'win32') {
       '/optimize+',
       '/platform:x64',
       '/target:exe',
-      '/out:dist-electron/darsena-task-host.exe',
-      'desktop/windows/TaskHost.cs',
+      `/out:${path.resolve('dist-electron/darsena-task-host.exe')}`,
+      path.resolve('desktop/windows/TaskHost.cs'),
     ],
     { stdio: 'inherit' },
   )

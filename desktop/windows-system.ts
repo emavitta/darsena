@@ -22,7 +22,7 @@ export async function ps(script: string, timeout = 15000) {
 }
 export async function windowsListeners() {
   const output = await ps(
-    `$names=@{}; Get-Process | ForEach-Object { $names[$_.Id]=$_.ProcessName }; $rows=@(Get-NetTCPConnection -State Listen -ErrorAction SilentlyContinue | ForEach-Object { @{pid=[int]$_.OwningProcess;command=[string]$names[[int]$_.OwningProcess];port=[int]$_.LocalPort;address=([string]$_.LocalAddress+':'+$_.LocalPort)} }); ConvertTo-Json -InputObject $rows -Compress`,
+    `$names=@{}; Get-Process | ForEach-Object { $names[$_.Id]=$_.ProcessName }; $rows=@(Get-NetTCPConnection -ErrorAction Stop | Where-Object { $_.State -eq 'Listen' } | ForEach-Object { @{pid=[int]$_.OwningProcess;command=[string]$names[[int]$_.OwningProcess];port=[int]$_.LocalPort;address=([string]$_.LocalAddress+':'+$_.LocalPort)} }); ConvertTo-Json -InputObject $rows -Compress`,
   )
   return JSON.parse(output) as { pid: number; command: string; port: number; address: string }[]
 }

@@ -47,8 +47,7 @@ function customTool(command: string): Identity {
     ['bash', 'sh', 'zsh', 'fish', 'dash', 'ksh', 'powershell', 'pwsh', 'cmd'].includes(
       executable,
     ) ||
-    /\.(sh|bash|zsh|ps1)$/u.test(executable) ||
-    /\.(bat|cmd)$/iu.test(command)
+    /\.(sh|bash|zsh|ps1)$/u.test(executable)
   )
     return shellTool
   if (/^python(?:[23](?:\.\d+)*)?$/u.test(executable) || executable.endsWith('.py'))
@@ -60,7 +59,11 @@ function customTool(command: string): Identity {
     'docker-compose': 'docker',
   }
   const name = Object.hasOwn(aliases, executable) ? aliases[executable]! : executable
-  return Object.hasOwn(customTools, name) ? customTools[name]! : fallback
+  return Object.hasOwn(customTools, name)
+    ? customTools[name]!
+    : /\.(bat|cmd)$/iu.test(command)
+      ? shellTool
+      : fallback
 }
 
 export function taskTool(task: Pick<Task, 'kind' | 'manager' | 'command'>): TaskTool {
