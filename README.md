@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="public/brand/icon.png" width="80" height="80" alt="Darsena app icon">
+  <img src="public/brand/icon.png" width="80" height="80" alt="Darsena: a map of the harbor, with Porta Ticinese, a green oak and a yellow-orange tram">
 </p>
 
 <h1 align="center">Darsena</h1>
@@ -255,7 +255,9 @@ It is not part of the current downloads.
 The app icon is a flat map of the Darsena basin and its two canals,
 using ultramarine, off-white and neutral city blocks. It has gently curved banks,
 no labels and three progressively shorter canal segments at each end. The basin
-extends northwest; the canals join at its southeast end. The welcome and About
+extends northwest; the canals join at its southeast end. A darker gray rectangle
+marks Porta Ticinese, a green crown represents the oak, and a small yellow-orange
+rectangle recalls Milan’s tram. The welcome and About
 screens share an illustrated view of the basin, Porta Ticinese and a historic
 Milan tram, in blue and pale gray. The working UI uses neutral surfaces in light/dark
 appearance. Compare [the three new studies](design/proposals/cartografica-v2/preview.png)
