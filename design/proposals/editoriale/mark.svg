@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 64 64" fill="none">
+  <title>Darsena — Due sponde</title>
+  <desc>Two curved urban quays frame an open basin. The opposite entrances remain open.</desc>
+  <g fill="currentColor">
+    <path d="M7 7h25c13.807 0 25 11.193 25 25v4H44v-4c0-6.627-5.373-12-12-12H7V7Z"/>
+    <path d="M57 57H32C18.193 57 7 45.807 7 32v-4h13v4c0 6.627 5.373 12 12 12h25v13Z"/>
+  </g>
+</svg>

@@ -1,0 +1,9 @@
+node_modules
+.nuxt
+.output
+dist-electron
+dist
+release
+test-results
+pnpm-lock.yaml
+build

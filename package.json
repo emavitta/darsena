@@ -1,0 +1,63 @@
+{
+  "name": "darsena",
+  "version": "0.1.0",
+  "description": "A local harbor for your Git worktrees and development tasks.",
+  "private": true,
+  "type": "module",
+  "main": "dist-electron/main.js",
+  "author": "Darsena",
+  "scripts": {
+    "dev": "node scripts/dev.mjs",
+    "dev:ui": "nuxt dev --host 127.0.0.1 --port 3141",
+    "build:desktop": "node scripts/build-desktop.mjs",
+    "build": "nuxt generate && pnpm build:desktop",
+    "start": "electron .",
+    "typecheck": "nuxt typecheck && tsc -p desktop/tsconfig.json",
+    "test": "node --import tsx --test tests/*.test.ts",
+    "pack:mac": "pnpm build && electron-builder --mac --dir",
+    "dist:mac": "pnpm build && electron-builder --mac dmg zip --arm64 --publish never",
+    "postinstall": "nuxt prepare"
+  },
+  "devDependencies": {
+    "@lucide/vue": "1.43.0",
+    "@types/node": "^24.0.0",
+    "electron": "44.3.0",
+    "electron-builder": "26.15.3",
+    "esbuild": "^0.28.2",
+    "nuxt": "4.5.2",
+    "playwright": "^1.58.0",
+    "prettier": "^3.8.0",
+    "sharp": "^0.34.0",
+    "tsx": "^4.20.0",
+    "typescript": "^5.9.0",
+    "vue": "^3.5.0",
+    "vue-tsc": "^3.0.0",
+    "zod": "^4.0.0"
+  },
+  "build": {
+    "appId": "app.darsena.desktop",
+    "productName": "Darsena",
+    "directories": {
+      "output": "release"
+    },
+    "files": [
+      "dist-electron/**/*",
+      ".output/public/**/*",
+      "package.json"
+    ],
+    "mac": {
+      "category": "public.app-category.developer-tools",
+      "icon": "build/icon.icns",
+      "identity": null,
+      "target": [
+        {
+          "target": "dir",
+          "arch": [
+            "arm64"
+          ]
+        }
+      ]
+    }
+  },
+  "packageManager": "pnpm@9.15.4+sha512.b2dc20e2fc72b3e18848459b37359a32064663e5627a51e4c74b2c29dd8e8e0491483c3abb40789cfd578bf362fb6ba8261b05f0387d76792ed6e23ea3b1b6a0"
+}

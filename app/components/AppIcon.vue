@@ -1,0 +1,72 @@
+<script setup lang="ts">
+import {
+  Activity,
+  ArrowUpRight,
+  Box,
+  Check,
+  ChevronRight,
+  Clock,
+  Ellipsis,
+  Code,
+  Copy,
+  Folder,
+  FolderOpen,
+  GitBranch,
+  GitFork,
+  Info,
+  LoaderCircle,
+  Network,
+  Play,
+  Plus,
+  RefreshCw,
+  Search,
+  Settings2,
+  Smartphone,
+  Square,
+  Star,
+  Terminal,
+  Trash2,
+  TriangleAlert,
+  X,
+} from '@lucide/vue'
+const icons = {
+  Activity,
+  ArrowUpRight,
+  Box,
+  Check,
+  ChevronRight,
+  Clock,
+  Ellipsis,
+  Code,
+  Copy,
+  Folder,
+  FolderOpen,
+  GitBranch,
+  GitFork,
+  Info,
+  LoaderCircle,
+  Network,
+  Play,
+  Plus,
+  RefreshCw,
+  Search,
+  Settings2,
+  Smartphone,
+  Square,
+  Star,
+  Terminal,
+  Trash2,
+  TriangleAlert,
+  X,
+}
+defineProps<{ name: keyof typeof icons; size?: number }>()
+</script>
+<template>
+  <component
+    :is="icons[name]"
+    :size="size || 16"
+    :stroke-width="1.65"
+    aria-hidden="true"
+    class="icon"
+  />
+</template>

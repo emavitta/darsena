@@ -1,0 +1,113 @@
+{
+  "revision": "777807a262bb7384ff406fd4b35fdcd02e9514c3",
+  "icons": [
+    {
+      "slug": "npm",
+      "title": "npm",
+      "hex": "CB3837",
+      "source": "https://www.npmjs.com",
+      "guidelines": "https://docs.npmjs.com/policies/logos-and-usage",
+      "artwork": "https://raw.githubusercontent.com/simple-icons/simple-icons/777807a262bb7384ff406fd4b35fdcd02e9514c3/icons/npm.svg"
+    },
+    {
+      "slug": "pnpm",
+      "title": "pnpm",
+      "hex": "F69220",
+      "source": "https://pnpm.io/logos",
+      "artwork": "https://raw.githubusercontent.com/simple-icons/simple-icons/777807a262bb7384ff406fd4b35fdcd02e9514c3/icons/pnpm.svg"
+    },
+    {
+      "slug": "yarn",
+      "title": "Yarn",
+      "hex": "2C8EBB",
+      "source": "https://github.com/yarnpkg/assets/blob/76d30ca2aebed5b73ea8131d972218fb860bd32d/yarn-kitten-circle.svg",
+      "guidelines": "https://github.com/yarnpkg/assets/tree/76d30ca2aebed5b73ea8131d972218fb860bd32d",
+      "license": {
+        "type": "CC-BY-4.0"
+      },
+      "artwork": "https://raw.githubusercontent.com/simple-icons/simple-icons/777807a262bb7384ff406fd4b35fdcd02e9514c3/icons/yarn.svg"
+    },
+    {
+      "slug": "bun",
+      "title": "Bun",
+      "hex": "000000",
+      "source": "https://bun.sh/press-kit",
+      "artwork": "https://raw.githubusercontent.com/simple-icons/simple-icons/777807a262bb7384ff406fd4b35fdcd02e9514c3/icons/bun.svg"
+    },
+    {
+      "slug": "gradle",
+      "title": "Gradle",
+      "hex": "02303A",
+      "source": "https://gradle.com/brand",
+      "guidelines": "https://gradle.com/brand",
+      "artwork": "https://raw.githubusercontent.com/simple-icons/simple-icons/777807a262bb7384ff406fd4b35fdcd02e9514c3/icons/gradle.svg"
+    },
+    {
+      "slug": "python",
+      "title": "Python",
+      "hex": "3776AB",
+      "source": "https://www.python.org/community/logos/",
+      "guidelines": "https://www.python.org/community/logos/",
+      "artwork": "https://raw.githubusercontent.com/simple-icons/simple-icons/777807a262bb7384ff406fd4b35fdcd02e9514c3/icons/python.svg"
+    },
+    {
+      "slug": "rust",
+      "title": "Rust",
+      "hex": "000000",
+      "source": "https://www.rust-lang.org",
+      "guidelines": "https://www.rust-lang.org/policies/media-guide",
+      "license": {
+        "type": "CC-BY-SA-4.0"
+      },
+      "artwork": "https://raw.githubusercontent.com/simple-icons/simple-icons/777807a262bb7384ff406fd4b35fdcd02e9514c3/icons/rust.svg"
+    },
+    {
+      "slug": "go",
+      "title": "Go",
+      "hex": "00ADD8",
+      "source": "https://blog.golang.org/go-brand",
+      "guidelines": "https://blog.golang.org/go-brand",
+      "artwork": "https://raw.githubusercontent.com/simple-icons/simple-icons/777807a262bb7384ff406fd4b35fdcd02e9514c3/icons/go.svg"
+    },
+    {
+      "slug": "docker",
+      "title": "Docker",
+      "hex": "2496ED",
+      "source": "https://www.docker.com/company/newsroom/media-resources",
+      "artwork": "https://raw.githubusercontent.com/simple-icons/simple-icons/777807a262bb7384ff406fd4b35fdcd02e9514c3/icons/docker.svg"
+    },
+    {
+      "slug": "apachemaven",
+      "title": "Apache Maven",
+      "hex": "C71A36",
+      "source": "https://apache.org/logos",
+      "guidelines": "https://www.apache.org/foundation/marks",
+      "license": {
+        "type": "Apache-2.0"
+      },
+      "artwork": "https://raw.githubusercontent.com/simple-icons/simple-icons/777807a262bb7384ff406fd4b35fdcd02e9514c3/icons/apachemaven.svg"
+    },
+    {
+      "slug": "uv",
+      "title": "uv",
+      "hex": "DE5FE9",
+      "source": "https://docs.astral.sh/uv/",
+      "artwork": "https://raw.githubusercontent.com/simple-icons/simple-icons/777807a262bb7384ff406fd4b35fdcd02e9514c3/icons/uv.svg"
+    },
+    {
+      "slug": "nodedotjs",
+      "title": "Node.js",
+      "hex": "5FA04E",
+      "source": "https://nodejs.org/en/about/branding",
+      "guidelines": "https://nodejs.org/en/about/branding",
+      "artwork": "https://raw.githubusercontent.com/simple-icons/simple-icons/777807a262bb7384ff406fd4b35fdcd02e9514c3/icons/nodedotjs.svg"
+    },
+    {
+      "slug": "task",
+      "title": "Task",
+      "hex": "29BEB0",
+      "source": "https://github.com/go-task/task/blob/84ad0056e49e2206bf5903863cdf972a7305072c/docs/static/img/logo_mono.svg",
+      "artwork": "https://raw.githubusercontent.com/simple-icons/simple-icons/777807a262bb7384ff406fd4b35fdcd02e9514c3/icons/task.svg"
+    }
+  ]
+}

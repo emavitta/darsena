@@ -1,0 +1,42 @@
+{
+  "version": 1,
+  "name": "mago-app",
+  "targets": [
+    {
+      "id": "root",
+      "label": "Repository",
+      "path": ".",
+      "openWith": ["vscode", "terminal"]
+    },
+    {
+      "id": "android",
+      "label": "WTC Android",
+      "path": "shells/wtc-android",
+      "openWith": ["android-studio", "vscode", "terminal"]
+    },
+    {
+      "id": "call",
+      "label": "Call",
+      "path": "services/call",
+      "openWith": ["vscode", "terminal"]
+    }
+  ],
+  "tasks": [
+    {
+      "id": "typecheck-call",
+      "label": "Typecheck Call",
+      "target": "root",
+      "command": "pnpm",
+      "args": ["--filter", "@mago/call", "run", "typecheck"],
+      "kind": "oneshot"
+    },
+    {
+      "id": "dev-call",
+      "label": "Avvia Call",
+      "target": "root",
+      "command": "pnpm",
+      "args": ["--filter", "@mago/call", "run", "dev"],
+      "kind": "service"
+    }
+  ]
+}

@@ -1,0 +1,13 @@
+node_modules/
+.nuxt/
+.output/
+dist-electron/
+/dist
+release/
+build/*.iconset/
+.DS_Store
+.env
+.env.*
+!.env.example
+test-results/
+playwright-report/

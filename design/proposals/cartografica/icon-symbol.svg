@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024">
+  <title>Darsena — Atlante</title>
+  <desc>An abstract cartographic silhouette: an urban water basin with two canal mouths. Not a geographic map.</desc>
+  <defs>
+    <linearGradient id="ink" x1="140" y1="100" x2="860" y2="944" gradientUnits="userSpaceOnUse"><stop stop-color="#283EC0"/><stop offset="1" stop-color="#162780"/></linearGradient>
+    <linearGradient id="edge" x1="512" x2="512" y1="62" y2="962" gradientUnits="userSpaceOnUse"><stop stop-color="#6072DC"/><stop offset="1" stop-color="#152677"/></linearGradient>
+  </defs>
+  <rect x="62" y="62" width="900" height="900" rx="204" fill="url(#ink)"/>
+  <rect x="63" y="63" width="898" height="898" rx="203" fill="none" stroke="url(#edge)" stroke-width="2"/>
+  <g transform="translate(140 146) scale(31) rotate(-28 12 12)">
+    <path fill="#F5F4EA" d="M5.7 5.8C9.5 3.6 15.8 3.3 19.7 6.8L21 8V12H17.8V20H14.6V12H8.3L3.4 16.9L1.1 14.6L5.7 10V5.8Z"/>
+  </g>
+</svg>
