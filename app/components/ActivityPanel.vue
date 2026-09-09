@@ -123,6 +123,12 @@ function showPorts() {
           </div>
           <div class="run-context truncate">{{ run.projectName }} / {{ run.worktreeName }}</div>
           <div class="run-entry-bottom">
+            <span
+              v-if="run.source === 'mcp'"
+              v-tooltip="'Started through Darsena’s MCP connection.'"
+              class="tag"
+              >MCP</span
+            >
             <span :class="{ 'text-danger': run.status === 'failed' }">{{ status(run) }}</span
             ><span v-if="run.port" v-tooltip="'The fixed TCP port configured for this task.'"
               >:{{ run.port }}</span
@@ -168,6 +174,9 @@ function showPorts() {
           ><span v-else class="tag">{{ status(current) }}</span>
         </header>
         <div class="run-details">
+          <div class="muted">
+            Started from {{ current.source === 'mcp' ? 'MCP' : 'the Darsena interface' }}
+          </div>
           <div class="mono">{{ current.command }}</div>
           <div class="mono muted">{{ current.folder }}</div>
           <div class="run-links">

@@ -76,6 +76,7 @@ export interface TaskCatalog {
 export type RunStatus = 'starting' | 'running' | 'stopping' | 'stopped' | 'succeeded' | 'failed'
 export interface Run {
   id: string
+  source: 'ui' | 'mcp'
   projectId: string
   projectName: string
   worktree: string
@@ -112,6 +113,15 @@ export interface ListenerReport {
 export type StartResult =
   { kind: 'started'; run: Run } | { kind: 'conflict'; message: string; runId?: string }
 export interface Methods {
+  mcpStatus: { input: undefined; output: McpStatus }
+  mcpConfigure: { input: { enabled: boolean; port: number }; output: McpStatus }
+  mcpProject: { input: { projectId: string; allowed: boolean }; output: McpStatus }
+  mcpTask: {
+    input: { projectId: string; worktree: string; taskId: string; allowed: boolean }
+    output: McpStatus
+  }
+  mcpRotateToken: { input: undefined; output: McpStatus }
+  mcpConfiguration: { input: undefined; output: string }
   state: { input: undefined; output: AppState }
   addProject: { input: undefined; output: AppState }
   removeProject: { input: { projectId: string }; output: AppState }
@@ -153,4 +163,13 @@ export interface DesktopApi {
     input?: Methods[K]['input'],
   ): Promise<Methods[K]['output']>
   onChange(callback: () => void): () => void
+}
+
+export interface McpStatus {
+  enabled: boolean
+  port: number
+  projects: Record<string, { tasks: string[] }>
+  listening: boolean
+  url?: string
+  error?: string
 }

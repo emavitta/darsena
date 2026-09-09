@@ -39,7 +39,13 @@ export class Runner extends EventEmitter {
     }
     this.emit('changed')
   }
-  start(project: Project, tree: Worktree, task: Task, cwd: string): Run {
+  start(
+    project: Project,
+    tree: Worktree,
+    task: Task,
+    cwd: string,
+    source: Run['source'] = 'ui',
+  ): Run {
     if (this.shuttingDown) throw new Error('Darsena is shutting down.')
     const env: NodeJS.ProcessEnv = { ...process.env, NO_COLOR: '1' }
     delete env.FORCE_COLOR
@@ -51,6 +57,7 @@ export class Runner extends EventEmitter {
     })
     const run: Run = {
       id: randomUUID(),
+      source,
       projectId: project.id,
       projectName: project.name,
       worktree: tree.path,

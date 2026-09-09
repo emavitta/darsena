@@ -15,13 +15,14 @@ import { fileURLToPath, pathToFileURL } from 'node:url'
 import { randomUUID } from 'node:crypto'
 import { z } from 'zod'
 import { Store } from './store.js'
-import { identifyProject, listWorktrees, matchingWorktree, validateWorktree } from './git.js'
+import { identifyProject, listWorktrees, matchingWorktree } from './git.js'
 import { command, importShellEnvironment, inside, message, resolveFolder } from './io.js'
-import { TaskDiscovery } from './tasks.js'
+import { WorkspaceService } from './workspace.js'
+import { McpController, mcpConnectionSchema, mcpProjectSchema, mcpTaskSchema } from './mcp.js'
 import { browseFolders, folderShortcut } from './folders.js'
-import { Runner, active } from './runner.js'
-import { isDescendant, listeners, processCwd, processParents } from './processes.js'
-import type { ListenerReport, Methods, StartResult } from '../shared/types.js'
+import { active } from './runner.js'
+import { listeners, processCwd } from './processes.js'
+import type { Methods } from '../shared/types.js'
 
 app.setName('Darsena')
 if (process.env.DARSENA_DATA_DIR)
@@ -41,8 +42,12 @@ const devUrl =
     ? process.env.DARSENA_DEV_URL
     : undefined
 const store = new Store(app.getPath('userData'))
-const discovery = new TaskDiscovery()
-const runner = new Runner()
+const workspace = new WorkspaceService(store)
+const { discovery, runner } = workspace
+const mcp = new McpController(workspace, app.getVersion(), changed)
+const tree = workspace.tree.bind(workspace)
+const scanListeners = workspace.scanListeners.bind(workspace)
+const start = workspace.start.bind(workspace)
 let window: BrowserWindow | undefined
 let quitReady = false,
   quitting = false,
@@ -67,6 +72,12 @@ const treeInput = projectInput.extend({ worktree: string })
 const taskInput = treeInput.extend({ taskId: string })
 const folderInput = treeInput.extend({ folder: string })
 const schemas: Record<keyof Methods, z.ZodType> = {
+  mcpStatus: z.undefined(),
+  mcpConfigure: mcpConnectionSchema,
+  mcpProject: mcpProjectSchema,
+  mcpTask: mcpTaskSchema,
+  mcpRotateToken: z.undefined(),
+  mcpConfiguration: z.undefined(),
   state: z.undefined(),
   addProject: z.undefined(),
   runs: z.undefined(),
@@ -120,108 +131,15 @@ async function save() {
   changed()
   return state
 }
-async function tree(projectId: string, worktree: string) {
-  const project = store.project(projectId)
-  return { project, worktree: await validateWorktree(project.root, worktree) }
-}
-async function scanListeners(): Promise<ListenerReport> {
-  try {
-    const rows = await listeners()
-    const parents = await processParents()
-    const trees = await Promise.all(
-      store.state.projects.map(async (p) => ({
-        project: p,
-        trees: await listWorktrees(p.root, false).catch(() => []),
-      })),
-    )
-    const cwdByPid = new Map<number, string | undefined>()
-    const pids = [...new Set(rows.map((r) => r.pid))]
-    for (let i = 0; i < pids.length; i += 6)
-      await Promise.all(
-        pids.slice(i, i + 6).map(async (pid) => cwdByPid.set(pid, await processCwd(pid))),
-      )
-    for (const row of rows) {
-      row.cwd = cwdByPid.get(row.pid)
-      const run = runner
-        .list()
-        .find((r) => active(r) && r.pid && isDescendant(row.pid, r.pid, parents))
-      if (run) {
-        row.runId = run.id
-        row.projectId = run.projectId
-        row.worktree = run.worktree
-        row.worktreeName = run.worktreeName
-      } else if (row.cwd) {
-        for (const entry of trees) {
-          const match = matchingWorktree(entry.trees, row.cwd)
-          if (match) {
-            row.projectId = entry.project.id
-            row.worktree = match.path
-            row.worktreeName = match.name
-            break
-          }
-        }
-      }
-    }
-    return { listeners: rows, checkedAt: Date.now() }
-  } catch (error) {
-    return { listeners: [], error: message(error), checkedAt: Date.now() }
-  }
-}
-let startQueue: Promise<unknown> = Promise.resolve()
-function queueStart(operation: () => Promise<StartResult>) {
-  const promise = startQueue.then(operation, operation)
-  startQueue = promise.catch(() => {})
-  return promise
-}
-async function start(input: {
-  projectId: string
-  worktree: string
-  taskId: string
-}): Promise<StartResult> {
-  return queueStart(async () => {
-    const context = await tree(input.projectId, input.worktree)
-    const task = (await discovery.list(context.project, input.worktree)).tasks.find(
-      (t) => t.id === input.taskId,
-    )
-    if (!task?.available)
-      throw new Error(
-        'This task is unavailable in the selected worktree. Reload its source or choose another task.',
-      )
-    const live = runner.list().filter(active)
-    const duplicate = live.find(
-      (r) =>
-        r.projectId === input.projectId &&
-        r.worktree === input.worktree &&
-        r.taskId === input.taskId,
-    )
-    if (duplicate)
-      return {
-        kind: 'conflict',
-        message: 'This task is already running in this worktree.',
-        runId: duplicate.id,
-      }
-    if (task.port) {
-      const owned = live.find((r) => r.port === task.port)
-      if (owned)
-        return {
-          kind: 'conflict',
-          message: `Port ${task.port} is reserved by ${owned.name} in ${owned.worktreeName}.`,
-          runId: owned.id,
-        }
-      const occupied = (await listeners()).find((l) => l.port === task.port)
-      if (occupied)
-        return {
-          kind: 'conflict',
-          message: `Port ${task.port} is in use by ${occupied.command} (PID ${occupied.pid}). Check Listening ports before starting.`,
-        }
-    }
-    const cwd = await resolveFolder(input.worktree, task.folder)
-    return { kind: 'started', run: runner.start(context.project, context.worktree, task, cwd) }
-  })
-}
 const handlers: {
   [K in keyof Methods]: (input: Methods[K]['input']) => Promise<Methods[K]['output']>
 } = {
+  mcpStatus: async () => mcp.status(),
+  mcpConfigure: (input) => mcp.configure(input),
+  mcpProject: ({ projectId, allowed }) => mcp.allowProject(projectId, allowed),
+  mcpTask: (input) => mcp.allowTask(input),
+  mcpRotateToken: () => mcp.rotateToken(),
+  mcpConfiguration: async () => mcp.configuration(),
   state: async () => structuredClone(store.state),
   addProject: async () => {
     const result = await dialog.showOpenDialog({
@@ -449,14 +367,14 @@ app.on('before-quit', (event) => {
   event.preventDefault()
   if (quitting) return
   quitting = true
-  void runner
-    .shutdown()
+  void Promise.all([mcp.shutdown(), runner.shutdown()])
     .then(() => {
       quitReady = true
       app.quit()
     })
     .catch(async (error) => {
       quitting = false
+      await mcp.resumeAfterFailedQuit()
       createWindow()
       await dialog.showMessageBox({ type: 'error', message: message(error) })
     })
@@ -469,6 +387,7 @@ if (gotLock)
     .then(async () => {
       await store.load()
       await importShellEnvironment()
+      await mcp.initialize()
       protocol.handle('darsena', async (request) => {
         const url = new URL(request.url)
         if (url.hostname !== 'app') return new Response('Not found', { status: 404 })

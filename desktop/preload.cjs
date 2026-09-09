@@ -1,5 +1,11 @@
 const { contextBridge, ipcRenderer } = require('electron')
 const methods = new Set([
+  'mcpStatus',
+  'mcpConfigure',
+  'mcpProject',
+  'mcpTask',
+  'mcpRotateToken',
+  'mcpConfiguration',
   'state',
   'addProject',
   'removeProject',

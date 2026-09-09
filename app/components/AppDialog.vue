@@ -4,6 +4,8 @@ const emit = defineEmits<{ close: [] }>()
 const element = useTemplateRef('element')
 const titleId = useId()
 onMounted(() => element.value?.showModal())
+// Closing before removal lets the native dialog restore focus to its opener.
+onBeforeUnmount(() => element.value?.close())
 </script>
 <template>
   <dialog

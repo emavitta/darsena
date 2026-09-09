@@ -245,44 +245,11 @@ function viewConflictActivity() {
         </footer>
       </div></AppDialog
     >
-    <AppDialog v-if="settings" title="Preferences" @close="settings = false"
-      ><div class="form-stack">
-        <p class="muted">Choose the applications used by folder shortcuts.</p>
-        <div
-          v-for="entry in [
-            { id: 'vscode' as const, label: 'VS Code' },
-            { id: 'terminal' as const, label: 'Terminal' },
-            { id: 'android-studio' as const, label: 'Android Studio' },
-          ]"
-          :key="entry.id"
-          class="preference-row"
-        >
-          <div>
-            <strong>{{ entry.label }}</strong
-            ><span
-              v-tooltip="state.apps[entry.id] || `Use the default ${entry.label} application.`"
-              class="mono muted"
-              >{{ state.apps[entry.id] || 'Default application' }}</span
-            >
-          </div>
-          <button
-            v-tooltip="
-              `Choose the macOS application used for ${entry.label} folder shortcuts. Saved immediately.`
-            "
-            class="button small"
-            @click="chooseApp(entry.id)"
-          >
-            Choose…
-          </button>
-        </div>
-        <div class="preference-note">
-          <AppIcon name="Info" :size="17" />
-          <p>
-            Closing the window keeps your tasks running. Quitting Darsena stops the tasks it
-            started. External processes stay independent.
-          </p>
-        </div>
-      </div></AppDialog
-    >
+    <AppPreferences
+      v-if="settings"
+      :state="state"
+      @close="settings = false"
+      @choose-app="chooseApp"
+    />
   </div>
 </template>

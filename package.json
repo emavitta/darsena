@@ -20,6 +20,9 @@
   },
   "devDependencies": {
     "@lucide/vue": "1.43.0",
+    "@modelcontextprotocol/client": "2.0.0",
+    "@modelcontextprotocol/node": "2.0.0",
+    "@modelcontextprotocol/server": "2.0.0",
     "@types/node": "^24.0.0",
     "electron": "44.3.0",
     "electron-builder": "26.15.3",
