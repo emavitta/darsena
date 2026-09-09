@@ -10,6 +10,7 @@
 </p>
 
 <p align="center">
+  <a href="#download">Download for macOS</a> ·
   <a href="#use">Get started</a> ·
   <a href="https://github.com/emavitta/darsena/releases">Releases</a> ·
   <a href="docs/distribution.md">Build &amp; distribute</a>
@@ -31,14 +32,30 @@ Work on branches created by you, a teammate or an agent, using the tools you alr
 
 Built with **Electron, Nuxt 4, Vue 3 and TypeScript**.
 
+## Download
+
+**[Download Darsena v0.1.0 for macOS — Apple Silicon (DMG)](https://github.com/emavitta/darsena/releases/download/v0.1.0/Darsena-0.1.0-arm64.dmg)**
+
+The first public preview is available on [GitHub Releases](https://github.com/emavitta/darsena/releases/tag/v0.1.0).
+Open the DMG and drag **Darsena** into **Applications**. A
+[ZIP containing the same app](https://github.com/emavitta/darsena/releases/download/v0.1.0/Darsena-0.1.0-arm64-mac.zip)
+is also available. Choose a DMG or app ZIP from the release assets; GitHub's
+automatic **Source code** archives are for development.
+
+This preview supports **Apple Silicon Macs (M-series)**. It is unsigned and not
+notarized, so macOS may display a security warning when opening it. Intel Mac
+and Windows installers are not available yet.
+
+Each release includes [SHA-256 checksums](https://github.com/emavitta/darsena/releases/download/v0.1.0/SHA256SUMS-macos-arm64.txt)
+and a [build manifest](https://github.com/emavitta/darsena/releases/download/v0.1.0/build-macos-arm64.json)
+recording the version, target and exact source commit. Install updates manually
+from [Releases](https://github.com/emavitta/darsena/releases); in-app updating is
+not implemented yet.
+
+Git and your projects' toolchains need to be installed separately. To run
+Darsena from source, see [Development and checks](#development-and-checks).
+
 ## Use
-
-Open `release/mac-arm64/Darsena.app`, or run from source with Node 24+ and pnpm:
-
-```sh
-pnpm install
-pnpm dev
-```
 
 1. **Add project**: choose a Git repository or one of its linked worktrees.
 2. Select a worktree. Discovery uses Git’s registry, regardless of who created it.
@@ -119,10 +136,20 @@ Tasks should stay attached to their launching process group. Independent,
 detached daemons and shared services such as a Gradle daemon are not claimed
 as managed just because a task contacted or started them.
 
-The current `.app` targets this Apple Silicon Mac for local use. Public
-signing/notarization and additional build architectures are later delivery work.
+The public preview targets macOS on Apple Silicon. Developer ID signing,
+notarization and additional build architectures remain future work.
 
 ## Development and checks
+
+From a checkout of this repository, use Node 24+ and the pnpm version declared
+in `package.json`:
+
+```sh
+pnpm install --frozen-lockfile
+pnpm dev
+```
+
+Available development and build commands:
 
 ```sh
 pnpm dev                 # Nuxt + Electron; frontend HMR
@@ -141,9 +168,9 @@ pnpm dist:mac            # Generate Apple Silicon DMG and ZIP; never uploads/pub
 node scripts/icons.mjs   # Regenerate Dock PNG and ICNS from the SVG master
 ```
 
-`release/Darsena-0.1.0-arm64.dmg` installs by dragging Darsena to Applications.
-`release/Darsena-0.1.0-arm64-mac.zip` contains the same app. These local builds are unsigned and not notarized;
-Developer ID signing/notarization and Intel builds remain future distribution work.
+`pnpm pack:mac` writes `release/mac-arm64/Darsena.app`. `pnpm dist:mac` also
+creates versioned DMG and ZIP installers under `release/`. These commands build
+locally; they do not upload files or create a GitHub Release.
 
 The desktop smoke test uses isolated repositories and settings.
 `DARSENA_DATA_DIR` selects a separate settings profile, including in packaged builds. It verifies
@@ -163,16 +190,37 @@ The development server uses `127.0.0.1:3141`.
 
 ## Builds and releases
 
-[Build macOS](https://github.com/emavitta/darsena/actions/workflows/build-macos.yml)
-runs on demand. It checks types, runs backend tests, builds the DMG/ZIP and tests
-the packaged app. The downloadable artifact includes checksums and the source
-commit and is retained for 14 days.
+The [v0.1.0 macOS preview](https://github.com/emavitta/darsena/releases/tag/v0.1.0)
+was built and tested on GitHub Actions and is publicly downloadable. The
+following workflows are already active:
 
-Pushing a version tag matching `package.json` (such as `v0.1.0`) runs the same
-checks and prepares a **draft pre-release** with the installers. Review and
-publish it from [GitHub Releases](https://github.com/emavitta/darsena/releases).
-Local `pnpm dist:mac` builds can be attached to a Release too; see the
-[distribution guide](docs/distribution.md) for both paths.
+| Workflow | Trigger | Result |
+| --- | --- | --- |
+| [CI](https://github.com/emavitta/darsena/actions/workflows/ci.yml) | PRs targeting `main`, pushes to `main`, or a manual run | Type checks, backend tests, application build and desktop checks. **Validate macOS** must pass before a PR can merge. |
+| [Build macOS](https://github.com/emavitta/darsena/actions/workflows/build-macos.yml) | Manual run, or called by the release workflow | Tested Apple Silicon DMG and ZIP, checksums and source manifest in the `darsena-macos-arm64` artifact. Retained for **14 days**. |
+| [Prepare release](https://github.com/emavitta/darsena/actions/workflows/release.yml) | Push a `v*` version tag | Runs Build macOS, verifies the downloaded checksums and creates a **draft pre-release** with the installers and release notes. |
+
+Build macOS tests the **packaged application**, including task execution, port
+conflicts, window close, cleanup on Quit and project removal. Tests use
+disposable repositories and isolated settings.
+
+To publish the next version:
+
+1. Update `package.json` and add `docs/releases/vX.Y.Z.md` through a PR to `main`.
+2. After merging, tag the release commit and push the tag. The tag must match
+   the package version, for example `v0.1.1` for version `0.1.1`.
+3. Wait for **Prepare release** to finish, then review the notes and try the
+   installers attached to its draft.
+4. Publish the draft from [GitHub Releases](https://github.com/emavitta/darsena/releases).
+   A published pre-release is publicly downloadable; a draft is not.
+
+Actions artifacts are temporary and require a GitHub login to download. Use
+published Releases for public download links. Changed installers get a new
+version: the workflow refuses to replace an already published release.
+
+Local `pnpm dist:mac` builds can also be attached to a release draft. See the
+[distribution guide](docs/distribution.md) for the commands, checksum generation
+and both distribution paths.
 
 Windows is deferred; the unfinished port is preserved on
 [`feat/windows-preview`](https://github.com/emavitta/darsena/tree/feat/windows-preview).
