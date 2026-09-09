@@ -1,4 +1,5 @@
 <script setup lang="ts">
+const { isWindows } = usePlatform()
 import type { CustomTask, Folder } from '../../shared/types'
 import { shellScriptCommand, type ScriptShell } from '../utils/customCommands'
 
@@ -9,7 +10,7 @@ const folder = shallowRef('.')
 const mode = shallowRef<'command' | 'script'>('command')
 const command = shallowRef('')
 const script = shallowRef('')
-const shell = shallowRef<ScriptShell>('bash')
+const shell = shallowRef<ScriptShell>(isWindows ? 'powershell' : 'bash')
 const args = shallowRef('')
 const error = shallowRef('')
 const preview = computed(() =>
@@ -44,7 +45,7 @@ function submit() {
           <input v-model="mode" type="radio" value="command" name="command-type" />
           <TaskToolIcon icon="command" /> Command
         </label>
-        <label v-tooltip="'Run a script file from the selected worktree with Bash, Zsh or Sh.'">
+        <label v-tooltip="'Run a script file from the selected worktree with the selected shell.'">
           <input v-model="mode" type="radio" value="script" name="command-type" />
           <TaskToolIcon icon="shell" /> Shell script
         </label>
@@ -79,7 +80,7 @@ function submit() {
               'Path relative to the working folder. Spaces are allowed; do not add quotes.'
             "
             required
-            placeholder="scripts/dev.sh"
+            :placeholder="isWindows ? 'scripts/dev.ps1' : 'scripts/dev.sh'"
             spellcheck="false"
           />
         </label>
@@ -91,6 +92,8 @@ function submit() {
               'Choose the shell this script was written for. The file does not need executable permission.'
             "
           >
+            <option v-if="isWindows" value="powershell">Windows PowerShell</option>
+            <option value="pwsh">PowerShell 7 (if installed)</option>
             <option value="bash">Bash</option>
             <option value="zsh">Zsh</option>
             <option value="sh">Sh (POSIX)</option>
@@ -127,7 +130,7 @@ function submit() {
           {{
             mode === 'script'
               ? 'Uses this script from the selected worktree. Choose the shell your script needs.'
-              : 'Runs in the selected worktree. Use Shell script for a .sh file or multi-step setup.'
+              : 'Runs in the selected worktree. Use Shell script for a script file or multi-step setup.'
           }}
         </p>
       </div>

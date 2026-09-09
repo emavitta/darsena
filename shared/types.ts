@@ -148,6 +148,7 @@ export interface Methods {
   openUrl: { input: { url: string }; output: void }
 }
 export interface DesktopApi {
+  readonly platform: string
   call<K extends keyof Methods>(
     method: K,
     input?: Methods[K]['input'],

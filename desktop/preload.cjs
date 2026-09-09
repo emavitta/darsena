@@ -27,6 +27,7 @@ const methods = new Set([
   'openUrl',
 ])
 contextBridge.exposeInMainWorld('darsena', {
+  platform: process.platform,
   call: async (method, input) => {
     if (!methods.has(method)) throw new Error('Unsupported operation')
     const result = await ipcRenderer.invoke('darsena:call', method, input)

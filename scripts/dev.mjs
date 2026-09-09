@@ -7,9 +7,14 @@ await new Promise((resolve, reject) => {
   probe.listen(3141, '127.0.0.1', resolve)
 })
 await new Promise((resolve) => probe.close(resolve))
-const build = spawn('pnpm', ['build:desktop'], { stdio: 'inherit' })
+const pnpm = process.env.npm_execpath
+if (!pnpm) throw new Error('Start development with pnpm dev.')
+const build = spawn(process.execPath, [pnpm, 'build:desktop'], { stdio: 'inherit' })
 if (await new Promise((resolve) => build.once('exit', resolve))) process.exit(1)
-const ui = spawn('pnpm', ['dev:ui'], { stdio: 'inherit', detached: true })
+const ui = spawn(process.execPath, [pnpm, 'dev:ui'], {
+  stdio: 'inherit',
+  detached: process.platform !== 'win32',
+})
 let desktop
 let closing = false
 function close() {
@@ -17,7 +22,12 @@ function close() {
   closing = true
   if (ui.pid)
     try {
-      process.kill(-ui.pid, 'SIGTERM')
+      if (process.platform === 'win32')
+        spawn('taskkill.exe', ['/pid', String(ui.pid), '/t', '/f'], {
+          stdio: 'ignore',
+          windowsHide: true,
+        })
+      else process.kill(-ui.pid, 'SIGTERM')
     } catch {}
   desktop?.kill('SIGTERM')
 }

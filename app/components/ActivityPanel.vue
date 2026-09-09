@@ -216,7 +216,7 @@ function showPorts() {
         ><button
           v-tooltip="
             scanning
-              ? 'Scanning TCP listeners visible to your macOS user…'
+              ? 'Scanning TCP listeners visible to your user account…'
               : 'Scan again to see which processes currently hold TCP ports.'
           "
           class="button small"
@@ -229,8 +229,8 @@ function showPorts() {
         </button>
       </div>
       <p class="section-hint">
-        TCP listeners visible to your macOS user. External processes keep their own lifecycle; task
-        logs are available for Darsena runs.
+        TCP listeners visible to your user account. External processes keep their own lifecycle;
+        task logs are available for Darsena runs.
       </p>
       <p v-if="report.error" role="alert" class="inline-error">{{ report.error }}</p>
       <div v-if="!visibleListeners.length" class="tasks-empty">
@@ -266,7 +266,7 @@ function showPorts() {
             class="truncate"
             >{{ listener.worktreeName || listener.cwd || 'Working folder unavailable' }}</span
           ><span
-            v-tooltip="'The macOS process identifier and the network address it listens on.'"
+            v-tooltip="'The process identifier and the network address it listens on.'"
             class="mono muted"
             >PID {{ listener.pid }} · {{ listener.address }}</span
           >

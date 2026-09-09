@@ -4,6 +4,7 @@ import os from 'node:os'
 import { z } from 'zod'
 import { command, message, resolveFolder } from './io.js'
 import type { Project, Task, TaskCatalog } from '../shared/types.js'
+import { gradleWrapper, gradleCommand, isWindows } from './platform.js'
 
 export function taskId(kind: string, folder: string, name: string) {
   return JSON.stringify([kind, folder, name])
@@ -56,8 +57,8 @@ export class TaskDiscovery {
   private gradle = new Map<string, Task[]>()
   async loadGradle(worktree: string, folder: string) {
     const cwd = await resolveFolder(worktree, folder)
-    if (!(await exists(path.join(cwd, 'gradlew'))))
-      throw new Error('Add the folder containing the Gradle wrapper (gradlew).')
+    if (!(await exists(path.join(cwd, gradleWrapper))))
+      throw new Error(`Add the folder containing the Gradle wrapper (${gradleWrapper}).`)
     const temp = await mkdtemp(path.join(os.tmpdir(), 'darsena-gradle-'))
     const name = `darsenaTaskReport${Date.now()}`
     const script = `gradle.projectsEvaluated {
@@ -74,8 +75,15 @@ export class TaskDiscovery {
       const init = path.join(temp, 'report.gradle')
       await writeFile(init, script)
       const output = await command(
-        './gradlew',
-        ['--init-script', init, '--console=plain', '--quiet', name],
+        gradleCommand,
+        [
+          ...(isWindows ? ['--no-daemon'] : []),
+          '--init-script',
+          init,
+          '--console=plain',
+          '--quiet',
+          name,
+        ],
         cwd,
         120000,
       )
@@ -84,8 +92,8 @@ export class TaskDiscovery {
         name: t.name,
         folder,
         kind: 'gradle',
-        command: './gradlew',
-        args: [t.name],
+        command: gradleCommand,
+        args: [...(isWindows ? ['--no-daemon'] : []), t.name],
         available: true,
         description: t.description || undefined,
       }))
@@ -124,7 +132,7 @@ export class TaskDiscovery {
             })
           }
         }
-        if (await exists(path.join(cwd, 'gradlew'))) {
+        if (await exists(path.join(cwd, gradleWrapper))) {
           const tasks = this.gradle.get(JSON.stringify([worktree, folder.path]))
           result.sources.push({
             kind: 'gradle',

@@ -38,12 +38,17 @@ const fallback: Identity = { id: 'custom', label: 'Custom', tone: 'custom', icon
 
 function customTool(command: string): Identity {
   // Presentation only: never inspect a script body or reinterpret shell arguments.
-  const executable = command.trim().split('/').at(-1) || ''
+  const executable = (command.trim().split(/[\\/]/).at(-1) || '')
+    .toLowerCase()
+    .replace(/\.(exe|cmd|bat)$/u, '')
   if (Object.hasOwn(managers, executable))
     return { id: `script:${executable}`, ...managers[executable as keyof typeof managers] }
   if (
-    ['bash', 'sh', 'zsh', 'fish', 'dash', 'ksh'].includes(executable) ||
-    /\.(sh|bash|zsh)$/u.test(executable)
+    ['bash', 'sh', 'zsh', 'fish', 'dash', 'ksh', 'powershell', 'pwsh', 'cmd'].includes(
+      executable,
+    ) ||
+    /\.(sh|bash|zsh|ps1)$/u.test(executable) ||
+    /\.(bat|cmd)$/iu.test(command)
   )
     return shellTool
   if (/^python(?:[23](?:\.\d+)*)?$/u.test(executable) || executable.endsWith('.py'))

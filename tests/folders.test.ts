@@ -11,9 +11,9 @@ test('folder browsing stays in the worktree, excludes files and external links, 
   t.after(f.cleanup)
   await mkdir(path.join(f.root, '.config'))
   await mkdir(path.join(f.root, 'shells/native module'), { recursive: true })
-  await symlink(f.directory, path.join(f.root, 'external'))
-  await symlink('missing', path.join(f.root, 'broken'))
-  await symlink('android-app', path.join(f.root, 'android-alias'))
+  await symlink(f.directory, path.join(f.root, 'external'), 'junction')
+  await symlink(path.join(f.root, 'missing'), path.join(f.root, 'broken'), 'junction')
+  await symlink(path.join(f.root, 'android-app'), path.join(f.root, 'android-alias'), 'junction')
   await symlink('README.md', path.join(f.root, 'file-alias'))
   const listing = await browseFolders(f.root, '.')
   assert.equal(listing.path, '.')
@@ -37,7 +37,7 @@ test('browse and save both validate paths, including traversal, prefix siblings,
   t.after(f.cleanup)
   const sibling = `${f.root}-other`
   await mkdir(sibling)
-  await symlink(sibling, path.join(f.root, 'external'))
+  await symlink(sibling, path.join(f.root, 'external'), 'junction')
   for (const operation of [browseFolders, folderShortcut]) {
     for (const folder of [
       '../harbor-project-other',

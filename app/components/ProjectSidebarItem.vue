@@ -1,4 +1,5 @@
 <script setup lang="ts">
+const { fileManager } = usePlatform()
 import type { Project } from '../../shared/types'
 
 defineProps<{ project: Project; selected: boolean }>()
@@ -129,7 +130,7 @@ onBeforeUnmount(() => {
     </button>
     <button
       ref="trigger"
-      v-tooltip="'Project actions: show in Finder, copy path or remove from Darsena.'"
+      v-tooltip="`Project actions: show in ${fileManager}, copy path or remove from Darsena.`"
       class="icon-button small project-actions-trigger"
       :aria-label="`Actions for ${project.name}`"
       aria-haspopup="menu"
@@ -158,7 +159,7 @@ onBeforeUnmount(() => {
         <span v-tooltip="project.root" class="mono truncate">{{ project.root }}</span>
       </div>
       <button class="project-menu-item" role="menuitem" tabindex="-1" @click="choose('reveal')">
-        <AppIcon name="FolderOpen" />Show in Finder
+        <AppIcon name="FolderOpen" />Show in {{ fileManager }}
       </button>
       <button class="project-menu-item" role="menuitem" tabindex="-1" @click="choose('copy')">
         <AppIcon name="Copy" />Copy project path

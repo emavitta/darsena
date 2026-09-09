@@ -1,4 +1,5 @@
 <script setup lang="ts">
+const { fileManager } = usePlatform()
 import type { AppId, Project, Run, Task, TaskCatalog, Worktree } from '../../shared/types'
 defineProps<{
   project: Project
@@ -58,8 +59,8 @@ const emit = defineEmits<{
           <AppIcon name="Copy" :size="13" /></button
         ><button
           class="icon-button small"
-          aria-label="Show worktree in Finder"
-          v-tooltip="'Reveal this worktree’s folder in Finder.'"
+          :aria-label="`Show worktree in ${fileManager}`"
+          v-tooltip="`Reveal this worktree’s folder in ${fileManager}.`"
           @click="emit('open', '.', 'finder')"
         >
           <AppIcon name="ArrowUpRight" :size="14" />

@@ -9,7 +9,7 @@ export function parseWorktrees(output: string): Worktree[] {
   for (const field of output.split('\0')) {
     if (field.startsWith('worktree ')) {
       current = {
-        path: field.slice(9),
+        path: path.normalize(field.slice(9)),
         name: path.basename(field.slice(9)),
         branch: null,
         head: '',

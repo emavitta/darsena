@@ -71,7 +71,7 @@ try {
   assert.equal(await copy.getAttribute('aria-describedby'), null)
 
   // A tooltip is above a modal, and Escape dismisses the hint before the dialog.
-  await page.getByRole('button', { name: 'Preferences 0.1' }).click()
+  await page.getByRole('button', { name: /^Preferences / }).click()
   const dialog = page.getByRole('dialog')
   await dialog.waitFor()
   await hint(dialog.getByRole('button', { name: 'Choose…' }).first(), /Saved immediately/)

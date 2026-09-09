@@ -25,7 +25,8 @@ await writeFile(
 let desktop
 try {
   desktop = await electron.launch({
-    args: ['.'],
+    executablePath: process.env.DARSENA_EXECUTABLE,
+    args: process.env.DARSENA_EXECUTABLE ? [] : ['.'],
     cwd: process.cwd(),
     env: {
       ...process.env,

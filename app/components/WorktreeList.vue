@@ -1,4 +1,5 @@
 <script setup lang="ts">
+const { shortcutKey } = usePlatform()
 import type { Run, Worktree } from '../../shared/types'
 const props = defineProps<{
   worktrees: Worktree[]
@@ -51,8 +52,8 @@ const runningPaths = computed(
         data-worktree-search
         placeholder="Find a worktree…"
         aria-label="Find a worktree"
-        v-tooltip="'Filter by worktree name, branch or path. Shortcut: ⌘K.'"
-      /><kbd>⌘ K</kbd></label
+        v-tooltip="`Filter by worktree name, branch or path. Shortcut: ${shortcutKey} K.`"
+      /><kbd>{{ shortcutKey }} K</kbd></label
     >
     <p v-if="error" class="inline-error pad" role="alert">{{ error }}</p>
     <div class="worktree-scroll">

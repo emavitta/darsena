@@ -8,6 +8,7 @@ import {
   net,
   protocol,
   shell,
+  Tray,
 } from 'electron'
 import { realpath } from 'node:fs/promises'
 import path from 'node:path'
@@ -21,10 +22,13 @@ import { TaskDiscovery } from './tasks.js'
 import { browseFolders, folderShortcut } from './folders.js'
 import { Runner, active } from './runner.js'
 import { isDescendant, listeners, processCwd, processParents } from './processes.js'
+import { isWindows, setTaskHost } from './platform.js'
+import { openApplication } from './launchers.js'
+import { windowsStartTime, stopWindowsProcess } from './windows-system.js'
 import type { ListenerReport, Methods, StartResult } from '../shared/types.js'
 
 app.setName('Darsena')
-if (process.env.DARSENA_DATA_DIR && !app.isPackaged)
+if (process.env.DARSENA_DATA_DIR)
   app.setPath('userData', path.resolve(process.env.DARSENA_DATA_DIR))
 const gotLock = app.requestSingleInstanceLock()
 if (!gotLock) app.quit()
@@ -35,6 +39,9 @@ protocol.registerSchemesAsPrivileged([
   },
 ])
 const base = path.dirname(fileURLToPath(import.meta.url))
+setTaskHost(
+  path.join(base.replace(/app\.asar([\\/])/, 'app.asar.unpacked$1'), 'darsena-task-host.exe'),
+)
 const assets = path.resolve(base, '../.output/public')
 const devUrl =
   !app.isPackaged && process.env.DARSENA_DEV_URL === 'http://127.0.0.1:3141'
@@ -44,6 +51,7 @@ const store = new Store(app.getPath('userData'))
 const discovery = new TaskDiscovery()
 const runner = new Runner()
 let window: BrowserWindow | undefined
+let tray: Tray | undefined
 let quitReady = false,
   quitting = false,
   initialized = false
@@ -128,6 +136,7 @@ async function scanListeners(): Promise<ListenerReport> {
   try {
     const rows = await listeners()
     const parents = await processParents()
+    const owned = await runner.ownedProcesses()
     const trees = await Promise.all(
       store.state.projects.map(async (p) => ({
         project: p,
@@ -144,8 +153,14 @@ async function scanListeners(): Promise<ListenerReport> {
       row.cwd = cwdByPid.get(row.pid)
       const run = runner
         .list()
-        .find((r) => active(r) && r.pid && isDescendant(row.pid, r.pid, parents))
+        .find(
+          (r) =>
+            active(r) &&
+            (owned.get(row.pid) === r.id ||
+              (!isWindows && r.pid && isDescendant(row.pid, r.pid, parents))),
+        )
       if (run) {
+        row.cwd ||= run.folder
         row.runId = run.id
         row.projectId = run.projectId
         row.worktree = run.worktree
@@ -334,23 +349,14 @@ const handlers: {
       shell.showItemInFolder(target)
       return
     }
-    const defaults = {
-      vscode: 'Visual Studio Code',
-      terminal: 'Terminal',
-      'android-studio': 'Android Studio',
-    }
-    await command('/usr/bin/open', [
-      '-a',
-      store.state.apps[targetApp] || defaults[targetApp],
-      target,
-    ])
+    await openApplication(targetApp, target, store.state.apps[targetApp])
   },
   chooseApp: async ({ app: targetApp }) => {
     const result = await dialog.showOpenDialog({
       title: 'Choose application',
-      defaultPath: '/Applications',
+      defaultPath: isWindows ? process.env.ProgramFiles : '/Applications',
       properties: ['openFile'],
-      filters: [{ name: 'Applications', extensions: ['app'] }],
+      filters: [{ name: 'Applications', extensions: [isWindows ? 'exe' : 'app'] }],
     })
     if (result.filePaths[0]) {
       store.state.apps[targetApp] = result.filePaths[0]
@@ -376,13 +382,15 @@ const handlers: {
     }
     if (pid === process.pid || pid === process.ppid)
       throw new Error('This process cannot be stopped here.')
-    const startedAt = (await command('/bin/ps', ['-p', String(pid), '-o', 'lstart='])).trim()
+    const startedAt = isWindows
+      ? await windowsStartTime(pid)
+      : (await command('/bin/ps', ['-p', String(pid), '-o', 'lstart='])).trim()
     if (!startedAt) throw new Error('This process is no longer present.')
     const result = await dialog.showMessageBox({
       type: 'warning',
       title: 'Stop an external process?',
       message: `Stop ${found.command} (PID ${pid}) on port ${port}?`,
-      detail: `Started outside Darsena. This sends SIGTERM to this process only.\n${found.cwd || 'Working folder unavailable'}`,
+      detail: `Started outside Darsena. ${isWindows ? 'This forcefully terminates this process only.' : 'This sends SIGTERM to this process only.'}\n${found.cwd || 'Working folder unavailable'}`,
       buttons: ['Cancel', 'Stop process'],
       defaultId: 0,
       cancelId: 0,
@@ -392,10 +400,13 @@ const handlers: {
       (l) => l.pid === pid && l.port === port && l.command === found.command,
     )
     const cwd = await processCwd(pid)
-    const currentStart = (await command('/bin/ps', ['-p', String(pid), '-o', 'lstart='])).trim()
+    const currentStart = isWindows
+      ? await windowsStartTime(pid)
+      : (await command('/bin/ps', ['-p', String(pid), '-o', 'lstart='])).trim()
     if (!fresh || cwd !== found.cwd || currentStart !== startedAt)
       throw new Error('The process changed while the dialog was open. Refresh and try again.')
-    process.kill(pid, 'SIGTERM')
+    if (isWindows) await stopWindowsProcess(pid, startedAt)
+    else process.kill(pid, 'SIGTERM')
   },
   openUrl: async ({ url }) => {
     const parsed = new URL(url)
@@ -416,7 +427,8 @@ function createWindow() {
     minWidth: 1000,
     minHeight: 680,
     title: 'Darsena',
-    titleBarStyle: 'hiddenInset',
+    titleBarStyle: isWindows ? 'default' : 'hiddenInset',
+    icon: path.join(assets, 'brand/icon.png'),
     backgroundColor: '#f8f7f4',
     webPreferences: {
       preload: path.join(base, 'preload.cjs'),
@@ -525,6 +537,19 @@ if (gotLock)
       )
       const icon = nativeImage.createFromPath(path.join(assets, 'brand/icon.png'))
       if (!icon.isEmpty()) app.dock?.setIcon(icon)
+      if (isWindows) {
+        app.setAppUserModelId('app.darsena.desktop')
+        tray = new Tray(icon.resize({ width: 32, height: 32 }))
+        tray.setToolTip('Darsena — worktrees and tasks')
+        tray.setContextMenu(
+          Menu.buildFromTemplate([
+            { label: 'Open Darsena', click: createWindow },
+            { type: 'separator' },
+            { label: 'Quit Darsena', click: () => app.quit() },
+          ]),
+        )
+        tray.on('click', createWindow)
+      }
       initialized = true
       createWindow()
     })
