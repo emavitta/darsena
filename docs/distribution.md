@@ -1,128 +1,110 @@
 # Building and distributing Darsena
 
-Builds can happen on your Mac or on GitHub. **GitHub Releases** is the shared
-download page in either case; compiled applications stay out of Git history.
-The current supported target is **macOS on Apple Silicon**. Builds are unsigned
-and not notarized. Windows needs platform integration work before it becomes a
-distribution target.
+The supported preview target is **macOS on Apple Silicon**. Windows work is
+paused on [`feat/windows-preview`](https://github.com/emavitta/darsena/tree/feat/windows-preview)
+and is not part of releases from `main`.
 
-## Recommended flow
+GitHub Releases holds the public downloads, whether built on GitHub or locally.
+The current Mac installers are unsigned and not notarized.
 
-1. Commit and push the version you want to distribute. Set the version in
-   `package.json` before building; use a new version for each published build.
-2. Build and test it locally, or run **Build macOS** in GitHub Actions.
-3. Install that build and try it with a disposable repository.
-4. Create a Release for that exact source commit and attach the DMG, ZIP and
-   checksums. Use a **pre-release** while Darsena is being tried by early users.
+## Build without releasing
 
-A tag such as `v0.1.0` identifies the source; the Release contains the download
-files and notes. Tags and published download files should not be silently
-replaced when code changes. Publish a new version instead.
-
-## Build on GitHub
-
-Open [Actions → Build macOS](https://github.com/emavitta/darsena/actions/workflows/build-macos.yml),
-choose **Run workflow**, and select the branch or tag to build. Repository write
-access is needed to start it. The equivalent CLI command is:
+Open [Actions → Build macOS](https://github.com/emavitta/darsena/actions/workflows/build-macos.yml)
+and choose **Run workflow**. It installs the locked dependencies, checks
+TypeScript, runs backend tests, builds the DMG/ZIP and tests the packaged app
+with disposable repositories and isolated settings. It then verifies the
+archives and writes checksums plus the exact source commit.
 
 ```sh
 gh workflow run build-macos.yml --repo emavitta/darsena --ref main
 gh run list --repo emavitta/darsena --workflow build-macos.yml --limit 5
 ```
 
-The workflow installs the locked dependencies with Node 24 and the project's
-pinned pnpm version, checks TypeScript, runs backend tests and desktop smoke
-tests, and packages an unsigned DMG and ZIP on a `macos-15` ARM64 runner. It also
-verifies the archives and generates `SHA256SUMS.txt` and `SOURCE_COMMIT.txt`.
-It uses a read-only repository token and does not create tags or releases.
+The `darsena-macos-arm64` artifact contains DMG, ZIP,
+`SHA256SUMS-macos-arm64.txt` and `build-macos-arm64.json`. It expires after 14 days
+and requires a GitHub login to download. Use a Release for persistent, public
+download links. Standard hosted runners are currently free for public
+repositories; private repositories have different allowances.
+[GitHub runner documentation](https://docs.github.com/en/actions/reference/runners/github-hosted-runners).
 
-On the completed run page, download the `darsena-macos-arm64-<commit>` artifact.
-Extract it to get the installers. Artifacts in this workflow expire after
-**14 days** and their download requires a GitHub login. Use a public Release
-for a persistent link that colleagues can download without signing in.
-[GitHub's artifact documentation](https://docs.github.com/en/actions/tutorials/store-and-share-data)
-explains retention and downloads.
+## Prepare a Release from a version tag
 
-The standard hosted runners are currently free for public repositories such as
-this one; private repositories have different usage allowances.
-[GitHub runner documentation](https://docs.github.com/en/actions/reference/runners/github-hosted-runners)
-lists the supported images and billing distinction.
+1. Set the version in `package.json`, add notes in `docs/releases/vX.Y.Z.md`,
+   commit and push.
+2. Tag that commit with the matching version and push the tag.
+3. **Prepare release** runs the same macOS build and tests.
+4. After success it downloads the artifact, verifies the checksums and creates
+   a **draft pre-release** with installers and source metadata.
+5. Review and try the downloads, then publish the draft in Releases.
 
-## Build locally
+For a future version `0.1.1`, after updating and committing the version:
 
-Use a clean, committed checkout on an Apple Silicon Mac. Quit a previously
-packaged Darsena before rebuilding into its output folder.
+```sh
+git tag -a v0.1.1 -m 'Darsena 0.1.1'
+git push origin v0.1.1
+```
+
+The tag must match `package.json`. The workflow uses GitHub's built-in token;
+no personal token is needed. Only the final release job has repository write
+permission. Re-running a tag can update its draft assets, but refuses to replace
+an already published release. Use a new version for changed downloads.
+
+A published **pre-release** is publicly downloadable; a **draft** is only visible
+to repository collaborators. GitHub's automatic Source code archives are not
+installable applications.
+
+## Build locally and attach downloads
+
+Use a clean, committed checkout on an Apple Silicon Mac, with Node 24 and the
+project's pinned pnpm version. Quit a packaged app before rebuilding into its
+output folder. `pnpm dist:mac` only builds; it does not upload or publish.
 
 ```sh
 pnpm install --frozen-lockfile
 pnpm typecheck
 pnpm test
 pnpm dist:mac
-node --import tsx tests/ui-smoke.mjs
-node --import tsx tests/project-removal-smoke.mjs
+node scripts/release-manifest.mjs
 ```
 
-For version `0.1.0`, verify and record the exact outputs:
+Test the application from `release/mac-arm64/Darsena.app`. The manifest records
+the current checkout, so generate it with the build from that exact commit.
+For version 0.1.0, verify the downloads with:
 
 ```sh
 hdiutil verify release/Darsena-0.1.0-arm64.dmg
 unzip -tq release/Darsena-0.1.0-arm64-mac.zip
-git rev-parse HEAD > release/SOURCE_COMMIT.txt
-(
-  cd release
-  shasum -a 256 Darsena-0.1.0-arm64.dmg Darsena-0.1.0-arm64-mac.zip > SHA256SUMS.txt
-)
+(cd release && shasum -a 256 --check SHA256SUMS-macos-arm64.txt)
 ```
 
-Update the filenames when the package version changes. Build from the commit
-being released; do not attach installers left over from a previous checkout.
-
-## Distribute either build through Releases
-
-The simplest route is [Releases → Draft a new release](https://github.com/emavitta/darsena/releases/new).
-Select or create a version tag at the source commit, add short release notes,
-attach the DMG, ZIP, `SHA256SUMS.txt` and `SOURCE_COMMIT.txt`, mark it as a
-pre-release, then publish when the build has been tried.
-GitHub's automatically generated **Source code** archives contain the source,
-not an installable application.
-
-With the CLI, the following example prepares a draft for version `0.1.0` from
-files in `release/`. For an Actions build, put the extracted artifact files there
-first and use its `SOURCE_COMMIT.txt`, not your current checkout's HEAD.
+In [Releases](https://github.com/emavitta/darsena/releases), create a draft for
+the source tag, add notes and attach the DMG, ZIP, checksum file and build
+manifest. This needs no Actions run. The equivalent CLI example, for an
+existing `v0.1.0` tag without a Release, is:
 
 ```sh
 gh release create v0.1.0 \
   release/Darsena-0.1.0-arm64.dmg \
   release/Darsena-0.1.0-arm64-mac.zip \
-  release/SHA256SUMS.txt \
-  release/SOURCE_COMMIT.txt \
-  --repo emavitta/darsena \
-  --target "$(cat release/SOURCE_COMMIT.txt)" \
+  release/SHA256SUMS-macos-arm64.txt \
+  release/build-macos-arm64.json \
+  --repo emavitta/darsena --verify-tag \
   --title 'Darsena 0.1.0 — macOS preview' \
-  --notes 'First preview for Apple Silicon Macs. Unsigned and not notarized. Includes worktree browsing, folder shortcuts and task supervision.' \
-  --draft --prerelease
+  --notes-file docs/releases/v0.1.0.md --draft --prerelease
 ```
 
-Review the draft in the GitHub Releases page and publish it there, or run:
-
-```sh
-gh release edit v0.1.0 --repo emavitta/darsena --draft=false
-```
-
-If the release already exists, add missing files with `gh release upload`
-instead of recreating it. Avoid `--clobber` on a published build. See the
+Use the actual version's filenames and tag. If a draft already exists, add files
+with `gh release upload` instead. Avoid replacing published downloads. Review
+the draft in GitHub and publish it there, or run
+`gh release edit <tag> --repo emavitta/darsena --draft=false`.
 [GitHub CLI release commands](https://cli.github.com/manual/gh_release).
 
-## Next increments
+## Signing and updates
 
-- Once this manual flow is comfortable, a pushed version tag can build and
-  populate a draft Release automatically.
-- Signing and notarization need an Apple Developer ID identity and credentials;
-  hosting a DMG on GitHub does not sign it.
-- Windows can join the workflow on its own Windows runner after the app's
-  launchers, process supervision and window lifecycle have been adapted.
-- In-app updates are a separate feature; a GitHub Release alone does not add an
-  updater to Darsena.
+Hosting a DMG on GitHub does not sign it. Apple Developer ID signing and
+notarization can be added later with credentials stored in Actions secrets.
+In-app updates are a separate feature; publishing a Release alone does not add
+an updater to Darsena.
 
-[electron-builder's GitHub Actions guide](https://www.electron.build/docs/github-actions/)
-covers the later build, signing and draft-release automation.
+See [electron-builder's Actions guide](https://www.electron.build/docs/github-actions/)
+and [GitHub Releases](https://docs.github.com/en/repositories/releasing-projects-on-github/about-releases).

@@ -1,6 +1,6 @@
 {
   "name": "darsena",
-  "version": "0.2.0",
+  "version": "0.1.0",
   "description": "A local harbor for your Git worktrees and development tasks.",
   "private": true,
   "type": "module",
@@ -13,12 +13,10 @@
     "build": "nuxt generate && pnpm build:desktop",
     "start": "electron .",
     "typecheck": "nuxt typecheck && tsc -p desktop/tsconfig.json",
-    "test": "node scripts/build-windows-host.mjs && node --import tsx --test tests/*.test.ts",
+    "test": "node --import tsx --test tests/*.test.ts",
     "pack:mac": "pnpm build && electron-builder --mac --dir",
     "dist:mac": "pnpm build && electron-builder --mac dmg zip --arm64 --publish never",
-    "postinstall": "nuxt prepare",
-    "dist:win": "pnpm build && electron-builder --win nsis zip --x64 --publish never",
-    "pack:win": "pnpm build && electron-builder --win --dir --x64"
+    "postinstall": "nuxt prepare"
   },
   "devDependencies": {
     "@lucide/vue": "1.43.0",
@@ -59,33 +57,6 @@
           ]
         }
       ]
-    },
-    "asarUnpack": [
-      "dist-electron/darsena-task-host.exe"
-    ],
-    "win": {
-      "icon": "public/brand/icon.png",
-      "target": [
-        {
-          "target": "nsis",
-          "arch": [
-            "x64"
-          ]
-        },
-        {
-          "target": "zip",
-          "arch": [
-            "x64"
-          ]
-        }
-      ],
-      "artifactName": "Darsena-${version}-windows-${arch}.${ext}"
-    },
-    "nsis": {
-      "oneClick": false,
-      "perMachine": false,
-      "allowToChangeInstallationDirectory": true,
-      "deleteAppDataOnUninstall": false
     }
   },
   "packageManager": "pnpm@9.15.4+sha512.b2dc20e2fc72b3e18848459b37359a32064663e5627a51e4c74b2c29dd8e8e0491483c3abb40789cfd578bf362fb6ba8261b05f0387d76792ed6e23ea3b1b6a0"

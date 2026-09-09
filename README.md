@@ -145,7 +145,8 @@ node scripts/icons.mjs   # Regenerate Dock PNG and ICNS from the SVG master
 `release/Darsena-0.1.0-arm64-mac.zip` contains the same app. These local builds are unsigned and not notarized;
 Developer ID signing/notarization and Intel builds remain future distribution work.
 
-The desktop smoke test uses isolated repositories and settings. It verifies
+The desktop smoke test uses isolated repositories and settings.
+`DARSENA_DATA_DIR` selects a separate settings profile, including in packaged builds. It verifies
 execution, a cross-worktree port conflict, transfer, window close and cleanup
 on quit. It never runs mago-app tasks.
 
@@ -163,15 +164,19 @@ The development server uses `127.0.0.1:3141`.
 ## Builds and releases
 
 [Build macOS](https://github.com/emavitta/darsena/actions/workflows/build-macos.yml)
-is a manual GitHub Actions workflow: choose **Run workflow** to check the code,
-test the desktop app and generate a DMG and ZIP on an Apple Silicon runner.
-The download includes SHA-256 checksums and the source commit; artifacts are kept
-for 14 days. The workflow does not publish a release.
+runs on demand. It checks types, runs backend tests, builds the DMG/ZIP and tests
+the packaged app. The downloadable artifact includes checksums and the source
+commit and is retained for 14 days.
 
-For downloads you want to share, attach the installers to a
-[GitHub Release](https://github.com/emavitta/darsena/releases). They can come from
-Actions or a local `pnpm dist:mac` build. See the
-[distribution guide](docs/distribution.md) for both paths and the exact CLI commands.
+Pushing a version tag matching `package.json` (such as `v0.1.0`) runs the same
+checks and prepares a **draft pre-release** with the installers. Review and
+publish it from [GitHub Releases](https://github.com/emavitta/darsena/releases).
+Local `pnpm dist:mac` builds can be attached to a Release too; see the
+[distribution guide](docs/distribution.md) for both paths.
+
+Windows is deferred; the unfinished port is preserved on
+[`feat/windows-preview`](https://github.com/emavitta/darsena/tree/feat/windows-preview).
+It is not part of the current downloads.
 
 ## Structure and design
 

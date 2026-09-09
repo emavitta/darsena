@@ -10,10 +10,7 @@ test('Git discovers linked worktrees regardless of location, with branch and cha
   const f = await fixture()
   t.after(f.cleanup)
   const nested = path.join(f.root, '.agent/worktrees/nested')
-  const unusual = path.join(
-    f.directory,
-    process.platform === 'win32' ? 'with spaces & unicode é' : 'with a\nnewline',
-  )
+  const unusual = path.join(f.directory, 'with a\nnewline')
   await f.git(['worktree', 'add', '-b', 'feat/nested', nested])
   await f.git(['worktree', 'add', '--detach', unusual])
   await writeFile(path.join(f.linked, 'a new file.txt'), 'change')
@@ -31,7 +28,7 @@ test('folder shortcuts resolve in each worktree and cannot escape through traver
   const f = await fixture()
   t.after(f.cleanup)
   assert.equal(await resolveFolder(f.linked, 'android-app'), path.join(f.linked, 'android-app'))
-  await symlink(f.directory, path.join(f.root, 'outside'), 'junction')
+  await symlink(f.directory, path.join(f.root, 'outside'))
   await assert.rejects(resolveFolder(f.root, '../feature worktree'), /outside/)
   await assert.rejects(resolveFolder(f.root, 'outside'), /outside/)
   await assert.rejects(resolveFolder(f.root, '/tmp'), /inside/)

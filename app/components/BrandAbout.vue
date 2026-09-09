@@ -1,12 +1,11 @@
 <script setup lang="ts">
-const { platformName } = usePlatform()
 const emit = defineEmits<{ close: [] }>()
 </script>
 
 <template>
   <AppDialog title="About Darsena" wide @close="emit('close')">
     <div class="brand-about">
-      <BrandIdentity :caption="`Version 0.2 · ${platformName}`" />
+      <BrandIdentity caption="Version 0.1 · Made for macOS" />
       <HarborArtwork />
       <p class="about-description">
         Named after Milan’s Darsena.<br />A harbor for your projects and worktrees.

@@ -8,10 +8,7 @@ export async function folderShortcut(worktree: string, folder: string) {
   if (!inside(root, path.resolve(root, folder)))
     throw new Error('Choose a folder inside the selected worktree.')
   const target = await resolveFolder(root, folder)
-  return {
-    path: path.relative(root, target).split(path.sep).join('/') || '.',
-    label: path.basename(target),
-  }
+  return { path: path.relative(root, target) || '.', label: path.basename(target) }
 }
 
 export async function browseFolders(worktree: string, folder: string): Promise<FolderListing> {

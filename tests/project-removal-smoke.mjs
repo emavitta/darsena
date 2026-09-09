@@ -43,7 +43,7 @@ try {
   const dialog = page.getByRole('dialog', { name: 'Remove project?' })
   await page.getByRole('heading', { name: 'harbor-project', exact: true }).waitFor()
 
-  await page.getByRole('button', { name: /^Preferences / }).click()
+  await page.getByRole('button', { name: 'Preferences 0.1' }).click()
   assert.equal(await page.getByRole('dialog').getByText('Remove from Darsena').count(), 0)
   await page.getByRole('button', { name: 'Close dialog' }).click()
 
@@ -54,9 +54,7 @@ try {
   await menu.waitFor()
   assert.ok(
     await menu
-      .getByRole('menuitem', {
-        name: process.platform === 'win32' ? 'Show in File Explorer' : 'Show in Finder',
-      })
+      .getByRole('menuitem', { name: 'Show in Finder' })
       .evaluate((el) => el === document.activeElement),
   )
   await page.keyboard.press('End')

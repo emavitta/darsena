@@ -1,22 +1,20 @@
 import { createHash } from 'node:crypto'
 import { readFile, writeFile } from 'node:fs/promises'
 import { execFileSync } from 'node:child_process'
+import { fileURLToPath } from 'node:url'
 import path from 'node:path'
 
-const { version } = JSON.parse(await readFile('package.json', 'utf8'))
-const target = process.platform === 'win32' ? 'windows-x64' : 'macos-arm64'
-const files =
-  target === 'windows-x64'
-    ? [`Darsena-${version}-windows-x64.exe`, `Darsena-${version}-windows-x64.zip`]
-    : [`Darsena-${version}-arm64.dmg`, `Darsena-${version}-arm64-mac.zip`]
+const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..')
+const { version } = JSON.parse(await readFile(path.join(root, 'package.json'), 'utf8'))
+const files = [`Darsena-${version}-arm64.dmg`, `Darsena-${version}-arm64-mac.zip`]
 const checksums = []
 for (const file of files) {
-  const buffer = await readFile(path.join('release', file))
+  const buffer = await readFile(path.join(root, 'release', file))
   checksums.push(`${createHash('sha256').update(buffer).digest('hex')}  ${file}`)
 }
-const commit = execFileSync('git', ['rev-parse', 'HEAD'], { encoding: 'utf8' }).trim()
-await writeFile(`release/SHA256SUMS-${target}.txt`, checksums.join('\n') + '\n')
+const commit = execFileSync('git', ['rev-parse', 'HEAD'], { cwd: root, encoding: 'utf8' }).trim()
+await writeFile(path.join(root, 'release/SHA256SUMS-macos-arm64.txt'), checksums.join('\n') + '\n')
 await writeFile(
-  `release/build-${target}.json`,
-  JSON.stringify({ version, target, commit, signed: false }, null, 2) + '\n',
+  path.join(root, 'release/build-macos-arm64.json'),
+  JSON.stringify({ version, target: 'macos-arm64', commit, signed: false }, null, 2) + '\n',
 )

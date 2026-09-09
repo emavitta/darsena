@@ -1,6 +1,5 @@
 import { build } from 'esbuild'
 import { mkdir, copyFile } from 'node:fs/promises'
-import './build-windows-host.mjs'
 await mkdir('dist-electron', { recursive: true })
 await build({
   entryPoints: ['desktop/main.ts'],

@@ -267,7 +267,7 @@ function viewConflictActivity() {
           </div>
           <button
             v-tooltip="
-              `Choose the application used for ${entry.label} folder shortcuts. Saved immediately.`
+              `Choose the macOS application used for ${entry.label} folder shortcuts. Saved immediately.`
             "
             class="button small"
             @click="chooseApp(entry.id)"

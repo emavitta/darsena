@@ -26,7 +26,7 @@ const descriptionId = useId()
           This removes the project and its saved settings from Darsena, including folder shortcuts,
           task favorites and custom commands.
         </p>
-        <p class="removal-files">Your files and Git worktrees stay on your computer.</p>
+        <p class="removal-files">Your files and Git worktrees stay on your Mac.</p>
         <p>You can add the repository again later.</p>
       </div>
       <div v-if="running" class="removal-running" role="status">

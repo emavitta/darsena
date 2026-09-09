@@ -386,7 +386,7 @@ export function useWorkspace() {
     }
   }
   function keydown(event: KeyboardEvent) {
-    if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'k') {
+    if (event.metaKey && event.key.toLowerCase() === 'k') {
       event.preventDefault()
       activity.value = false
       void nextTick(() =>

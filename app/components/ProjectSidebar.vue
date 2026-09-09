@@ -75,17 +75,17 @@ const sorted = computed(() =>
     </div>
     <div class="sidebar-bottom">
       <p
-        v-tooltip="'Projects, preferences and task processes are managed on this computer.'"
+        v-tooltip="'Projects, preferences and task processes are managed on this Mac.'"
         class="local-note"
       >
-        <span class="status-dot" />Local to your computer
+        <span class="status-dot" />Local to your Mac
       </p>
       <button
         v-tooltip="'Choose which applications open your folders.'"
         class="navigation-button"
         @click="emit('settings')"
       >
-        <AppIcon name="Settings2" /><span>Preferences</span><span class="version">0.2</span>
+        <AppIcon name="Settings2" /><span>Preferences</span><span class="version">0.1</span>
       </button>
     </div>
   </aside>

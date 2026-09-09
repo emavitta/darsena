@@ -38,16 +38,12 @@ const fallback: Identity = { id: 'custom', label: 'Custom', tone: 'custom', icon
 
 function customTool(command: string): Identity {
   // Presentation only: never inspect a script body or reinterpret shell arguments.
-  const executable = (command.trim().split(/[\\/]/).at(-1) || '')
-    .toLowerCase()
-    .replace(/\.(exe|cmd|bat)$/u, '')
+  const executable = command.trim().split('/').at(-1) || ''
   if (Object.hasOwn(managers, executable))
     return { id: `script:${executable}`, ...managers[executable as keyof typeof managers] }
   if (
-    ['bash', 'sh', 'zsh', 'fish', 'dash', 'ksh', 'powershell', 'pwsh', 'cmd'].includes(
-      executable,
-    ) ||
-    /\.(sh|bash|zsh|ps1)$/u.test(executable)
+    ['bash', 'sh', 'zsh', 'fish', 'dash', 'ksh'].includes(executable) ||
+    /\.(sh|bash|zsh)$/u.test(executable)
   )
     return shellTool
   if (/^python(?:[23](?:\.\d+)*)?$/u.test(executable) || executable.endsWith('.py'))
@@ -59,11 +55,7 @@ function customTool(command: string): Identity {
     'docker-compose': 'docker',
   }
   const name = Object.hasOwn(aliases, executable) ? aliases[executable]! : executable
-  return Object.hasOwn(customTools, name)
-    ? customTools[name]!
-    : /\.(bat|cmd)$/iu.test(command)
-      ? shellTool
-      : fallback
+  return Object.hasOwn(customTools, name) ? customTools[name]! : fallback
 }
 
 export function taskTool(task: Pick<Task, 'kind' | 'manager' | 'command'>): TaskTool {

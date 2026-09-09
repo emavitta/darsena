@@ -2,18 +2,14 @@ import { spawn, type ChildProcess } from 'node:child_process'
 import { EventEmitter } from 'node:events'
 import { randomUUID } from 'node:crypto'
 import { StringDecoder } from 'node:string_decoder'
-import { execFile } from 'node:child_process'
-import { promisify } from 'node:util'
-import { isWindows, taskHost } from './platform.js'
-import { windowsInvocation } from './windows-command.js'
 import type { Project, Run, Task, Worktree } from '../shared/types.js'
 
 export const active = (run: Run) => ['starting', 'running', 'stopping'].includes(run.status)
-type Entry = { run: Run; child: ChildProcess; log: string; job: string; stopping?: Promise<void> }
+type Entry = { run: Run; child: ChildProcess; log: string; stopping?: Promise<void> }
 const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms))
 function groupAlive(pid: number) {
   try {
-    process.kill(isWindows ? pid : -pid, 0)
+    process.kill(-pid, 0)
     return true
   } catch {
     return false
@@ -29,22 +25,6 @@ export class Runner extends EventEmitter {
   }
   logs(id: string) {
     return this.entries.get(id)?.log || ''
-  }
-  async ownedProcesses() {
-    const owned = new Map<number, string>()
-    if (!isWindows) return owned
-    await Promise.all(
-      [...this.entries.values()]
-        .filter((entry) => active(entry.run))
-        .map(async (entry) => {
-          const { stdout } = await promisify(execFile)(taskHost, ['--list', entry.job], {
-            windowsHide: true,
-            timeout: 5000,
-          })
-          for (const pid of JSON.parse(stdout) as number[]) owned.set(pid, entry.run.id)
-        }),
-    )
-    return owned
   }
   append(entry: Entry, text: string) {
     entry.log = (entry.log + text).slice(-512 * 1024)
@@ -63,22 +43,14 @@ export class Runner extends EventEmitter {
     if (this.shuttingDown) throw new Error('Darsena is shutting down.')
     const env: NodeJS.ProcessEnv = { ...process.env, NO_COLOR: '1' }
     delete env.FORCE_COLOR
-    const id = randomUUID()
-    const job = `darsena-${id}`
-    const invocation = isWindows ? windowsInvocation(task.command, task.args, cwd) : undefined
-    const child = spawn(
-      invocation ? taskHost : task.command,
-      invocation ? [job, invocation.file, invocation.line] : task.args,
-      {
-        cwd,
-        env,
-        detached: !isWindows,
-        windowsHide: true,
-        stdio: [isWindows ? 'pipe' : 'ignore', 'pipe', 'pipe'],
-      },
-    )
+    const child = spawn(task.command, task.args, {
+      cwd,
+      env,
+      detached: true,
+      stdio: ['ignore', 'pipe', 'pipe'],
+    })
     const run: Run = {
-      id,
+      id: randomUUID(),
       projectId: project.id,
       projectName: project.name,
       worktree: tree.path,
@@ -95,8 +67,7 @@ export class Runner extends EventEmitter {
       port: task.port,
       urls: [],
     }
-    const entry: Entry = { run, child, log: '', job }
-    child.stdin?.on('error', () => {}) // The host may exit while Stop closes its control pipe.
+    const entry: Entry = { run, child, log: '' }
     this.entries.set(run.id, entry)
     const outDecoder = new StringDecoder('utf8'),
       errDecoder = new StringDecoder('utf8')
@@ -156,17 +127,13 @@ export class Runner extends EventEmitter {
     run.status = 'stopping'
     this.emit('changed')
     if (run.pid) {
-      if (isWindows) entry.child.stdin?.end('stop\n')
-      else
-        try {
-          process.kill(-run.pid, 'SIGTERM')
-        } catch {}
+      try {
+        process.kill(-run.pid, 'SIGTERM')
+      } catch {}
       for (let i = 0; i < 40 && groupAlive(run.pid); i++) await delay(100)
       if (groupAlive(run.pid)) {
         try {
-          if (isWindows)
-            entry.child.kill() // Closing the host closes its job handle.
-          else process.kill(-run.pid, 'SIGKILL')
+          process.kill(-run.pid, 'SIGKILL')
         } catch {}
         for (let i = 0; i < 20 && groupAlive(run.pid); i++) await delay(100)
       }

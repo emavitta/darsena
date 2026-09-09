@@ -1,7 +1,5 @@
 import { command } from './io.js'
 import type { Listener } from '../shared/types.js'
-import { isWindows } from './platform.js'
-import { windowsListeners, windowsParents } from './windows-system.js'
 
 export function parseListeners(output: string): Listener[] {
   const rows: Listener[] = []
@@ -20,7 +18,6 @@ export function parseListeners(output: string): Listener[] {
   return rows
 }
 export async function listeners(): Promise<Listener[]> {
-  if (isWindows) return windowsListeners()
   try {
     return parseListeners(
       await command('/usr/sbin/lsof', ['-nP', '-iTCP', '-sTCP:LISTEN', '-Fpcn'], undefined, 5000),
@@ -35,7 +32,6 @@ export async function listeners(): Promise<Listener[]> {
   }
 }
 export async function processCwd(pid: number) {
-  if (isWindows) return undefined // No supported API for an arbitrary process's working directory.
   try {
     const out = await command(
       '/usr/sbin/lsof',
@@ -52,7 +48,6 @@ export async function processCwd(pid: number) {
   }
 }
 export async function processParents() {
-  if (isWindows) return windowsParents()
   const rows = (await command('/bin/ps', ['-axo', 'pid=,ppid='], undefined, 4000))
     .trim()
     .split('\n')

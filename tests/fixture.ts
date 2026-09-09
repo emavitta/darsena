@@ -13,16 +13,12 @@ export async function fixture() {
   const git = (args: string[], cwd = root) =>
     exec('git', args, {
       cwd,
-      env: {
-        ...process.env,
-        GIT_CONFIG_GLOBAL: process.platform === 'win32' ? 'NUL' : '/dev/null',
-        GIT_CONFIG_NOSYSTEM: '1',
-      },
+      env: { ...process.env, GIT_CONFIG_GLOBAL: '/dev/null', GIT_CONFIG_NOSYSTEM: '1' },
     })
   await git(['init', '--initial-branch=main'])
   await git(['config', 'user.email', 'test@example.invalid'])
   await git(['config', 'user.name', 'Darsena Test'])
-  await git(['config', 'core.hooksPath', path.join(directory, 'no-hooks')])
+  await git(['config', 'core.hooksPath', '/dev/null'])
   await writeFile(path.join(root, 'README.md'), 'Fixture repository\n')
   await writeFile(
     path.join(root, 'package.json'),
@@ -71,7 +67,7 @@ export async function fixture() {
     cleanup: () => rm(directory, { recursive: true, force: true }),
   }
 }
-export async function eventually(check: () => boolean | Promise<boolean>, timeout = 20000) {
+export async function eventually(check: () => boolean | Promise<boolean>, timeout = 6000) {
   const end = Date.now() + timeout
   while (Date.now() < end) {
     if (await check()) return

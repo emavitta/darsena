@@ -1,5 +1,4 @@
 <script setup lang="ts">
-const { isWindows } = usePlatform()
 import type { AppId, Folder } from '../../shared/types'
 defineProps<{ folders: Folder[] }>()
 const emit = defineEmits<{ open: [folder: string, app: AppId]; add: []; remove: [id: string] }>()
@@ -55,7 +54,7 @@ const emit = defineEmits<{ open: [folder: string, app: AppId]; add: []; remove: 
           >
             <img
               class="application-icon"
-              :src="isWindows ? '/apps/windows-terminal.svg' : '/apps/terminal.png'"
+              src="/apps/terminal.png"
               alt=""
               width="28"
               height="28"
