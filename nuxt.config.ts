@@ -1,4 +1,7 @@
+import pkg from './package.json'
+
 export default defineNuxtConfig({
+  runtimeConfig: { public: { appVersion: pkg.version } },
   compatibilityDate: '2026-09-09',
   ssr: false,
   telemetry: false,

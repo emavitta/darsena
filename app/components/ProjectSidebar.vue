@@ -1,4 +1,5 @@
 <script setup lang="ts">
+const { appVersion } = usePlatform()
 import type { Project } from '../../shared/types'
 const props = defineProps<{
   projects: Project[]
@@ -85,7 +86,8 @@ const sorted = computed(() =>
         class="navigation-button"
         @click="emit('settings')"
       >
-        <AppIcon name="Settings2" /><span>Preferences</span><span class="version">0.2</span>
+        <AppIcon name="Settings2" /><span>Preferences</span
+        ><span class="version">{{ appVersion }}</span>
       </button>
     </div>
   </aside>

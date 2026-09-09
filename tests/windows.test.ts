@@ -1,6 +1,6 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
-import { writeFile, readFile, access } from 'node:fs/promises'
+import { writeFile, readFile } from 'node:fs/promises'
 import path from 'node:path'
 import { spawn } from 'node:child_process'
 import { fixture, eventually } from './fixture.js'
@@ -10,8 +10,25 @@ import { listWorktrees } from '../desktop/git.js'
 import { windowsInvocation } from '../desktop/windows-command.js'
 import { taskHost } from '../desktop/platform.js'
 import { TaskDiscovery } from '../desktop/tasks.js'
+import { windowsOpenArgs } from '../desktop/launchers.js'
+import { powershell } from '../desktop/windows-system.js'
 
 const windows = process.platform === 'win32'
+test(
+  'Windows terminal opens the exact folder, including apostrophes and spaces',
+  { skip: !windows },
+  async (t) => {
+    const f = await fixture()
+    t.after(f.cleanup)
+    assert.deepEqual(windowsOpenArgs('vscode', 'Code.exe', f.root), [f.root])
+    assert.deepEqual(windowsOpenArgs('android-studio', 'studio64.exe', f.root), [f.root])
+    assert.deepEqual(windowsOpenArgs('terminal', 'wt.exe', f.root), ['-d', f.root])
+    const args = windowsOpenArgs('terminal', powershell, f.root).filter((arg) => arg !== '-NoExit')
+    const script = Buffer.from(args.at(-1)!, 'base64').toString('utf16le') + '; (Get-Location).Path'
+    args[args.length - 1] = Buffer.from(script, 'utf16le').toString('base64')
+    assert.equal((await command(powershell, args)).trim(), f.root)
+  },
+)
 test(
   'Windows native and batch arguments stay literal, including spaces, Unicode and shell metacharacters',
   { skip: !windows },

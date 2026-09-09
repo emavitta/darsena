@@ -20,11 +20,14 @@
 </p>
 
 <p align="center">
-  <sub>Named after Milan’s Darsena. Made for the work happening on your Mac.</sub><br>
-  <sub>macOS · Apple Silicon · Early preview</sub>
+  <sub>Named after Milan’s Darsena. Made for the work happening on your machine.</sub><br>
+  <sub>macOS Apple Silicon · Windows x64 · Early preview</sub>
 </p>
 
 ---
+
+**Windows work in progress:** this branch is paused and is not a validated release.
+Use `main` for the supported macOS version. See [Windows status](docs/windows.md).
 
 Darsena brings your Git worktrees, folder shortcuts and running tasks together.
 Work on branches created by you, a teammate or an agent, using the tools you already know.
@@ -67,12 +70,12 @@ want to browse. Adding projects or folders does not install or execute anything.
 - Reads package.json scripts and detects npm, pnpm, Yarn or Bun from each folder's
   `packageManager` field or lockfile, walking up to the worktree root as needed.
   Nested npm packages with their own lockfile do not inherit an outer pnpm/Yarn runner.
-- **Tasks → Sources → Load tasks** on a folder containing `gradlew` gets a structured task report,
+- **Tasks → Sources → Load tasks** on a folder containing `gradlew` (`gradlew.bat` on Windows) gets a structured task report,
   including subprojects. This explicitly evaluates the Gradle build and requires
   a compatible JDK and working wrapper.
 - **Custom command** supports an executable, separate arguments (one per line)
   and a relative folder for other toolchains and setup scripts. **Shell script**
-  accepts a file path such as `scripts/dev.sh` and an explicit Bash, Zsh or Sh
+  accepts a file path such as `scripts/dev.sh` and an explicit Bash, Zsh, Sh or PowerShell
   interpreter; executable permission is not required in this mode. Paths and
   arguments with spaces do not need surrounding quotes. Saving does not run it.
   Recognized executables get a tool icon; `.sh` files get a Shell icon and unknown
@@ -89,17 +92,20 @@ want to browse. Adding projects or folders does not install or execute anything.
 
 ## Lifecycle and settings
 
-Closing the window keeps Darsena and its tasks running. Reopen from the Dock.
-**Quit Darsena** stops managed process groups before exiting. External processes
+Closing the window keeps Darsena and its tasks running. Reopen from the Dock on macOS
+or the notification-area icon on Windows.
+**Quit Darsena** stops managed tasks and their descendants before exiting. External processes
 remain independent. Up to 30 completed runs and 524,288 characters of output per run are
 retained during the app session.
 
 Personal settings are saved atomically under Electron’s user data folder,
-normally `~/Library/Application Support/Darsena/settings.json` on macOS.
-**Preferences** configures alternative application bundles for folder shortcuts.
-The app reads PATH and JAVA_HOME from your login shell when available.
+normally `~/Library/Application Support/Darsena/settings.json` on macOS or
+`%APPDATA%/Darsena/settings.json` on Windows.
+**Preferences** configures alternative applications for folder shortcuts.
+On macOS, the app reads PATH and JAVA_HOME from your login shell when available.
+On Windows it inherits the launching environment; restart after changing PATH.
 
-Use **…** beside a project, or right-click its row, for **Show in Finder**,
+Use **…** beside a project, or right-click its row, for **Show in Finder** (or **File Explorer** on Windows),
 **Copy project path** and **Remove from Darsena…**. Removal asks for confirmation
 with the project's name and path. It forgets Darsena's saved settings for that
 project; repository files and Git worktrees remain on disk. If the project has
@@ -111,7 +117,7 @@ No worktree creation/deletion, Git diff viewer, automatic worktree preparation,
 shared `.darsena.json` import, interactive PTY or portless hostname management.
 The file in `examples/` is an earlier design example, not a supported import format.
 
-The commands you run require their own toolchains on your Mac. Darsena does not
+The commands you run require their own toolchains on your computer. Darsena does not
 install dependencies, Node, Java, or environment files. Interactive commands
 should be run in the external Terminal for now.
 
@@ -119,8 +125,9 @@ Tasks should stay attached to their launching process group. Independent,
 detached daemons and shared services such as a Gradle daemon are not claimed
 as managed just because a task contacted or started them.
 
-The current `.app` targets this Apple Silicon Mac for local use. Public
-signing/notarization and additional build architectures are later delivery work.
+Current targets are macOS Apple Silicon and Windows 10/11 x64. Windows is an
+early preview for local Windows repositories. See [Windows integration](docs/windows.md)
+for platform behavior and the scope of task supervision.
 
 ## Development and checks
 
@@ -137,12 +144,13 @@ node --import tsx tests/task-sources-smoke.mjs
 node --import tsx tests/task-readability-smoke.mjs
 node --import tsx tests/project-removal-smoke.mjs
 pnpm pack:mac            # Generate a local Apple Silicon .app
-pnpm dist:mac            # Generate Apple Silicon DMG and ZIP; never uploads/publishes
+pnpm dist:mac            # Generate Apple Silicon DMG and ZIP
+pnpm dist:win            # Generate Windows x64 installer and ZIP (run on Windows)
 node scripts/icons.mjs   # Regenerate Dock PNG and ICNS from the SVG master
 ```
 
-`release/Darsena-0.1.0-arm64.dmg` installs by dragging Darsena to Applications.
-`release/Darsena-0.1.0-arm64-mac.zip` contains the same app. These local builds are unsigned and not notarized;
+`release/Darsena-0.2.0-arm64.dmg` installs by dragging Darsena to Applications.
+`release/Darsena-0.2.0-arm64-mac.zip` contains the same app. These local builds are unsigned and not notarized;
 Developer ID signing/notarization and Intel builds remain future distribution work.
 
 The desktop smoke test uses isolated repositories and settings. It verifies
@@ -162,16 +170,16 @@ The development server uses `127.0.0.1:3141`.
 
 ## Builds and releases
 
-[Build macOS](https://github.com/emavitta/darsena/actions/workflows/build-macos.yml)
-is a manual GitHub Actions workflow: choose **Run workflow** to check the code,
-test the desktop app and generate a DMG and ZIP on an Apple Silicon runner.
-The download includes SHA-256 checksums and the source commit; artifacts are kept
-for 14 days. The workflow does not publish a release.
+[Build desktop](https://github.com/emavitta/darsena/actions/workflows/build-desktop.yml)
+runs on demand and builds both macOS and Windows. It tests the packaged Mac app
+and the installed Windows app, then uploads installers, checksums and source
+metadata as artifacts retained for 14 days.
 
-For downloads you want to share, attach the installers to a
-[GitHub Release](https://github.com/emavitta/darsena/releases). They can come from
-Actions or a local `pnpm dist:mac` build. See the
-[distribution guide](docs/distribution.md) for both paths and the exact CLI commands.
+Pushing a version tag (such as `v0.2.0`, matching `package.json`) runs the same
+checks and prepares a **draft pre-release** with both platforms' downloads.
+Publish the draft after trying the installers. Local builds can be attached to
+the same kind of [GitHub Release](https://github.com/emavitta/darsena/releases).
+See the [distribution guide](docs/distribution.md) for the complete flow.
 
 ## Structure and design
 

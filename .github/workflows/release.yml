@@ -1,0 +1,45 @@
+name: Prepare release
+
+on:
+  push:
+    tags: ['v*']
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    uses: ./.github/workflows/build-desktop.yml
+  release:
+    name: Collect tested installers in a draft pre-release
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      actions: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8
+        with:
+          pattern: darsena-*
+          path: release-downloads
+          merge-multiple: true
+      - name: Verify all downloaded checksums
+        working-directory: release-downloads
+        run: sha256sum --check SHA256SUMS-*.txt
+      - name: Prepare draft
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          RELEASE_TAG: ${{ github.ref_name }}
+        run: |
+          if gh release view "$RELEASE_TAG" --json isDraft > release-state.json 2>/dev/null; then
+            node -e "if(!require('./release-state.json').isDraft) throw Error('A published release cannot be replaced. Use a new version.')"
+            gh release upload "$RELEASE_TAG" release-downloads/* --clobber
+          else
+            gh release create "$RELEASE_TAG" release-downloads/* \
+              --verify-tag --title "Darsena $RELEASE_TAG — desktop preview" \
+              --notes-file "docs/releases/$RELEASE_TAG.md" --draft --prerelease
+          fi
