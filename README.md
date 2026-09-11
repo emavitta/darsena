@@ -34,15 +34,15 @@ Built with **Electron, Nuxt 4, Vue 3 and TypeScript**, with **Nuxt UI** being ad
 
 ## Download
 
-**[Download Darsena v0.1.0 for macOS — Apple Silicon (DMG)](https://github.com/emavitta/darsena/releases/download/v0.1.0/Darsena-0.1.0-arm64.dmg)**
+**[Download Darsena v0.1.1 for macOS — Apple Silicon (DMG)](https://github.com/emavitta/darsena/releases/download/v0.1.1/Darsena-0.1.1-arm64.dmg)**
 
-The first public preview is available on [GitHub Releases](https://github.com/emavitta/darsena/releases/tag/v0.1.0).
+The latest public preview is available on [GitHub Releases](https://github.com/emavitta/darsena/releases/tag/v0.1.1).
 Open the DMG and drag **Darsena** into **Applications**. A
-[ZIP containing the same app](https://github.com/emavitta/darsena/releases/download/v0.1.0/Darsena-0.1.0-arm64-mac.zip)
+[ZIP containing the same app](https://github.com/emavitta/darsena/releases/download/v0.1.1/Darsena-0.1.1-arm64-mac.zip)
 is also available. Choose a DMG or app ZIP from the release assets; GitHub's
 automatic **Source code** archives are for development.
 
-This preview supports **Apple Silicon Macs (M-series)**. It is unsigned and not
+This preview supports **Apple Silicon Macs (M-series)**. It is ad-hoc signed but not
 notarized, so macOS may display a security warning when opening it. Intel Mac
 and Windows installers are not available yet.
 
@@ -51,8 +51,8 @@ before upload. This checks signature integrity; it does not provide Developer ID
 or notarization, so Gatekeeper warnings remain possible. Previously published
 installers are not changed by this fix.
 
-Each release includes [SHA-256 checksums](https://github.com/emavitta/darsena/releases/download/v0.1.0/SHA256SUMS-macos-arm64.txt)
-and a [build manifest](https://github.com/emavitta/darsena/releases/download/v0.1.0/build-macos-arm64.json)
+Each release includes [SHA-256 checksums](https://github.com/emavitta/darsena/releases/download/v0.1.1/SHA256SUMS-macos-arm64.txt)
+and a [build manifest](https://github.com/emavitta/darsena/releases/download/v0.1.1/build-macos-arm64.json)
 recording the version, target and exact source commit. Install updates manually
 from [Releases](https://github.com/emavitta/darsena/releases); in-app updating is
 not implemented yet.
@@ -161,8 +161,7 @@ runs appear in Activity with an **MCP** label. Closing the window keeps the
 connection and tasks available; Quit stops both. Access starts disabled, uses a
 private token and stays local to your Mac.
 
-See [MCP setup, tools and permissions](docs/mcp.md). The published **v0.1.0**
-installers predate this feature; use the development version until the next release.
+See [MCP setup, tools and permissions](docs/mcp.md). MCP is included in **v0.1.1** and later.
 
 ## First-version scope
 
@@ -253,7 +252,7 @@ The development server uses `127.0.0.1:3141`.
 
 ## Builds and releases
 
-The [v0.1.0 macOS preview](https://github.com/emavitta/darsena/releases/tag/v0.1.0)
+The [v0.1.1 macOS preview](https://github.com/emavitta/darsena/releases/tag/v0.1.1)
 was built and tested on GitHub Actions and is publicly downloadable. The
 following workflows are already active:
 

@@ -2,8 +2,7 @@
 
 Darsena exposes a local Model Context Protocol server so AI clients can inspect
 your worktrees and use the same task runner as the desktop interface. MCP is
-available in the development version; the published v0.1.0 installers do not
-include it.
+included in v0.1.1 and later; the older v0.1.0 installers do not include it.
 
 ## Connect a client
 
