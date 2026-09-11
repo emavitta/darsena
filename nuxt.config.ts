@@ -3,7 +3,13 @@ export default defineNuxtConfig({
   ssr: false,
   telemetry: false,
   devtools: { enabled: false },
-  css: ['~/assets/main.css'],
+  modules: ['@nuxt/ui'],
+  ui: { fonts: false, colorMode: false },
+  icon: {
+    provider: 'none',
+    clientBundle: { scan: true },
+  },
+  css: ['~/assets/nuxt-ui.css'],
   app: {
     head: {
       title: 'Darsena',

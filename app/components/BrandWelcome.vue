@@ -1,12 +1,12 @@
 <script setup lang="ts">
 defineProps<{ desktopOnly?: boolean; busy?: boolean }>()
-const emit = defineEmits<{ add: [] }>()
+const emit = defineEmits<{ add: []; story: [] }>()
 </script>
 
 <template>
   <section class="brand-welcome">
     <div class="welcome-composition">
-      <BrandIdentity caption="A harbor for your worktrees." />
+      <BrandIdentity caption="A harbor for your worktrees." story @story="emit('story')" />
       <HarborArtwork />
       <div class="welcome-introduction">
         <div>

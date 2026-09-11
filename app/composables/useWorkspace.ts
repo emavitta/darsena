@@ -46,6 +46,48 @@ export function useWorkspace() {
   const activity = shallowRef(false),
     settings = shallowRef(false),
     customDialog = shallowRef(false)
+  const switcher = shallowRef(false)
+  const switcherLoading = shallowRef(false)
+  const switcherBusy = shallowRef(false)
+  const switcherTrees = shallowRef<Record<string, Worktree[]>>({})
+  const switcherErrors = shallowRef<string[]>([])
+  let switcherRevision = 0
+  async function openSwitcher() {
+    if (!ready.value || !bridge.value || document.querySelector('dialog[open]')) return
+    switcher.value = true
+    switcherLoading.value = true
+    switcherTrees.value = {}
+    switcherErrors.value = []
+    const revision = ++switcherRevision
+    await Promise.all(state.value.projects.map(async p => {
+      try {
+        const trees = await call('worktrees', { projectId: p.id })
+        if (revision === switcherRevision) switcherTrees.value = { ...switcherTrees.value, [p.id]: trees }
+      } catch (e) {
+        if (revision === switcherRevision) switcherErrors.value = [...switcherErrors.value, p.name + ': ' + (e instanceof Error ? e.message : String(e))]
+      }
+    }))
+    if (revision === switcherRevision) switcherLoading.value = false
+  }
+  function closeSwitcher() {
+    if (switcherBusy.value) return
+    switcher.value = false
+    switcherRevision++
+  }
+  async function switchToWorktree(projectId: string, path: string) {
+    if (switcherBusy.value) return
+    switcherBusy.value = true
+    try {
+      if (project.value?.id !== projectId && !await selectProject(projectId)) {
+        switcherErrors.value = [error.value || 'Could not open this project.']
+        return
+      }
+      if (await selectWorktree(path)) switcher.value = false
+      else switcherErrors.value = [error.value || 'Could not open this worktree.']
+    } finally {
+      switcherBusy.value = false
+    }
+  }
   const portTask = shallowRef<Task>()
   const folderPicker = shallowRef<FolderPicker>()
   const removalProject = shallowRef<Project>()
@@ -166,7 +208,6 @@ export function useWorkspace() {
     })
   }
   function selectProject(id: string) {
-    activity.value = false
     selectedPath.value = ''
     catalog.value = { tasks: [], sources: [], errors: [] }
     return update(() => call('selectProject', { projectId: id }))
@@ -386,14 +427,13 @@ export function useWorkspace() {
     }
   }
   function keydown(event: KeyboardEvent) {
-    if (event.metaKey && event.key.toLowerCase() === 'k') {
+    if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'k') {
       event.preventDefault()
-      activity.value = false
-      void nextTick(() =>
-        document.querySelector<HTMLInputElement>('[data-worktree-search]')?.focus(),
-      )
+      if (switcher.value) closeSwitcher()
+      else void openSwitcher()
     }
   }
+
   onMounted(async () => {
     bridge.value = !!window.darsena
     if (!bridge.value) {
@@ -422,6 +462,7 @@ export function useWorkspace() {
     window.removeEventListener('keydown', keydown)
   })
   return {
+    switcher, switcherLoading, switcherBusy, switcherTrees, switcherErrors, openSwitcher, closeSwitcher, switchToWorktree,
     state,
     worktrees,
     selectedPath,
@@ -475,7 +516,6 @@ export function useWorkspace() {
     copy,
     locate,
     addProject: () => {
-      activity.value = false
       return update(() => call('addProject'))
     },
     starProject: (projectId: string) => update(() => call('starProject', { projectId }), false),

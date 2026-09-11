@@ -45,9 +45,10 @@ export class Runner extends EventEmitter {
     task: Task,
     cwd: string,
     source: Run['source'] = 'ui',
+    options: { env?: NodeJS.ProcessEnv; displayCommand?: string; androidDevice?: string } = {},
   ): Run {
     if (this.shuttingDown) throw new Error('Darsena is shutting down.')
-    const env: NodeJS.ProcessEnv = { ...process.env, NO_COLOR: '1' }
+    const env: NodeJS.ProcessEnv = { ...process.env, ...options.env, NO_COLOR: '1' }
     delete env.FORCE_COLOR
     const child = spawn(task.command, task.args, {
       cwd,
@@ -57,15 +58,18 @@ export class Runner extends EventEmitter {
     })
     const run: Run = {
       id: randomUUID(),
+      androidDevice: options.androidDevice,
       source,
       projectId: project.id,
       projectName: project.name,
       worktree: tree.path,
       worktreeName: tree.name,
+      worktreeBranch: tree.branch,
+      worktreeHead: tree.head,
       taskId: task.id,
       name: task.name,
       folder: cwd,
-      command: [task.command, ...task.args]
+      command: options.displayCommand || [task.command, ...task.args]
         .map((s) => (/\s/.test(s) ? JSON.stringify(s) : s))
         .join(' '),
       pid: child.pid,

@@ -1,6 +1,7 @@
 <script setup lang="ts">
-import type { Run, Task, TaskCatalog } from '../../shared/types'
+import type { Folder, Run, Task, TaskCatalog } from '../../shared/types'
 const props = defineProps<{
+  folders: Folder[]
   catalog: TaskCatalog
   favorites: string[]
   runs: Run[]
@@ -42,6 +43,33 @@ const visible = computed(() =>
         .includes(query.value.trim().toLowerCase()),
   ),
 )
+const collapsedFolders = shallowRef(new Set<string>())
+function setFolderOpen(path: string, open: boolean) {
+  const next = new Set(collapsedFolders.value)
+  if (open) next.delete(path)
+  else next.add(path)
+  collapsedFolders.value = next
+}
+const folderGroups = computed(() => {
+  const groups = new Map<string, typeof visible.value>()
+  for (const row of visible.value) {
+    const group = groups.get(row.task.folder)
+    if (group) group.push(row)
+    else groups.set(row.task.folder, [row])
+  }
+  return [...groups]
+    .sort(([a], [b]) => (a === '.' ? -1 : b === '.' ? 1 : a.localeCompare(b)))
+    .map(([path, rows]) => ({
+      path,
+      rows,
+      label:
+        path === '.'
+          ? 'Worktree root'
+          : props.folders.find((folder) => folder.path === path)?.label ||
+            path.split('/').at(-1) ||
+            path,
+    }))
+})
 watch(toolOptions, (options) => {
   if (toolFilter.value !== 'all' && !options.some((tool) => tool.id === toolFilter.value))
     toolFilter.value = 'all'
@@ -67,9 +95,11 @@ function needsSource(task: Task) {
   )
 }
 function missingHint(task: Task) {
+  if (task.action) return 'No Android application variants found in this folder.'
   return needsSource(task) ? 'Load this task’s source in Sources.' : 'Unavailable in this worktree'
 }
 function runHint(task: Task) {
+  if (task.action && task.available) return 'Choose an Android variant and device, then build, install and launch.'
   if (running.value.has(task.id))
     return 'This task is already active in this worktree. Open Activity to view its output or stop it.'
   if (!task.available)
@@ -172,77 +202,167 @@ function runHint(task: Task) {
         Browse all tasks<AppIcon name="ChevronRight" :size="14" />
       </button>
     </div>
-    <div
-      v-for="{ task, tool } in visible"
-      :key="task.id"
-      class="task-row"
-      :class="{ unavailable: !task.available }"
+    <section
+      v-for="group in folderGroups"
+      :key="group.path"
+      class="task-folder-group"
+      :aria-label="'Tasks in ' + group.path"
     >
-      <button
-        class="icon-button star-button"
-        :class="{ starred: favorites.includes(task.id) }"
-        :aria-label="`${favorites.includes(task.id) ? 'Unfavorite' : 'Favorite'} task ${task.name}`"
-        :aria-pressed="favorites.includes(task.id)"
-        v-tooltip="
-          favorites.includes(task.id)
-            ? 'Remove this task from the project’s favorites.'
-            : 'Favorite this task once to find it in every worktree of this project.'
-        "
-        @click="emit('star', task.id)"
+      <UCollapsible
+        :open="filtering || !collapsedFolders.has(group.path)"
+        @update:open="setFolderOpen(group.path, $event)"
       >
-        <AppIcon name="Star" :size="18" />
-      </button>
-      <div class="task-info">
-        <div class="task-name">
-          <strong v-tooltip="task.description || [task.command, ...task.args].join(' ')">{{
-            task.name
-          }}</strong>
-        </div>
-        <span
-          v-tooltip="`Working folder relative to the selected worktree: ${task.folder}`"
-          class="mono muted truncate"
-          >{{ task.folder === '.' ? 'Root' : task.folder
-          }}<span
-            v-if="task.port"
-            v-tooltip="
-              `Darsena checks that TCP port ${task.port} is free before starting. It does not change the server’s port.`
-            "
+        <template #default="{ open }">
+          <button
+            class="task-folder-heading"
+            :aria-label="group.label + ' tasks'"
+            :disabled="filtering"
           >
-            · port {{ task.port }}</span
-          ></span
-        ><span v-if="!task.available" class="task-missing">{{ missingHint(task) }}</span>
-      </div>
-      <TaskToolBadge :tool="tool" class="task-row-tool" />
-      <div class="task-row-actions">
-        <button
-          class="icon-button subtle"
-          :aria-label="`Configure ${task.name}`"
-          v-tooltip="'Set a fixed TCP port to check for conflicts before starting this task.'"
-          @click="emit('configure', task)"
-        >
-          <AppIcon name="Settings2" :size="14" />
-        </button>
-        <button
-          v-if="task.kind === 'custom'"
-          class="icon-button subtle"
-          :aria-label="`Remove command ${task.name}`"
-          v-tooltip="'Remove this saved command from the project. No files are deleted.'"
-          @click="emit('remove', task.id)"
-        >
-          <AppIcon name="Trash2" :size="14" />
-        </button>
-        <button
-          class="run-button"
-          :disabled="!task.available || busy || running.has(task.id)"
-          :aria-label="`Run ${task.name} in ${task.folder}`"
-          v-tooltip="runHint(task)"
-          @click="emit('start', task.id)"
-        >
-          <AppIcon :name="running.has(task.id) ? 'Activity' : 'Play'" :size="13" />{{
-            running.has(task.id) ? 'Running' : 'Run'
-          }}
-        </button>
-      </div>
-    </div>
+            <AppIcon
+              name="ChevronRight"
+              :size="15"
+              class="folder-chevron"
+              :class="{ expanded: open }"
+            />
+            <AppIcon name="FolderOpen" :size="17" />
+            <span class="task-folder-name">{{ group.label }}</span>
+            <span class="task-folder-path mono" :title="group.path">{{
+              group.path === '.' ? 'Root' : group.path
+            }}</span>
+            <span class="task-folder-count">{{ group.rows.length }}</span>
+          </button>
+        </template>
+        <template #content>
+          <div
+            v-for="{ task, tool } in group.rows"
+            :key="task.id"
+            class="task-row"
+            :class="{ unavailable: !task.available }"
+          >
+            <button
+              class="icon-button star-button"
+              :class="{ starred: favorites.includes(task.id) }"
+              :aria-label="`${favorites.includes(task.id) ? 'Unfavorite' : 'Favorite'} task ${task.name}`"
+              :aria-pressed="favorites.includes(task.id)"
+              v-tooltip="
+                favorites.includes(task.id)
+                  ? 'Remove this task from the project’s favorites.'
+                  : 'Favorite this task once to find it in every worktree of this project.'
+              "
+              @click="emit('star', task.id)"
+            >
+              <AppIcon name="Star" :size="18" />
+            </button>
+            <div class="task-info">
+              <div class="task-name">
+                <strong v-tooltip="task.description || [task.command, ...task.args].join(' ')">{{
+                  task.name
+                }}</strong>
+              </div>
+              <span v-if="task.action" class="muted">Build, install and launch</span>
+              <span
+                v-if="task.port"
+                class="mono muted"
+                v-tooltip="'Darsena checks this TCP port before starting the task.'"
+                >Port {{ task.port }}</span
+              >
+              <span v-if="!task.available" class="task-missing">{{ missingHint(task) }}</span>
+            </div>
+            <TaskToolBadge :tool="tool" class="task-row-tool" />
+            <div class="task-row-actions">
+              <button
+                v-if="!task.action"
+                class="icon-button subtle"
+                :aria-label="`Configure ${task.name}`"
+                v-tooltip="'Set a fixed TCP port to check for conflicts before starting this task.'"
+                @click="emit('configure', task)"
+              >
+                <AppIcon name="Settings2" :size="14" />
+              </button>
+              <button
+                v-if="task.kind === 'custom'"
+                class="icon-button subtle"
+                :aria-label="`Remove command ${task.name}`"
+                v-tooltip="'Remove this saved command from the project. No files are deleted.'"
+                @click="emit('remove', task.id)"
+              >
+                <AppIcon name="Trash2" :size="14" />
+              </button>
+              <button
+                class="run-button"
+                :disabled="!task.available || busy || running.has(task.id)"
+                :aria-label="`Run ${task.name} in ${task.folder}`"
+                v-tooltip="runHint(task)"
+                @click="emit('start', task.id)"
+              >
+                <AppIcon :name="running.has(task.id) ? 'Activity' : 'Play'" :size="13" />{{
+                  running.has(task.id) ? 'Running' : 'Run'
+                }}
+              </button>
+            </div>
+          </div>
+        </template>
+      </UCollapsible>
+    </section>
   </section>
 </template>
+
+<style scoped>
+.task-folder-group {
+  margin-top: 16px;
+}
+.task-folder-heading {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  width: 100%;
+  min-height: 38px;
+  padding: 8px 4px;
+  border-bottom: 1px solid var(--line);
+  text-align: left;
+}
+.task-folder-heading:hover {
+  background: var(--pane);
+}
+.task-folder-heading:disabled {
+  opacity: 1;
+  cursor: default;
+}
+.task-folder-heading > .icon {
+  color: var(--accent);
+  flex-shrink: 0;
+}
+.task-folder-name {
+  font-size: 15px;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+.task-folder-path {
+  min-width: 0;
+  font-size: 12px;
+  color: var(--muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.task-folder-count {
+  margin-left: auto;
+  font-size: 12px;
+  color: var(--muted);
+  padding-left: 8px;
+}
+.folder-chevron {
+  transition: transform 120ms ease;
+}
+.folder-chevron.expanded {
+  transform: rotate(90deg);
+}
+.task-folder-group .task-row:last-child {
+  border-bottom: 0;
+}
+@media (prefers-reduced-motion: reduce) {
+  .folder-chevron {
+    transition: none;
+  }
+}
+</style>

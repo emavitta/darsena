@@ -1,7 +1,7 @@
 import type { Task } from '../../shared/types'
 import type { toolIconPaths } from '../assets/tool-icon-paths'
 
-export type TaskToolIcon = keyof typeof toolIconPaths | 'shell' | 'command' | 'build' | 'recipe'
+export type TaskToolIcon = keyof typeof toolIconPaths | 'shell' | 'command' | 'build' | 'recipe' | 'android'
 
 export interface TaskTool {
   id: string
@@ -58,7 +58,8 @@ function customTool(command: string): Identity {
   return Object.hasOwn(customTools, name) ? customTools[name]! : fallback
 }
 
-export function taskTool(task: Pick<Task, 'kind' | 'manager' | 'command'>): TaskTool {
+export function taskTool(task: Pick<Task, 'kind' | 'manager' | 'command' | 'action'>): TaskTool {
+  if (task.action === 'android-launch') return { id: 'android', label: 'Android', tone: 'neutral', icon: 'android', hint: 'Build, install and launch on an Android device.' }
   if (task.kind === 'script' && task.manager) {
     const manager = Object.hasOwn(managers, task.manager)
       ? managers[task.manager as keyof typeof managers]

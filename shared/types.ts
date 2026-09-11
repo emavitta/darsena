@@ -49,7 +49,10 @@ export interface Worktree {
   changed?: number
   error?: string
 }
+export interface AndroidDevice { serial: string; state: string; label: string }
 export interface Task {
+  action?: 'android-launch'
+  android?: { assembleTask: string; variant: string; buildDirectory: string }
   id: string
   name: string
   folder: string
@@ -75,12 +78,16 @@ export interface TaskCatalog {
 }
 export type RunStatus = 'starting' | 'running' | 'stopping' | 'stopped' | 'succeeded' | 'failed'
 export interface Run {
+  androidDevice?: string
   id: string
   source: 'ui' | 'mcp'
   projectId: string
   projectName: string
   worktree: string
   worktreeName: string
+  /** Git identity captured when this run started. */
+  worktreeBranch?: string | null
+  worktreeHead?: string
   taskId: string
   name: string
   folder: string
@@ -136,6 +143,8 @@ export interface Methods {
   addFolder: { input: { projectId: string; worktree: string; folder: string }; output: AppState }
   removeFolder: { input: { projectId: string; folderId: string }; output: AppState }
   tasks: { input: { projectId: string; worktree: string }; output: TaskCatalog }
+  androidDevices: { input: { projectId: string; worktree: string; folder: string }; output: AndroidDevice[] }
+  androidStart: { input: { projectId: string; worktree: string; taskId: string; serial: string }; output: Run }
   loadGradle: {
     input: { projectId: string; worktree: string; folder: string }
     output: TaskCatalog

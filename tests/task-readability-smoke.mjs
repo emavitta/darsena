@@ -45,7 +45,8 @@ await writeFile(
 let desktop
 try {
   desktop = await electron.launch({
-    args: [process.env.DARSENA_TEST_ASAR || '.'],
+    executablePath: process.env.DARSENA_EXECUTABLE,
+    args: process.env.DARSENA_EXECUTABLE ? [] : [process.env.DARSENA_TEST_ASAR || '.'],
     cwd: process.cwd(),
     env: { ...process.env, DARSENA_DATA_DIR: data, DARSENA_DEV_URL: '' },
   })
@@ -61,6 +62,24 @@ try {
   await tasks.getByRole('button', { name: 'Load Gradle tasks in android-app' }).click()
   await tasks.getByRole('button', { name: 'Run :app:assembleDebug in android-app' }).waitFor()
   await tasks.locator('summary').click()
+  assert.equal(await tasks.locator('.task-folder-group').count(), 5)
+  for (const manager of ['npm', 'yarn', 'bun']) {
+    const group = tasks.getByRole('region', { name: 'Tasks in services/' + manager + '-example', exact: true })
+    assert.ok(await group.getByRole('button', { name: manager + ' example tasks', exact: true }).isVisible())
+    assert.equal(await group.locator('.task-row').count(), 1)
+    assert.ok(await group.getByRole('button', { name: 'Run dev in services/' + manager + '-example', exact: true }).isVisible())
+  }
+  const npmGroup = tasks.getByRole('region', { name: 'Tasks in services/npm-example', exact: true })
+  const npmToggle = npmGroup.getByRole('button', { name: 'npm example tasks', exact: true })
+  await npmToggle.click()
+  await eventually(async () => !(await npmGroup.getByRole('button', { name: 'Run dev in services/npm-example', exact: true }).isVisible()))
+  await tasks.getByRole('textbox', { name: 'Search tasks' }).fill('npm-example')
+  await npmGroup.getByRole('button', { name: 'Run dev in services/npm-example', exact: true }).waitFor()
+  await tasks.getByRole('textbox', { name: 'Search tasks' }).fill('')
+  await eventually(async () => await npmToggle.getAttribute('aria-expanded') === 'false')
+  await npmToggle.focus()
+  await npmToggle.press('Enter')
+  await npmGroup.getByRole('button', { name: 'Run dev in services/npm-example', exact: true }).waitFor()
   await tasks.getByRole('button', { name: 'Custom command', exact: true }).click()
   const dialog = page.getByRole('dialog')
   await dialog.getByRole('textbox', { name: 'Display name', exact: true }).fill('prepare:local')
@@ -92,15 +111,40 @@ try {
   assert.deepEqual(saved.args, ['--', './scripts/start server.sh', 'a b', '$HOME', '&&'])
   assert.ok(state.projects[0].favorites.includes(saved.id))
   assert.equal((await page.evaluate(() => window.darsena.call('runs'))).length, 0)
-  const labels = ['pnpm', 'npm', 'Yarn', 'Bun', 'Gradle', 'Python', 'Shell', 'Custom']
-  assert.equal(await tasks.locator('.task-tool-badge svg.tool-icon').count(), labels.length)
-  const iconSizes = await tasks.locator('.task-tool-badge svg').evaluateAll((icons) =>
+  await tasks.getByRole('button', { name: 'Configure prepare:local', exact: true }).click()
+  const portInput = dialog.getByRole('spinbutton', { name: 'Exclusive TCP port', exact: true })
+  await portInput.fill('65536')
+  await dialog.getByRole('button', { name: 'Save', exact: true }).click()
+  assert.ok(await dialog.isVisible())
+  assert.equal(await portInput.evaluate((input) => input.checkValidity()), false)
+  await portInput.fill('9000')
+  await dialog.getByRole('button', { name: 'Save', exact: true }).click()
+  await dialog.waitFor({ state: 'hidden' })
+  assert.equal(
+    (await page.evaluate(() => window.darsena.call('state'))).projects[0].taskPreferences[saved.id]
+      .port,
+    9000,
+  )
+  await tasks.getByRole('button', { name: 'Configure prepare:local', exact: true }).click()
+  assert.equal(await portInput.inputValue(), '9000')
+  await dialog.screenshot({ path: 'test-results/task-port-dialog.png', animations: 'disabled' })
+  await portInput.fill('')
+  await dialog.getByRole('button', { name: 'Save', exact: true }).click()
+  await dialog.waitFor({ state: 'hidden' })
+  assert.equal(
+    (await page.evaluate(() => window.darsena.call('state'))).projects[0].taskPreferences[saved.id]
+      ?.port,
+    undefined,
+  )
+  const labels = ['pnpm', 'npm', 'Yarn', 'Bun', 'Gradle', 'Python', 'Shell', 'Custom', 'Android']
+  assert.equal(await tasks.locator('.task-tool-badge .tool-icon').count(), labels.length)
+  const iconSizes = await tasks.locator('.task-tool-badge .tool-icon').evaluateAll((icons) =>
     icons.map((icon) => ({
       width: icon.getBoundingClientRect().width,
-      paths: icon.querySelectorAll('path').length,
+      loaded: icon.tagName === 'IMG' ? icon.complete && icon.naturalWidth > 0 : icon.querySelectorAll('path').length > 0,
     })),
   )
-  assert.ok(iconSizes.every((icon) => icon.width >= 18 && icon.paths > 0))
+  assert.ok(iconSizes.every((icon) => icon.width === 16 && icon.loaded))
   assert.deepEqual(
     (await tasks.locator('.task-tool-badge').allTextContents()).map((text) => text.trim()).sort(),
     labels.toSorted(),
@@ -122,6 +166,10 @@ try {
   await tasks.getByRole('heading', { name: 'Tasks', exact: true }).click()
 
   function luminance(color) {
+    if (color.startsWith('#')) {
+      const hex = color.slice(1)
+      color = 'rgb(' + [0, 2, 4].map(i => parseInt(hex.slice(i, i + 2), 16)).join(',') + ')'
+    }
     const rgb = color
       .match(/[\d.]+/g)
       .slice(0, 3)
@@ -139,7 +187,7 @@ try {
       badges.map((badge) => ({
         label: badge.textContent,
         foreground: getComputedStyle(badge).color,
-        background: getComputedStyle(badge).backgroundColor,
+        background: getComputedStyle(document.documentElement).getPropertyValue('--bg').trim(),
       })),
     )
     for (const color of colors) {

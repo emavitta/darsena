@@ -16,14 +16,15 @@ const filtered = computed(() =>
       .includes(query.value.toLowerCase()),
   ),
 )
-const runningPaths = computed(
-  () =>
-    new Set(
-      props.runs
-        .filter((r) => ['running', 'starting', 'stopping'].includes(r.status))
-        .map((r) => r.worktree),
-    ),
-)
+const activeCounts = computed(() => {
+  const counts = new Map<string, number>()
+  for (const run of props.runs) {
+    if (['running', 'starting', 'stopping'].includes(run.status)) {
+      counts.set(run.worktree, (counts.get(run.worktree) || 0) + 1)
+    }
+  }
+  return counts
+})
 </script>
 <template>
   <section class="worktree-column">
@@ -51,8 +52,8 @@ const runningPaths = computed(
         data-worktree-search
         placeholder="Find a worktree…"
         aria-label="Find a worktree"
-        v-tooltip="'Filter by worktree name, branch or path. Shortcut: ⌘K.'"
-      /><kbd>⌘ K</kbd></label
+        v-tooltip="'Filter this project by worktree name, branch or path.'"
+      /></label
     >
     <p v-if="error" class="inline-error pad" role="alert">{{ error }}</p>
     <div class="worktree-scroll">
@@ -67,29 +68,23 @@ const runningPaths = computed(
         :class="{ selected: selected === tree.path, unavailable: !tree.exists || tree.bare }"
         v-tooltip="worktreeSelectionHint(tree)"
         :disabled="!tree.exists || tree.bare"
+        :aria-current="selected === tree.path ? 'true' : undefined"
         @click="emit('select', tree.path)"
       >
         <div class="worktree-name">
-          <AppIcon name="GitFork" :size="16" /><strong class="truncate">{{ tree.name }}</strong
-          ><span
-            v-if="runningPaths.has(tree.path)"
-            class="status-dot"
-            v-tooltip="
-              'Darsena has a running, starting or stopping task in this worktree. See Activity for details.'
-            "
-          /><AppIcon v-if="selected === tree.path" name="ChevronRight" :size="14" />
+          <AppIcon name="GitBranch" :size="18" />
+          <strong>{{ tree.branch || (tree.bare ? 'Bare repository' : 'Detached HEAD') }}</strong>
+          <AppIcon v-if="selected === tree.path" name="ChevronRight" :size="16" />
         </div>
+        <div class="worktree-folder"><AppIcon name="Folder" :size="14" />{{ tree.name }}</div>
+        <div class="worktree-path mono">{{ tree.path }}</div>
         <div
-          v-tooltip="
-            tree.branch
-              ? `Checked-out branch: ${tree.branch}`
-              : tree.bare
-                ? 'This repository has no working files.'
-                : 'This worktree points directly to a commit, rather than a branch.'
-          "
-          class="worktree-branch truncate"
+          v-if="activeCounts.has(tree.path)"
+          class="worktree-active"
+          v-tooltip="'Tasks running, starting or stopping in this worktree. See Activity for details.'"
         >
-          {{ tree.branch || (tree.bare ? 'Bare repository' : 'Detached HEAD') }}
+          <span class="status-dot" />
+          {{ activeCounts.get(tree.path) }} active {{ activeCounts.get(tree.path) === 1 ? 'task' : 'tasks' }}
         </div>
         <div class="worktree-meta">
           <span v-if="tree.main" v-tooltip="'The repository’s main working folder.'"
@@ -114,3 +109,75 @@ const runningPaths = computed(
     </footer>
   </section>
 </template>
+
+<style scoped>
+.worktree-column {
+  width: clamp(290px, 25vw, 350px);
+}
+.search-field input {
+  font-size: 13px;
+}
+.worktree-row {
+  padding: 17px 13px;
+  margin-bottom: 7px;
+}
+.worktree-row.selected {
+  border-color: var(--accent);
+  box-shadow: inset 3px 0 var(--accent);
+}
+.worktree-name {
+  align-items: flex-start;
+  font-size: 16px;
+  line-height: 1.4;
+  color: var(--text);
+}
+.worktree-name strong {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.worktree-name > .icon {
+  flex-shrink: 0;
+  margin-top: 3px;
+}
+.worktree-folder {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  margin-top: 10px;
+  font-size: 14px;
+  font-weight: 500;
+  overflow-wrap: anywhere;
+}
+.worktree-folder > .icon {
+  flex-shrink: 0;
+  color: var(--muted);
+}
+.worktree-path {
+  margin-top: 6px;
+  font-size: 12px;
+  line-height: 1.55;
+  color: var(--muted);
+  overflow-wrap: anywhere;
+}
+.worktree-active {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  color: var(--accent);
+  font-weight: 600;
+  font-size: 12px;
+  margin-top: 12px;
+}
+.worktree-meta {
+  padding-left: 0;
+  margin-top: 12px;
+  padding-top: 10px;
+  border-top: 1px solid var(--line);
+  flex-wrap: wrap;
+  font-size: 12px;
+  line-height: 1.4;
+}
+.column-foot {
+  font-size: 12px;
+}
+</style>

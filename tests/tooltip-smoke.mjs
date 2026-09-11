@@ -60,10 +60,10 @@ try {
 
   // Keyboard hints keep focus on the trigger and preserve its accessible name.
   await page.keyboard.press('Tab')
-  const copy = page.getByRole('button', { name: 'Copy worktree path' })
+  const copy = page.getByRole('button', { name: 'Worktree actions' })
   await copy.focus()
   await tip.waitFor()
-  assert.match(await tip.innerText(), /clipboard/)
+  assert.match(await tip.innerText(), /copy its path/)
   assert.equal(await copy.getAttribute('aria-describedby'), await tip.getAttribute('id'))
   assert.ok(await copy.evaluate((el) => el === document.activeElement))
   await page.keyboard.press('Escape')
@@ -74,7 +74,7 @@ try {
   await page.getByRole('button', { name: 'Preferences 0.1' }).click()
   const dialog = page.getByRole('dialog')
   await dialog.waitFor()
-  await hint(dialog.getByRole('button', { name: 'Choose…' }).first(), /Saved immediately/)
+  await hint(dialog.getByRole('button', { name: 'Close dialog', exact: true }), /Close this dialog/)
   assert.ok(await tip.evaluate((el) => el.closest('dialog')?.open))
   assert.ok(
     await tip.evaluate((el) => {

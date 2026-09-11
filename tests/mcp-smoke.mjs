@@ -57,7 +57,7 @@ try {
   page.on('pageerror', (error) => errors.push(error.message))
   await page.getByRole('heading', { name: 'harbor-project', exact: true }).waitFor()
   await page.getByRole('button', { name: /Preferences/ }).click()
-  await page.getByRole('button', { name: 'MCP', exact: true }).click()
+  await page.getByRole('tab', { name: 'MCP', exact: true }).click()
   const dialog = page.getByRole('dialog')
   await dialog.getByText('Off', { exact: true }).waitFor()
   await dialog.getByText('Connection settings', { exact: true }).click()
@@ -113,10 +113,7 @@ try {
     ),
     f.root,
   )
-  await page
-    .getByRole('complementary')
-    .getByRole('button', { name: /Activity/ })
-    .click()
+  await page.getByRole('button', { name: 'Activity', exact: true }).click()
   await page.getByText('MCP', { exact: true }).waitFor()
   await page.locator('.run-list').getByRole('button').filter({ hasText: 'preview' }).click()
   await page.getByText('Started from MCP', { exact: true }).waitFor()

@@ -18,6 +18,8 @@ const methods = new Set([
   'removeFolder',
   'tasks',
   'loadGradle',
+  'androidDevices',
+  'androidStart',
   'starTask',
   'taskPort',
   'addCustom',

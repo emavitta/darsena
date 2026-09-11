@@ -30,7 +30,7 @@
 Darsena brings your Git worktrees, folder shortcuts and running tasks together.
 Work on branches created by you, a teammate or an agent, using the tools you already know.
 
-Built with **Electron, Nuxt 4, Vue 3 and TypeScript**.
+Built with **Electron, Nuxt 4, Vue 3 and TypeScript**, with **Nuxt UI** being adopted for shared controls.
 
 ## Download
 
@@ -46,6 +46,11 @@ This preview supports **Apple Silicon Macs (M-series)**. It is unsigned and not
 notarized, so macOS may display a security warning when opening it. Intel Mac
 and Windows installers are not available yet.
 
+New builds use an ad-hoc signature and verify the app inside both the DMG and ZIP
+before upload. This checks signature integrity; it does not provide Developer ID
+or notarization, so Gatekeeper warnings remain possible. Previously published
+installers are not changed by this fix.
+
 Each release includes [SHA-256 checksums](https://github.com/emavitta/darsena/releases/download/v0.1.0/SHA256SUMS-macos-arm64.txt)
 and a [build manifest](https://github.com/emavitta/darsena/releases/download/v0.1.0/build-macos-arm64.json)
 recording the version, target and exact source commit. Install updates manually
@@ -59,6 +64,9 @@ Darsena from source, see [Development and checks](#development-and-checks).
 
 1. **Add project**: choose a Git repository or one of its linked worktrees.
 2. Select a worktree. Discovery uses Git’s registry, regardless of who created it.
+   Press **⌘K** (or use **Search worktrees** in the title bar) to search all saved
+   projects by project name, branch or path. Results show active task counts;
+   switching keeps the Activity panel and its selected run in place.
 3. **Add shortcut**: browse subfolders inside that worktree using the built-in
    picker. Breadcrumbs stay within the worktree; folders already added are marked.
    The relative shortcut follows you across worktrees. Open it in VS Code,
@@ -100,6 +108,11 @@ want to browse. Adding projects or folders does not install or execute anything.
   infer the port of an arbitrary script.
 - When a managed task holds that port, **Stop there & start here** stops it
   before attempting the new execution. Failed starts remain visible with logs.
+- **Activity lives in a bottom panel** beside your current project and worktree.
+  Its collapsed bar keeps the active-task count visible. Open it for runs, saved
+  output and listening ports; switching worktrees keeps the inspected run in place.
+  Use the enlarge control when you need more room for logs. Collapsing the panel
+  does not stop tasks.
 - **Activity → Listening ports** lists visible TCP listeners and associates
   them with worktrees when possible. Stopping an external process asks for
   confirmation and signals only that PID.
@@ -155,6 +168,25 @@ as managed just because a task contacted or started them.
 The public preview targets macOS on Apple Silicon. Developer ID signing,
 notarization and additional build architectures remain future work.
 
+## Run on Android
+
+For a saved folder containing a Gradle wrapper, the **Run on Android** task appears
+in that folder’s task group and supports favorites and search. Its **Run** button lets you load
+module/variant choices, choose an authorized device or an already running emulator,
+and build, install and launch the app. Darsena finds ADB through local.properties,
+ANDROID_HOME / ANDROID_SDK_ROOT, the standard macOS SDK location or PATH.
+
+Deployment appears in Activity with build/install/launch logs. A successful run
+means deployment finished; the Android app then runs independently. Stopping a
+run cancels deployment and does not stop an app already installed on the device.
+Installing the same application ID from another worktree updates that device’s
+existing app. No uninstall or app-data clearing is performed.
+
+This first implementation supports a single universal APK from Android Gradle
+Plugin output metadata, including custom module build directories inside the
+worktree. Split-only APKs, emulator startup, debugger attachment and Logcat remain
+in Android Studio. Variant discovery evaluates the Gradle build explicitly.
+
 ## Development and checks
 
 From a checkout of this repository, use Node 24+ and the pnpm version declared
@@ -180,6 +212,7 @@ node --import tsx tests/task-sources-smoke.mjs
 node --import tsx tests/task-readability-smoke.mjs
 node --import tsx tests/project-removal-smoke.mjs
 node --import tsx tests/mcp-smoke.mjs
+node --import tsx tests/preferences-smoke.mjs
 pnpm pack:mac            # Generate a local Apple Silicon .app
 pnpm dist:mac            # Generate Apple Silicon DMG and ZIP; never uploads/publishes
 node scripts/icons.mjs   # Regenerate Dock PNG and ICNS from the SVG master
@@ -211,11 +244,11 @@ The [v0.1.0 macOS preview](https://github.com/emavitta/darsena/releases/tag/v0.1
 was built and tested on GitHub Actions and is publicly downloadable. The
 following workflows are already active:
 
-| Workflow | Trigger | Result |
-| --- | --- | --- |
-| [CI](https://github.com/emavitta/darsena/actions/workflows/ci.yml) | PRs targeting `main`, pushes to `main`, or a manual run | Type checks, backend tests, application build and desktop checks. **Validate macOS** must pass before a PR can merge. |
-| [Build macOS](https://github.com/emavitta/darsena/actions/workflows/build-macos.yml) | Manual run, or called by the release workflow | Tested Apple Silicon DMG and ZIP, checksums and source manifest in the `darsena-macos-arm64` artifact. Retained for **14 days**. |
-| [Prepare release](https://github.com/emavitta/darsena/actions/workflows/release.yml) | Push a `v*` version tag | Runs Build macOS, verifies the downloaded checksums and creates a **draft pre-release** with the installers and release notes. |
+| Workflow                                                                             | Trigger                                                 | Result                                                                                                                           |
+| ------------------------------------------------------------------------------------ | ------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------- |
+| [CI](https://github.com/emavitta/darsena/actions/workflows/ci.yml)                   | PRs targeting `main`, pushes to `main`, or a manual run | Type checks, backend tests, application build and desktop checks. **Validate macOS** must pass before a PR can merge.            |
+| [Build macOS](https://github.com/emavitta/darsena/actions/workflows/build-macos.yml) | Manual run, or called by the release workflow           | Tested Apple Silicon DMG and ZIP, checksums and source manifest in the `darsena-macos-arm64` artifact. Retained for **14 days**. |
+| [Prepare release](https://github.com/emavitta/darsena/actions/workflows/release.yml) | Push a `v*` version tag                                 | Runs Build macOS, verifies the downloaded checksums and creates a **draft pre-release** with the installers and release notes.   |
 
 Build macOS tests the **packaged application**, including task execution, port
 conflicts, window close, cleanup on Quit and project removal. Tests use

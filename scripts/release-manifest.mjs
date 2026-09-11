@@ -16,5 +16,5 @@ const commit = execFileSync('git', ['rev-parse', 'HEAD'], { cwd: root, encoding:
 await writeFile(path.join(root, 'release/SHA256SUMS-macos-arm64.txt'), checksums.join('\n') + '\n')
 await writeFile(
   path.join(root, 'release/build-macos-arm64.json'),
-  JSON.stringify({ version, target: 'macos-arm64', commit, signed: false }, null, 2) + '\n',
+  JSON.stringify({ version, target: 'macos-arm64', commit, signed: false, signing: 'ad-hoc', notarized: false }, null, 2) + '\n',
 )

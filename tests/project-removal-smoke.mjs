@@ -43,6 +43,12 @@ try {
   const dialog = page.getByRole('dialog', { name: 'Remove project?' })
   await page.getByRole('heading', { name: 'harbor-project', exact: true }).waitFor()
 
+  // Worktree menu copies the selected checkout without changing selection.
+  await page.getByRole('button', { name: 'Worktree actions', exact: true }).click()
+  await menu.getByRole('menuitem', { name: 'Copy worktree path', exact: true }).click()
+  assert.equal(await desktop.evaluate(({ clipboard }) => clipboard.readText()), f.root)
+  assert.equal((await saved()).selectedProject, f.project.id)
+
   await page.getByRole('button', { name: 'Preferences 0.1' }).click()
   assert.equal(await page.getByRole('dialog').getByText('Remove from Darsena').count(), 0)
   await page.getByRole('button', { name: 'Close dialog' }).click()

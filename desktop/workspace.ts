@@ -82,6 +82,7 @@ export class WorkspaceService {
       const task = (await this.discovery.list(context.project, context.worktree.path)).tasks.find(
         (task) => task.id === input.taskId,
       )
+      if (task?.action === 'android-launch') throw new Error('Choose a variant and device using Run on Android in Darsena.')
       if (!task?.available)
         throw new Error(
           'This task is unavailable in the selected worktree. Reload its source or choose another task.',
