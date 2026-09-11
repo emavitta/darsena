@@ -1,0 +1,61 @@
+/* Keep the existing interface intact; Tailwind preflight is intentionally omitted. */
+@layer theme, base, darsena, components, utilities;
+@import 'tailwindcss/theme.css' layer(theme);
+@import 'tailwindcss/utilities.css' layer(utilities);
+@import '@nuxt/ui';
+@import './main.css' layer(darsena);
+
+/* Darsena follows macOS appearance, without a second persisted theme setting. */
+@custom-variant dark (@media (prefers-color-scheme: dark));
+@custom-variant light (@media (prefers-color-scheme: light));
+
+@theme {
+  --font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+
+:root {
+  --ui-primary: var(--accent);
+  --ui-secondary: var(--accent);
+  --ui-info: var(--accent);
+  --ui-warning: var(--terracotta);
+  --ui-error: var(--danger);
+  --ui-text: var(--text);
+  --ui-text-highlighted: var(--text);
+  --ui-text-toned: var(--text);
+  --ui-text-muted: var(--muted);
+  --ui-text-dimmed: var(--muted);
+  --ui-text-inverted: var(--surface);
+  --ui-bg: var(--surface);
+  --ui-bg-muted: var(--pane);
+  --ui-bg-elevated: var(--pane);
+  --ui-bg-accented: var(--line);
+  --ui-bg-inverted: var(--text);
+  --ui-border: var(--line);
+  --ui-border-muted: var(--line);
+  --ui-border-accented: var(--muted);
+  --ui-border-inverted: var(--text);
+  --ui-radius: 0.375rem;
+}
+
+@layer components {
+  .nuxt-ui-scope fieldset {
+    border: 0;
+    padding: 0;
+    margin: 0;
+    min-width: 0;
+  }
+  .nuxt-ui-scope legend {
+    padding: 0;
+  }
+
+  /* Reset only migrated controls; utility classes provide their final appearance. */
+  .nuxt-ui-scope
+    :where(button[data-slot], input[data-slot], textarea[data-slot], select[data-slot]) {
+    border-width: 0;
+    border-style: solid;
+    background-color: transparent;
+    padding: 0;
+    border-radius: 0;
+    font: inherit;
+  }
+}

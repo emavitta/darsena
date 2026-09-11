@@ -1,3 +1,5 @@
+import { gitAction, gitState } from './git-actions.js'
+import type { Methods } from '../shared/types.js'
 import { Store } from './store.js'
 import { TaskDiscovery } from './tasks.js'
 import { Runner, active } from './runner.js'
@@ -16,6 +18,23 @@ export class WorkspaceService {
   async tree(projectId: string, worktree: string) {
     const project = this.store.project(projectId)
     return { project, worktree: await validateWorktree(project.root, worktree) }
+  }
+
+  async gitState(projectId: string, worktree: string) {
+    const context = await this.tree(projectId, worktree)
+    return gitState(context.worktree.path)
+  }
+
+  gitAction(input: Methods['gitAction']['input']) {
+    const operation = this.startQueue.then(async () => {
+      const context = await this.tree(input.projectId, input.worktree)
+      if (input.action === 'pull' && this.runner.list().some(run => active(run) && run.worktree === context.worktree.path)) {
+        throw new Error('Stop the tasks running in this worktree before pulling.')
+      }
+      return gitAction(context.worktree.path, input.action, input.expectedHead, input.expectedBranch)
+    })
+    this.startQueue = operation.catch(() => {})
+    return operation
   }
 
   async tasks(projectId: string, worktree: string) {
@@ -82,6 +101,7 @@ export class WorkspaceService {
       const task = (await this.discovery.list(context.project, context.worktree.path)).tasks.find(
         (task) => task.id === input.taskId,
       )
+      if (task?.action === 'android-launch') throw new Error('Choose a variant and device using Run on Android in Darsena.')
       if (!task?.available)
         throw new Error(
           'This task is unavailable in the selected worktree. Reload its source or choose another task.',

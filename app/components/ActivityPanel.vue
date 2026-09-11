@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import type { ListenerReport, Run } from '../../shared/types'
 const props = defineProps<{
+  compact?: boolean
   runs: Run[]
   selected?: string
   logs: string
@@ -43,10 +44,6 @@ function status(run: Run) {
     failed: 'Failed',
   }[run.status]
 }
-function duration(run: Run) {
-  const seconds = Math.max(0, Math.floor(((run.endedAt || Date.now()) - run.startedAt) / 1000))
-  return seconds < 60 ? `${seconds}s` : `${Math.floor(seconds / 60)}m ${seconds % 60}s`
-}
 watch(
   () => props.logs,
   async () => {
@@ -62,14 +59,14 @@ function showPorts() {
 }
 </script>
 <template>
-  <main class="activity-panel">
+  <main class="activity-panel" :class="{ 'activity-compact': compact }">
     <header class="activity-header">
-      <div>
+      <div v-if="!compact">
         <div class="eyebrow">Across your worktrees</div>
         <h1>Activity</h1>
-        <p class="muted">
-          {{ activeRuns.length }} {{ activeRuns.length === 1 ? 'task is' : 'tasks are' }} running.
-          Every process has a place.
+        <p v-if="!compact" class="muted">
+          {{ activeRuns.length }} active {{ activeRuns.length === 1 ? 'task' : 'tasks' }}. Finished
+          and stopped runs are kept in History.
         </p>
       </div>
       <div class="segmented">
@@ -89,72 +86,25 @@ function showPorts() {
       </div>
     </header>
     <div v-if="tab === 'runs'" class="activity-content">
-      <section class="run-list">
-        <div v-if="!runs.length" class="empty-small">
-          <AppIcon name="Activity" :size="28" />
-          <h3>No task runs yet.</h3>
-          <p>Run a task from any worktree.<br />Its status and logs will appear here.</p>
-        </div>
-        <button
-          v-for="run in runs"
-          :key="run.id"
-          class="run-entry"
-          :class="{ selected: run.id === selected }"
-          v-tooltip="
-            `View output and status for ${run.name}.\n${run.projectName} / ${run.worktreeName}`
-          "
-          @click="emit('inspect', run.id)"
-        >
-          <div class="run-entry-top">
-            <span
-              class="status-dot"
-              :class="{
-                neutral: !['running', 'starting', 'stopping'].includes(run.status),
-                danger: run.status === 'failed',
-              }"
-            /><strong class="truncate">{{ run.name }}</strong
-            ><span
-              v-tooltip="
-                'Elapsed time from task start to completion, or until now if still active.'
-              "
-              class="run-duration"
-              >{{ duration(run) }}</span
-            >
-          </div>
-          <div class="run-context truncate">{{ run.projectName }} / {{ run.worktreeName }}</div>
-          <div class="run-entry-bottom">
-            <span
-              v-if="run.source === 'mcp'"
-              v-tooltip="'Started through Darsena’s MCP connection.'"
-              class="tag"
-              >MCP</span
-            >
-            <span :class="{ 'text-danger': run.status === 'failed' }">{{ status(run) }}</span
-            ><span v-if="run.port" v-tooltip="'The fixed TCP port configured for this task.'"
-              >:{{ run.port }}</span
-            ><span
-              v-else-if="run.exitCode != null"
-              v-tooltip="
-                run.exitCode === 0
-                  ? 'The command exited successfully.'
-                  : `The command exited with code ${run.exitCode}. Check its output for details.`
-              "
-              >exit {{ run.exitCode }}</span
-            >
-          </div>
-        </button>
-      </section>
+      <ActivityRunList
+        :compact="compact"
+        :runs="runs"
+        :selected="selected"
+        @inspect="emit('inspect', $event)"
+      />
       <section v-if="current" class="run-inspector">
         <header class="log-header">
-          <div>
+          <div class="inspector-identity">
+            <div class="run-project">{{ current.projectName }}</div>
             <h3>{{ current.name }}</h3>
             <button
               v-tooltip="`Jump to the worktree where this task ran.\n${current.worktree}`"
-              class="text-button muted"
+              class="text-button inspector-worktree"
               @click="emit('locate', current)"
             >
-              <AppIcon name="GitFork" :size="13" />{{ current.worktreeName
-              }}<AppIcon name="ArrowUpRight" :size="12" />
+              <AppIcon name="GitFork" :size="18" />{{
+                current.worktreeBranch || current.worktreeName
+              }}<AppIcon name="ArrowUpRight" :size="15" />
             </button>
           </div>
           <button
@@ -174,12 +124,61 @@ function showPorts() {
           ><span v-else class="tag">{{ status(current) }}</span>
         </header>
         <div class="run-details">
-          <div class="muted">
+          <div class="worktree-path mono" :title="compact ? current.worktree : undefined">
+            {{ current.worktree }}
+          </div>
+          <div
+            class="run-state"
+            :class="{
+              'run-state-ended': !['running', 'starting', 'stopping'].includes(current.status),
+              'text-danger': current.status === 'failed',
+            }"
+            role="status"
+          >
+            <strong>{{ status(current) }}</strong>
+            <span v-if="!compact && !['running', 'starting', 'stopping'].includes(current.status)"
+              >This task is no longer running. You’re viewing saved output.</span
+            >
+            <span v-else-if="!compact && current.status === 'stopping'"
+              >Waiting for this task’s processes to exit.</span
+            >
+            <span v-else-if="!compact">Active in this worktree.</span>
+          </div>
+          <div class="run-origin muted">
             Started from {{ current.source === 'mcp' ? 'MCP' : 'the Darsena interface' }}
           </div>
-          <div class="mono">{{ current.command }}</div>
-          <div class="mono muted">{{ current.folder }}</div>
-          <div class="run-links">
+          <details v-if="compact" :key="current.id" class="command-details">
+            <summary>Command &amp; folder</summary>
+            <div class="mono">Worktree: {{ current.worktree }}</div>
+            <div class="mono">{{ current.command }}</div>
+            <div class="mono muted">Working folder: {{ current.folder }}</div>
+            <div class="run-links">
+              <button
+                v-for="url in current.urls"
+                :key="url"
+                class="text-button"
+                v-tooltip="`Open this address in your default browser.\n${url}`"
+                @click="emit('openUrl', url)"
+              >
+                {{ url }}<AppIcon name="ArrowUpRight" :size="12" />
+              </button>
+            </div>
+          </details>
+          <template v-else>
+            <div class="mono">{{ current.command }}</div>
+            <div class="mono muted">Working folder: {{ current.folder }}</div>
+          </template>
+          <p
+            v-if="
+              !compact &&
+              current.urls.length &&
+              !['running', 'starting', 'stopping'].includes(current.status)
+            "
+            class="muted"
+          >
+            Addresses from saved output; the task has ended.
+          </p>
+          <div v-if="!compact" class="run-links">
             <button
               v-for="url in current.urls"
               :key="url"
@@ -204,8 +203,13 @@ function showPorts() {
             />Follow output</label
           >
         </div>
-        <pre ref="logElement" class="log-output">{{ cleanedLogs || 'Waiting for output…' }}</pre>
-        <footer class="log-footer">
+        <pre ref="logElement" class="log-output">{{
+          cleanedLogs ||
+          (['running', 'starting', 'stopping'].includes(current.status)
+            ? 'Waiting for output…'
+            : 'No output was recorded.')
+        }}</pre>
+        <footer v-if="!compact" class="log-footer">
           Output is retained for this app session, up to 524,288 characters per task.
         </footer>
       </section>
@@ -304,3 +308,215 @@ function showPorts() {
     </section>
   </main>
 </template>
+
+<style scoped>
+.log-header {
+  align-items: flex-start;
+}
+.log-header > div {
+  min-width: 0;
+}
+.log-header .button {
+  flex-shrink: 0;
+}
+.run-project {
+  color: var(--muted);
+  font-size: 13px;
+  margin-bottom: 6px;
+}
+.log-header h3 {
+  font-size: 17px;
+}
+.inspector-worktree {
+  font-size: 20px;
+  font-weight: 650;
+  text-align: left;
+  overflow-wrap: anywhere;
+  align-items: flex-start;
+}
+.inspector-worktree svg {
+  flex-shrink: 0;
+  margin-top: 3px;
+}
+.worktree-path {
+  font-size: 13px;
+  line-height: 1.6;
+  overflow-wrap: anywhere;
+}
+.run-state {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 12px;
+  padding: 11px 13px;
+  background: var(--accent-soft);
+  color: var(--accent);
+  border-radius: 7px;
+  font-size: 13px;
+}
+.run-state-ended {
+  background: var(--pane);
+  color: var(--muted);
+  border: 1px solid var(--line);
+}
+.run-state strong {
+  color: var(--text);
+}
+.run-state.text-danger strong {
+  color: var(--danger);
+}
+.run-details {
+  gap: 10px;
+}
+.log-toolbar {
+  font-size: 12px;
+}
+@media (max-width: 1100px) {
+  .log-header {
+    padding: 18px 18px 12px;
+  }
+  .run-details {
+    padding-inline: 18px;
+  }
+  .inspector-worktree {
+    font-size: 18px;
+  }
+}
+.activity-compact {
+  min-height: 0;
+  overflow: hidden;
+}
+.activity-compact .activity-header {
+  padding: 8px 16px;
+  align-items: center;
+  gap: 12px;
+}
+.activity-compact .activity-header h1 {
+  margin: 0;
+  font-size: 15px;
+  line-height: 1.4;
+}
+.compact-count {
+  margin-left: 10px;
+  font-size: 12px;
+  font-weight: 400;
+  color: var(--muted);
+}
+.activity-compact .log-header {
+  padding: 10px 16px 6px;
+  gap: 12px;
+}
+.activity-compact .inspector-identity {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 3px 12px;
+  min-width: 0;
+}
+.activity-compact .run-project {
+  margin: 0;
+  font-size: 12px;
+}
+.activity-compact .log-header h3 {
+  margin: 0;
+  font-size: 14px;
+}
+.activity-compact .inspector-worktree {
+  flex-basis: 100%;
+  font-size: 16px;
+  line-height: 1.35;
+}
+.activity-compact .run-details {
+  padding: 0 16px 8px;
+  gap: 5px 10px;
+  flex-flow: row wrap;
+  align-items: center;
+  max-height: 130px;
+  overflow: auto;
+  flex-shrink: 0;
+}
+.activity-compact .worktree-path {
+  flex-basis: 100%;
+  font-size: 12px;
+  line-height: 1.4;
+}
+.activity-compact .run-state {
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 12px;
+}
+.activity-compact .run-origin {
+  font-size: 12px;
+}
+.command-details {
+  font-size: 12px;
+  min-width: 0;
+}
+.command-details summary {
+  cursor: pointer;
+  color: var(--muted);
+}
+.command-details[open] {
+  flex-basis: 100%;
+}
+.command-details > div {
+  margin-top: 5px;
+  overflow-wrap: anywhere;
+}
+.activity-compact .run-links {
+  flex-basis: 100%;
+  gap: 6px 12px;
+  font-size: 12px;
+}
+.activity-compact .log-toolbar {
+  padding: 6px 16px;
+}
+.activity-compact .log-output {
+  padding: 8px 16px;
+  min-height: 65px;
+  font-size: 12px;
+  line-height: 1.55;
+}
+.activity-compact .run-inspector {
+  min-height: 0;
+  overflow: auto;
+}
+.activity-compact .ports-content {
+  padding: 12px 16px;
+}
+/* Keep output visible in the short dock; only the secondary metadata scrolls. */
+.activity-compact .activity-header {
+  padding: 3px 12px;
+  justify-content: flex-end;
+}
+.activity-compact .activity-header .segmented button {
+  padding-block: 4px;
+}
+.activity-compact .run-inspector {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto minmax(65px, 2fr);
+  overflow: hidden;
+}
+.activity-compact .log-header {
+  padding: 6px 12px 4px;
+}
+.activity-compact .run-details {
+  padding: 0 12px 4px;
+  min-height: 0;
+  max-height: none;
+  align-content: flex-start;
+  overflow: auto;
+}
+.activity-compact .worktree-path {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.activity-compact .log-toolbar {
+  padding: 4px 12px;
+}
+.activity-compact .log-output {
+  min-height: 0;
+  padding: 6px 12px;
+}
+</style>

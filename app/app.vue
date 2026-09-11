@@ -1,1 +1,3 @@
-<template><WorkspaceApp /></template>
+<template>
+  <UApp><WorkspaceApp /></UApp>
+</template>

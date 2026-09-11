@@ -1,5 +1,6 @@
 import {
   app,
+  clipboard,
   BrowserWindow,
   dialog,
   ipcMain,
@@ -21,6 +22,7 @@ import { WorkspaceService } from './workspace.js'
 import { McpController, mcpConnectionSchema, mcpProjectSchema, mcpTaskSchema } from './mcp.js'
 import { browseFolders, folderShortcut } from './folders.js'
 import { active } from './runner.js'
+import { androidDevices, findAdb } from './android.js'
 import { listeners, processCwd } from './processes.js'
 import type { Methods } from '../shared/types.js'
 
@@ -72,6 +74,9 @@ const treeInput = projectInput.extend({ worktree: string })
 const taskInput = treeInput.extend({ taskId: string })
 const folderInput = treeInput.extend({ folder: string })
 const schemas: Record<keyof Methods, z.ZodType> = {
+  gitState: treeInput,
+  gitAction: treeInput.extend({ action: z.enum(['fetch', 'pull']), expectedHead: z.string().max(64), expectedBranch: string.nullable() }),
+  copyText: z.object({ text: z.string().max(32768) }),
   mcpStatus: z.undefined(),
   mcpConfigure: mcpConnectionSchema,
   mcpProject: mcpProjectSchema,
@@ -92,6 +97,8 @@ const schemas: Record<keyof Methods, z.ZodType> = {
   removeFolder: projectInput.extend({ folderId: string }),
   tasks: treeInput,
   loadGradle: folderInput,
+  androidDevices: folderInput,
+  androidStart: taskInput.extend({ serial: string }),
   starTask: projectInput.extend({ taskId: string }),
   taskPort: projectInput.extend({
     taskId: string,
@@ -134,6 +141,9 @@ async function save() {
 const handlers: {
   [K in keyof Methods]: (input: Methods[K]['input']) => Promise<Methods[K]['output']>
 } = {
+  gitState: ({ projectId, worktree }) => workspace.gitState(projectId, worktree),
+  gitAction: async (input) => { try { return await workspace.gitAction(input) } finally { changed() } },
+  copyText: async ({ text }) => { clipboard.writeText(text) },
   mcpStatus: async () => mcp.status(),
   mcpConfigure: (input) => mcp.configure(input),
   mcpProject: ({ projectId, allowed }) => mcp.allowProject(projectId, allowed),
@@ -218,6 +228,24 @@ const handlers: {
       throw new Error('Add this folder to the project first.')
     await discovery.loadGradle(worktree, folder)
     return discovery.list(t.project, worktree)
+  },
+  androidDevices: async ({ projectId, worktree, folder }) => {
+    const { project } = await tree(projectId, worktree)
+    if (!project.folders.some(f => f.path === folder)) throw new Error('Unknown folder shortcut.')
+    return androidDevices(await resolveFolder(worktree, folder))
+  },
+  androidStart: async input => {
+    const { project, worktree: selectedTree } = await tree(input.projectId, input.worktree)
+    const task = (await discovery.list(project, input.worktree)).tasks.find(t => t.id === input.taskId)
+    if (!task?.available || !task.android) throw new Error('Load Gradle tasks and select an Android install variant first.')
+    const cwd = await resolveFolder(input.worktree, task.folder)
+    const devices = await androidDevices(cwd)
+    if (!devices.some(d => d.serial === input.serial && d.state === 'device')) throw new Error('The selected Android device is no longer available or authorized.')
+    const androidTaskId = JSON.stringify(['gradle', task.folder, 'darsena:android-launch'])
+    if (runner.list().some(r => active(r) && r.androidDevice === input.serial)) throw new Error('A deployment to this device is already running.')
+    const plan = { cwd, worktree: input.worktree, ...task.android, adb: await findAdb(cwd), serial: input.serial }
+    if (runner.list().some(r => active(r) && r.androidDevice === input.serial)) throw new Error('A deployment to this device is already running.')
+    return runner.start(project, selectedTree, { ...task, id: androidTaskId, name: 'Android · ' + task.android.variant + ' → ' + input.serial, command: process.execPath, args: [path.join(base, 'android-entry.js'), JSON.stringify(plan)] }, cwd, 'ui', { androidDevice: input.serial, env: { ELECTRON_RUN_AS_NODE: '1' }, displayCommand: task.android.assembleTask + ' → install → launch on ' + input.serial })
   },
   starTask: async ({ projectId, taskId }) => {
     const p = store.project(projectId)

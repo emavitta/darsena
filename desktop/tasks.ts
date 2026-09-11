@@ -2,6 +2,7 @@ import { readFile, access, mkdtemp, writeFile, rm } from 'node:fs/promises'
 import path from 'node:path'
 import os from 'node:os'
 import { z } from 'zod'
+import { androidVariant } from './android.js'
 import { command, message, resolveFolder } from './io.js'
 import type { Project, Task, TaskCatalog } from '../shared/types.js'
 
@@ -42,6 +43,7 @@ const gradleReportSchema = z.array(
   z.object({
     name: z.string().regex(/^:[\w:.-]+$/),
     description: z.string().nullable().optional(),
+    buildDirectory: z.string().optional(),
   }),
 )
 export function parseGradleReport(output: string) {
@@ -64,7 +66,7 @@ export class TaskDiscovery {
   rootProject.tasks.register('${name}') {
     doLast {
       def rows = rootProject.allprojects.collectMany { p ->
-        p.tasks.findAll { t -> t.name != '${name}' }.collect { t -> [name: t.path, description: t.description] }
+        p.tasks.findAll { t -> t.name != '${name}' }.collect { t -> [name: t.path, description: t.description, buildDirectory: p.layout.buildDirectory.get().asFile.absolutePath] }
       }
       println('__DARSENA_TASKS__' + groovy.json.JsonOutput.toJson(rows))
     }
@@ -84,6 +86,7 @@ export class TaskDiscovery {
         name: t.name,
         folder,
         kind: 'gradle',
+        android: t.buildDirectory && androidVariant(t.name) ? { ...androidVariant(t.name)!, buildDirectory: t.buildDirectory } : undefined,
         command: './gradlew',
         args: [t.name],
         available: true,
@@ -133,6 +136,13 @@ export class TaskDiscovery {
             loaded: tasks !== undefined,
             count: tasks?.length || 0,
           })
+          result.tasks.push({
+            id: taskId('gradle', folder.path, 'darsena:android-launch'),
+            name: 'Run on Android', folder: folder.path, kind: 'gradle',
+            action: 'android-launch', command: '', args: [],
+            description: 'Build, install and launch on a device or emulator.',
+            available: tasks === undefined || tasks.some(task => task.android),
+          })
           result.tasks.push(...(tasks || []))
         }
       } catch (error) {
@@ -165,7 +175,7 @@ export class TaskDiscovery {
           typeof folder === 'string' &&
           typeof name === 'string'
         ) {
-          result.tasks.push({ id, kind, folder, name, command: '', args: [], available: false })
+          result.tasks.push({ id, kind, folder, name: name === 'darsena:android-launch' ? 'Run on Android' : name, action: kind === 'gradle' && name === 'darsena:android-launch' ? 'android-launch' : undefined, command: '', args: [], available: false })
         }
       } catch {
         /* Removed custom task. */

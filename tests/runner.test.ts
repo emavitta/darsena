@@ -30,7 +30,13 @@ test('runner preserves cwd, output and failure status for a command', async (t) 
     },
     f.linked,
   )
+  const startedBranch = tree.branch
+  const startedHead = tree.head
+  tree.branch = 'a-different-checkout-later'
+  tree.head = 'changed-later'
   await eventually(() => !active(runner.list()[0]!))
+  assert.equal(runner.list()[0]!.worktreeBranch, startedBranch)
+  assert.equal(runner.list()[0]!.worktreeHead, startedHead)
   assert.equal(runner.list()[0]!.status, 'failed')
   assert.equal(runner.list()[0]!.exitCode, 7)
   assert.match(runner.logs(run.id), /expected failure/)

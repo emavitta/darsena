@@ -2,7 +2,7 @@
 import type { CustomTask, Folder } from '../../shared/types'
 import { shellScriptCommand, type ScriptShell } from '../utils/customCommands'
 
-defineProps<{ folders: Folder[]; busy: boolean }>()
+const props = defineProps<{ folders: Folder[]; busy: boolean }>()
 const emit = defineEmits<{ close: []; save: [task: Omit<CustomTask, 'id'>] }>()
 const name = shallowRef('')
 const folder = shallowRef('.')
@@ -22,6 +22,12 @@ watch([mode, script, shell], () => {
   error.value = ''
 })
 function submit() {
+  if (props.busy) return
+  error.value = ''
+  if (!name.value.trim() || (mode.value === 'command' && !command.value.trim())) {
+    error.value = 'Enter a display name and an executable.'
+    return
+  }
   try {
     const parsed = args.value.split(/\r?\n/u).filter((value) => value.length > 0)
     const invocation =
@@ -36,159 +42,158 @@ function submit() {
 </script>
 
 <template>
-  <AppDialog title="Add a custom command" @close="emit('close')">
-    <form class="form-stack" @submit.prevent="submit">
-      <fieldset class="command-type">
-        <legend class="sr-only">Command type</legend>
-        <label v-tooltip="'Save any executable with its arguments.'">
-          <input v-model="mode" type="radio" value="command" name="command-type" />
-          <TaskToolIcon icon="command" /> Command
-        </label>
-        <label v-tooltip="'Run a script file from the selected worktree with Bash, Zsh or Sh.'">
-          <input v-model="mode" type="radio" value="script" name="command-type" />
-          <TaskToolIcon icon="shell" /> Shell script
-        </label>
-      </fieldset>
-      <label>
-        Display name
-        <input
-          v-tooltip="'A recognizable name for this command in the task list.'"
+  <AppDialog title="Add a custom command" :busy="busy" @close="emit('close')">
+    <form class="custom-command-form nuxt-ui-scope" @submit.prevent="submit">
+      <URadioGroup
+        v-model="mode"
+        legend="Command type"
+        name="command-type"
+        :items="[
+          { value: 'command', label: 'Command' },
+          { value: 'script', label: 'Shell script' },
+        ]"
+        orientation="horizontal"
+        variant="card"
+        :disabled="busy"
+        :ui="{ label: 'text-[13px]', legend: 'text-[13px] font-medium', item: 'flex-1' }"
+      />
+      <UFormField label="Display name" required :ui="{ label: 'text-[13px]' }">
+        <UInput
+          aria-label="Display name"
           v-model="name"
           required
           placeholder="Run tests"
           autofocus
+          :disabled="busy"
+          class="w-full"
+          :ui="{ base: 'text-[14px] min-h-[36px]' }"
         />
-      </label>
-      <label>
+      </UFormField>
+      <label class="native-choice">
         Working folder
-        <select
-          v-tooltip="'Run from this folder inside whichever worktree you select.'"
-          v-model="folder"
-        >
+        <select v-model="folder" :disabled="busy">
           <option v-for="entry in folders" :key="entry.id" :value="entry.path">
             {{ entry.label }} · {{ entry.path }}
           </option>
         </select>
       </label>
       <template v-if="mode === 'script'">
-        <label>
-          Script path
-          <input
+        <UFormField
+          label="Script path"
+          required
+          description="Relative to the working folder. Spaces are allowed; do not add quotes."
+          :ui="{ label: 'text-[13px]', description: 'text-[13px]' }"
+        >
+          <UInput
+            aria-label="Script path"
             v-model="script"
-            v-tooltip="
-              'Path relative to the working folder. Spaces are allowed; do not add quotes.'
-            "
             required
             placeholder="scripts/dev.sh"
-            spellcheck="false"
+            :spellcheck="false"
+            :disabled="busy"
+            class="w-full"
+            :ui="{ base: 'text-[14px] min-h-[36px]' }"
           />
-        </label>
-        <label>
+        </UFormField>
+        <label class="native-choice">
           Run with
-          <select
-            v-model="shell"
-            v-tooltip="
-              'Choose the shell this script was written for. The file does not need executable permission.'
-            "
-          >
+          <select v-model="shell" :disabled="busy">
             <option value="bash">Bash</option>
             <option value="zsh">Zsh</option>
             <option value="sh">Sh (POSIX)</option>
           </select>
+          <span class="field-description"
+            >Choose the shell this script needs. Executable permission is not required.</span
+          >
         </label>
       </template>
-      <label v-else>
-        Executable
-        <input
+      <UFormField
+        v-else
+        label="Executable"
+        required
+        description="Name or path without arguments, such as cargo or ./gradlew."
+        :ui="{ label: 'text-[13px]', description: 'text-[13px]' }"
+      >
+        <UInput
+          aria-label="Executable"
           v-model="command"
-          v-tooltip="
-            'The executable name or path, without arguments. For example: cargo or ./gradlew.'
-          "
           required
           placeholder="cargo, python3, ./gradlew…"
-          spellcheck="false"
+          :spellcheck="false"
+          :disabled="busy"
+          class="w-full"
+          :ui="{ base: 'text-[14px] min-h-[36px]' }"
         />
-      </label>
-      <label>
-        Arguments <span class="muted">One per line · optional</span>
-        <textarea
+      </UFormField>
+      <UFormField
+        label="Arguments"
+        hint="Optional"
+        description="One argument per line, without surrounding quotes. Spaces stay in that argument; shell operators are not expanded."
+        :ui="{ label: 'text-[13px]', hint: 'text-[13px]', description: 'text-[13px]' }"
+      >
+        <UTextarea
           v-model="args"
-          v-tooltip="
-            'One argument per line, without surrounding quotes. Spaces stay in that argument. Shell operators are not expanded.'
-          "
-          rows="3"
-          spellcheck="false"
+          :rows="3"
+          :spellcheck="false"
           :placeholder="mode === 'script' ? '--watch' : 'test'"
+          :disabled="busy"
+          class="w-full"
+          :ui="{ base: 'text-[14px] min-h-[36px]' }"
         />
-      </label>
+      </UFormField>
       <div class="command-preview">
         <TaskToolBadge :tool="preview" />
-        <p class="form-hint">
+        <p class="field-description">
           {{
             mode === 'script'
-              ? 'Uses this script from the selected worktree. Choose the shell your script needs.'
+              ? 'Uses this script from the selected worktree.'
               : 'Runs in the selected worktree. Use Shell script for a .sh file or multi-step setup.'
           }}
         </p>
       </div>
       <p v-if="error" role="alert" class="inline-error">{{ error }}</p>
       <footer class="dialog-actions">
-        <button
-          v-tooltip="'Discard this unsaved command.'"
+        <UButton
           type="button"
-          class="button"
-          @click="emit('close')"
-        >
-          Cancel
-        </button>
-        <button
-          v-tooltip="'Save and favorite this command for the project. It does not run yet.'"
-          class="button primary"
+          color="neutral"
+          variant="outline"
           :disabled="busy"
+          class="text-[13px]"
+          @click="emit('close')"
+          >Cancel</UButton
         >
-          Add command
-        </button>
+        <UButton type="submit" :loading="busy" :disabled="busy" class="text-[13px]"
+          >Add command</UButton
+        >
       </footer>
     </form>
   </AppDialog>
 </template>
 
 <style scoped>
-.sr-only {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  padding: 0;
-  overflow: hidden;
-  clip-path: inset(50%);
-  white-space: nowrap;
-}
-.command-type {
+.custom-command-form {
   display: flex;
-  gap: 8px;
-  border: 0;
-  padding: 0;
-  margin: 0;
+  flex-direction: column;
+  gap: 18px;
 }
-.command-type label {
+.native-choice {
   display: flex;
-  flex: 1;
-  align-items: center;
-  gap: 8px;
-  padding: 10px;
-  border: 1px solid var(--line);
-  border-radius: 7px;
-  font-size: 12px;
-  cursor: pointer;
+  flex-direction: column;
+  gap: 7px;
+  font-size: 13px;
+  font-weight: 500;
 }
-.command-type label:has(input:checked) {
-  border-color: var(--accent);
-  background: var(--surface);
+.native-choice select {
+  width: 100%;
+  font-size: 14px;
+  font-weight: 400;
 }
-.command-type input {
-  width: auto;
+.field-description {
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 400;
+  line-height: 1.55;
   margin: 0;
-  accent-color: var(--accent);
 }
 .command-preview {
   display: flex;

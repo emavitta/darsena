@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import {
   Activity,
+  ArrowLeft,
+  ArrowRight,
   ArrowUpRight,
   Box,
   Check,
@@ -31,6 +33,8 @@ import {
 } from '@lucide/vue'
 const icons = {
   Activity,
+  ArrowLeft,
+  ArrowRight,
   ArrowUpRight,
   Box,
   Check,

@@ -48,8 +48,11 @@ jobs:
       - name: Build the application
         run: pnpm build
 
-      - name: Package unsigned DMG and ZIP
+      - name: Package ad-hoc signed DMG and ZIP
         run: pnpm exec electron-builder --mac dmg zip --arm64 --publish never
+
+      - name: Verify the application signature
+        run: node scripts/verify-macos.mjs
 
       - name: Test the packaged app lifecycle and project removal
         env:
@@ -57,7 +60,12 @@ jobs:
         run: |
           node --import tsx tests/ui-smoke.mjs
           node --import tsx tests/project-removal-smoke.mjs
+          node --import tsx tests/git-smoke.mjs
           node --import tsx tests/mcp-smoke.mjs
+          node --import tsx tests/preferences-smoke.mjs
+          node --import tsx tests/task-readability-smoke.mjs
+          node --import tsx tests/worktree-switcher-smoke.mjs
+          node --import tsx tests/android-smoke.mjs
 
       - name: Verify downloads and record their source
         working-directory: release
