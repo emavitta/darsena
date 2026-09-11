@@ -74,6 +74,7 @@ export async function deploy(plan: AndroidPlan, run = execute) {
   const installed = await run(plan.adb, ['-s', plan.serial, 'install', '-r', apk.file], plan.cwd)
   if (!/Success/.test(installed))
     throw new Error('Android did not confirm installation. The app was not launched.')
+  process.send?.({ type: 'installed', applicationId: apk.applicationId })
   console.log('[3/3] Launch ' + apk.applicationId)
   const launched = await run(
     plan.adb,

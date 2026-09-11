@@ -8,15 +8,24 @@ type StoryId = (typeof brandStory)[number]['id']
 const active = shallowRef<StoryId>('harbor')
 let dialog: HTMLDialogElement | null = null
 let frame = 0
+let resizeObserver: ResizeObserver | undefined
+const finalSectionHeight = shallowRef(0)
+const readingOffset = () => Math.min(150, (dialog?.clientHeight || 450) / 3)
+function resizeReadingArea() {
+  if (!dialog) return
+  // Let the last heading reach the same reading line as every preceding one.
+  // This also gives short penultimate sections their own scroll interval.
+  finalSectionHeight.value = Math.ceil(dialog.clientHeight - readingOffset()) + 1
+  onScroll()
+}
 function updateSection() {
   if (!dialog) return
   const sections = Array.from(article.value?.querySelectorAll<HTMLElement>('.story-section') || [])
-  const readingLine = dialog.getBoundingClientRect().top + 150
+  const readingLine = dialog.getBoundingClientRect().top + readingOffset()
   let visible = sections[0]
   for (const section of sections) {
-    if (section.getBoundingClientRect().top <= readingLine) visible = section
+    if (section.getBoundingClientRect().top <= readingLine + 1) visible = section
   }
-  if (dialog.scrollTop + dialog.clientHeight >= dialog.scrollHeight - 3) visible = sections.at(-1)
   if (visible) active.value = visible.dataset.story as StoryId
 }
 function onScroll() {
@@ -32,12 +41,13 @@ function selectSection(id: StoryId) {
         dialog.scrollTop +
         section.getBoundingClientRect().top -
         dialog.getBoundingClientRect().top -
-        100,
+        readingOffset(),
       behavior: 'instant',
     })
   }
 }
 onBeforeUnmount(() => {
+  resizeObserver?.disconnect()
   dialog?.removeEventListener('scroll', onScroll)
   cancelAnimationFrame(frame)
 })
@@ -48,6 +58,9 @@ onMounted(async () => {
   heading.value?.focus({ preventScroll: true })
   dialog = article.value?.closest('dialog') || null
   dialog?.addEventListener('scroll', onScroll, { passive: true })
+  resizeObserver = new ResizeObserver(resizeReadingArea)
+  if (dialog) resizeObserver.observe(dialog)
+  resizeReadingArea()
 })
 
 function openSource(event: MouseEvent, url: string) {
@@ -59,7 +72,7 @@ function openSource(event: MouseEvent, url: string) {
 </script>
 
 <template>
-  <article ref="article" class="brand-story">
+  <article ref="article" class="brand-story" :style="{ '--story-final-height': `${finalSectionHeight}px` }">
     <button class="story-back" @click="emit('back')">
       <AppIcon name="ArrowLeft" :size="15" />Back to About
     </button>
@@ -179,6 +192,9 @@ function openSource(event: MouseEvent, url: string) {
   gap: 10px;
   padding: 25px 0;
   border-top: 1px solid var(--line);
+}
+.story-section:last-child {
+  min-height: var(--story-final-height);
 }
 .story-number {
   position: relative;

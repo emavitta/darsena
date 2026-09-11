@@ -131,3 +131,58 @@ port conflicts, revocation and persistence. The desktop smoke test uses isolated
 settings to exercise the Preferences controls, configuration copy, an MCP-started
 task visible in Activity, window close and Quit cleanup. GitHub CI runs it too;
 the macOS build workflow also runs it against the packaged app.
+
+## Inspecting completion
+
+Use `get_run` with `{ "runId": "..." }` for a single run, or
+`wait_for_run` with `{ "runId": "...", "timeoutMs": 25000 }` to wait.
+Both return `run` (including exit code and signal), `completed`, `outcome`,
+`durationMs` and `successScope`. Outcomes are `pending`, `succeeded`, `failed`
+or `stopped`; stopping a task is not success. `read_logs` provides error output.
+
+Waiting accepts 0–25000 ms and returns `timedOut: true` while the process is
+still active. Repeat the call to continue waiting. Timeout or cancellation never
+stops the process. Project access and connection credentials are rechecked during
+the wait. These are read-only tools and need no task execution grant.
+
+Success describes the managed process, not application health. For Android runs,
+a successful deployment does not prove the installed app remains alive. No application health guarantees, automatic retries or webhook callbacks are provided.
+Optional Logcat collection can observe process presence, as described below.
+
+Copied connection configuration now includes `"type": "http"` for clients such
+as Claude Code that require an explicit transport type.
+
+## Android Logcat
+
+After a deployment or app operation finishes, `start_logcat` accepts its `runId`.
+The application ID and device come from that run: clients cannot request arbitrary
+packages or devices. Installation metadata is captured by new Darsena deployments;
+older runs without it cannot start collection. Project sharing is required; no
+permission to execute shell tasks is needed for log collection.
+
+- `start_logcat { runId }` returns a managed Logcat run, reusing an active reader
+  for the same project/device/package.
+- `read_logcat { runId, lines?, query?, level? }` returns up to 500 lines / 32 Ki
+  characters, the run metadata and `collecting`. Levels: V, D, I, W, E, F (minimum).
+- `stop_logcat { runId }` stops the reader only. The device app is untouched.
+- `list_runs`, `get_run`, `wait_for_run` and `read_logs` also work for Logcat.
+  Waiting follows the reader's lifetime, not the device application's lifetime.
+
+`run.logcat` reports sampled process state (`running`, `not-running`, `unknown`),
+PIDs and `checkedAt`. Sampling is approximately every two seconds; short process
+lifetimes can be missed. A running process is not proof of application health.
+After collection stops, observations are historical. `lastCrashAt` is when a
+crash-like message was observed, not its original timestamp: the initial 200
+recent records may include old crashes. Inspect the actual log timestamps.
+
+Collection uses the package's Android UID, so it survives PID changes and includes
+app subprocesses. Packages sharing a UID are rejected to avoid including another
+app's logs. Device disconnects, user/UID changes or missing packages fail the
+reader; restart it after resolving the problem. No automatic reinstall/relaunch,
+log-buffer clearing, or app stop occurs. Closing the window keeps readers alive;
+quitting Darsena stops them. Logs are bounded to 512 Ki characters per run and
+retained only in this Darsena session.
+
+The worktree identifies the originating operation, not the installed binary:
+Android Studio or another worktree can replace the package afterward. Logs may
+contain secrets and are readable by clients with access to the originating project.

@@ -108,7 +108,7 @@ test('MCP authenticates HTTP, supports legacy/modern clients and defaults to no 
     const client = await connect(mode)
     assert.equal(client.getServerVersion()?.name, 'darsena')
     assert.equal(client.getProtocolEra(), mode === 'auto' ? 'modern' : 'legacy')
-    assert.equal((await client.listTools()).tools.length, 8)
+    assert.equal((await client.listTools()).tools.length, 13)
     assert.deepEqual((await call(client, 'list_projects')).projects, [])
     assert.equal(
       (await client.callTool({ name: 'list_worktrees', arguments: { projectId: f.project.id } }))
@@ -396,5 +396,105 @@ test('connection failures can be corrected and persisted permissions survive a r
   assert.equal(
     JSON.parse(restarted.configuration()).mcpServers.darsena.headers.Authorization,
     original.headers.Authorization,
+  )
+})
+
+test('run inspection and bounded waiting distinguish outcomes and recheck sharing', async (t) => {
+  const { f, mcp, workspace, connect } = await setup(t)
+  await mcp.allowProject(f.project.id, true)
+  const client = await connect()
+  f.project.customTasks.push({
+    id: 'finish',
+    name: 'finish',
+    folder: '.',
+    command: process.execPath,
+    args: ['-e', 'setTimeout(()=>process.exit(0), 700)'],
+  })
+  const input = { projectId: f.project.id, worktree: f.root, taskId: 'finish' }
+  await mcp.allowTask({ ...input, allowed: true })
+  const { run } = await call(client, 'start_task', input)
+  const pending = await call(client, 'wait_for_run', { runId: run.id, timeoutMs: 0 })
+  assert.equal(pending.timedOut, true)
+  assert.equal(pending.outcome, 'pending')
+  const done = await call(client, 'wait_for_run', { runId: run.id, timeoutMs: 5000 })
+  assert.equal(done.timedOut, false)
+  assert.equal(done.outcome, 'succeeded')
+  assert.equal(done.run.exitCode, 0)
+  assert.ok(done.durationMs >= 0)
+  assert.equal((await call(client, 'get_run', { runId: run.id })).completed, true)
+  assert.equal(
+    (await client.callTool({ name: 'get_run', arguments: { runId: 'missing' } })).isError,
+    true,
+  )
+  const task = f.project.customTasks.find((task) => task.id === 'finish')!
+  task.args = ['-e', 'process.exit(7)']
+  const failed = await call(client, 'start_task', input)
+  const failure = await call(client, 'wait_for_run', { runId: failed.run.id, timeoutMs: 5000 })
+  assert.equal(failure.outcome, 'failed')
+  assert.equal(failure.run.exitCode, 7)
+  task.args = ['-e', 'setInterval(()=>{},1000)']
+  const live = await call(client, 'start_task', input)
+  const waiting = client.callTool({
+    name: 'wait_for_run',
+    arguments: { runId: live.run.id, timeoutMs: 5000 },
+  })
+  await new Promise((resolve) => setTimeout(resolve, 100))
+  await mcp.allowProject(f.project.id, false)
+  assert.equal((await waiting).isError, true)
+  assert.equal(
+    (await client.callTool({ name: 'get_run', arguments: { runId: live.run.id } })).isError,
+    true,
+  )
+  await workspace.runner.stop(live.run.id)
+  await mcp.allowProject(f.project.id, true)
+  assert.equal((await call(client, 'wait_for_run', { runId: live.run.id })).outcome, 'stopped')
+})
+
+test('MCP Logcat reads only shared sessions and stopping logs does not require command execution grants', async (t) => {
+  const { f, workspace, mcp, connect } = await setup(t)
+  const client = await connect()
+  const { worktree } = await workspace.tree(f.project.id, f.root)
+  const session = workspace.runner.start(
+    f.project,
+    worktree,
+    {
+      id: 'logcat-test',
+      name: 'Logcat',
+      folder: '.',
+      kind: 'custom',
+      available: true,
+      command: process.execPath,
+      args: [
+        '-e',
+        "console.log('09-11 12:00:00.000 1 1 I App: hello');console.log('09-11 12:00:00.000 1 1 E App: broken');setInterval(()=>{},1000)",
+      ],
+    },
+    f.root,
+    'ui',
+    {
+      androidDevice: 'fixture-device',
+      androidOperation: 'logcat',
+      androidApplicationId: 'app.fixture',
+    },
+  )
+  await eventually(() => workspace.runner.logs(session.id).includes('broken'))
+  for (const name of ['read_logcat', 'stop_logcat', 'start_logcat']) {
+    assert.equal((await client.callTool({ name, arguments: { runId: session.id } })).isError, true)
+  }
+  await mcp.allowProject(f.project.id, true)
+  const logs = await call(client, 'read_logcat', { runId: session.id, level: 'E' })
+  assert.equal(logs.collecting, true)
+  assert.ok(logs.text.includes('broken'))
+  assert.ok(!logs.text.includes('hello'))
+  assert.equal(
+    (await client.callTool({ name: 'start_logcat', arguments: { runId: session.id } })).isError,
+    true,
+  )
+  assert.equal((await call(client, 'stop_logcat', { runId: session.id })).run.status, 'stopped')
+  assert.equal((await call(client, 'read_logcat', { runId: session.id })).collecting, false)
+  await mcp.allowProject(f.project.id, false)
+  assert.equal(
+    (await client.callTool({ name: 'read_logcat', arguments: { runId: session.id } })).isError,
+    true,
   )
 })

@@ -10,7 +10,7 @@ import {
   protocol,
   shell,
 } from 'electron'
-import { realpath } from 'node:fs/promises'
+import { realpath, writeFile } from 'node:fs/promises'
 import path from 'node:path'
 import { fileURLToPath, pathToFileURL } from 'node:url'
 import { randomUUID } from 'node:crypto'
@@ -98,6 +98,8 @@ const schemas: Record<keyof Methods, z.ZodType> = {
   removeFolder: projectInput.extend({ folderId: string }),
   tasks: treeInput,
   loadGradle: folderInput,
+  exportLogcat: z.object({ runId: string }),
+  startLogcat: z.object({ runId: string }),
   androidApps: folderInput.extend({ serial: string }),
   androidAppAction: folderInput.extend({ serial: string, applicationId: z.string().regex(/^[A-Za-z]\w*(\.[A-Za-z]\w*)+$/), user: z.string().regex(/^\d+$/), operation: z.enum(adbOperations), confirmed: z.boolean() }),
   androidDevices: folderInput,
@@ -232,6 +234,16 @@ const handlers: {
     await discovery.loadGradle(worktree, folder)
     return discovery.list(t.project, worktree)
   },
+  exportLogcat: async ({ runId }) => {
+    const run = runner.list().find(r => r.id === runId && r.androidOperation === 'logcat')
+    if (!run) throw new Error('Logcat session not found.')
+    const output = runner.logs(runId)
+    const result = await dialog.showSaveDialog({ defaultPath: `Logcat-${run.androidApplicationId}-${Date.now()}.txt`, filters: [{ name: 'Text', extensions: ['txt'] }] })
+    if (result.canceled || !result.filePath) return false
+    await writeFile(result.filePath, output, 'utf8')
+    return true
+  },
+  startLogcat: async ({ runId }) => workspace.startLogcat(runId),
   androidApps: async input => {
     const { project } = await tree(input.projectId, input.worktree)
     if (!project.folders.some(f => f.path === input.folder)) throw new Error('Unknown folder shortcut.')
@@ -246,9 +258,9 @@ const handlers: {
     if (apps.user !== input.user || !apps.packages.includes(input.applicationId)) throw new Error('App or Android user changed. Refresh apps.')
     const cwd = await resolveFolder(input.worktree, input.folder)
     const adb = await findAdb(cwd)
-    if (runner.list().some(r => active(r) && r.androidDevice === input.serial)) throw new Error('An Android operation is already running on this device.')
+    if (runner.list().some(r => active(r) && r.androidOperation !== 'logcat' && r.androidDevice === input.serial)) throw new Error('An Android operation is already running on this device.')
     const plan = { ...input, cwd, adb }
-    return runner.start(project, selectedTree, { id: JSON.stringify(['adb', input.folder, input.operation, input.applicationId]), name: `ADB · ${input.operation} · ${input.applicationId} → ${input.serial}`, folder: input.folder, kind: 'custom', available: true, command: process.execPath, args: [path.join(base, 'adb-entry.js'), JSON.stringify(plan)] }, cwd, 'ui', { androidDevice: input.serial, env: { ELECTRON_RUN_AS_NODE: '1' }, androidOperation: 'app-action', displayCommand: `ADB ${input.operation} ${input.applicationId} · device ${input.serial} · user ${input.user}` })
+    return runner.start(project, selectedTree, { id: JSON.stringify(['adb', input.folder, input.operation, input.applicationId]), name: `ADB · ${input.operation} · ${input.applicationId} → ${input.serial}`, folder: input.folder, kind: 'custom', available: true, command: process.execPath, args: [path.join(base, 'adb-entry.js'), JSON.stringify(plan)] }, cwd, 'ui', { androidDevice: input.serial, env: { ELECTRON_RUN_AS_NODE: '1' }, androidOperation: 'app-action', androidApplicationId: input.applicationId, displayCommand: `ADB ${input.operation} ${input.applicationId} · device ${input.serial} · user ${input.user}` })
   },
   androidDevices: async ({ projectId, worktree, folder }) => {
     const { project } = await tree(projectId, worktree)
@@ -263,10 +275,10 @@ const handlers: {
     const devices = await androidDevices(cwd)
     if (!devices.some(d => d.serial === input.serial && d.state === 'device')) throw new Error('The selected Android device is no longer available or authorized.')
     const androidTaskId = JSON.stringify(['gradle', task.folder, 'darsena:android-launch'])
-    if (runner.list().some(r => active(r) && r.androidDevice === input.serial)) throw new Error('A deployment to this device is already running.')
+    if (runner.list().some(r => active(r) && r.androidOperation !== 'logcat' && r.androidDevice === input.serial)) throw new Error('A deployment to this device is already running.')
     const plan = { cwd, worktree: input.worktree, ...task.android, adb: await findAdb(cwd), serial: input.serial }
-    if (runner.list().some(r => active(r) && r.androidDevice === input.serial)) throw new Error('A deployment to this device is already running.')
-    return runner.start(project, selectedTree, { ...task, id: androidTaskId, name: 'Android · ' + task.android.variant + ' → ' + input.serial, command: process.execPath, args: [path.join(base, 'android-entry.js'), JSON.stringify(plan)] }, cwd, 'ui', { androidDevice: input.serial, env: { ELECTRON_RUN_AS_NODE: '1' }, displayCommand: task.android.assembleTask + ' → install → launch on ' + input.serial })
+    if (runner.list().some(r => active(r) && r.androidOperation !== 'logcat' && r.androidDevice === input.serial)) throw new Error('A deployment to this device is already running.')
+    return runner.start(project, selectedTree, { ...task, id: androidTaskId, name: 'Android · ' + task.android.variant + ' → ' + input.serial, command: process.execPath, args: [path.join(base, 'android-entry.js'), JSON.stringify(plan)] }, cwd, 'ui', { androidDevice: input.serial, env: { ELECTRON_RUN_AS_NODE: '1' }, reports: true, androidVariant: task.android.variant, displayCommand: task.android.assembleTask + ' → install → launch on ' + input.serial })
   },
   starTask: async ({ projectId, taskId }) => {
     const p = store.project(projectId)

@@ -1,3 +1,4 @@
+import { z } from 'zod'
 import { spawn, type ChildProcess } from 'node:child_process'
 import { EventEmitter } from 'node:events'
 import { randomUUID } from 'node:crypto'
@@ -45,7 +46,7 @@ export class Runner extends EventEmitter {
     task: Task,
     cwd: string,
     source: Run['source'] = 'ui',
-    options: { env?: NodeJS.ProcessEnv; displayCommand?: string; androidDevice?: string; androidOperation?: Run['androidOperation'] } = {},
+    options: { env?: NodeJS.ProcessEnv; displayCommand?: string; androidDevice?: string; androidOperation?: Run['androidOperation']; androidApplicationId?: string; androidVariant?: string; reports?: boolean } = {},
   ): Run {
     if (this.shuttingDown) throw new Error('Darsena is shutting down.')
     const env: NodeJS.ProcessEnv = { ...process.env, ...options.env, NO_COLOR: '1' }
@@ -54,11 +55,13 @@ export class Runner extends EventEmitter {
       cwd,
       env,
       detached: true,
-      stdio: ['ignore', 'pipe', 'pipe'],
+      stdio: options.reports ? ['ignore', 'pipe', 'pipe', 'ipc'] : ['ignore', 'pipe', 'pipe'],
     })
     const run: Run = {
       id: randomUUID(),
       androidDevice: options.androidDevice,
+      androidApplicationId: options.androidApplicationId,
+      androidVariant: options.androidVariant,
       androidOperation: options.androidDevice ? options.androidOperation || 'deployment' : undefined,
       source,
       projectId: project.id,
@@ -81,6 +84,16 @@ export class Runner extends EventEmitter {
     }
     const entry: Entry = { run, child, log: '' }
     this.entries.set(run.id, entry)
+    if (options.reports) child.on('message', data => {
+      const deployment = z.object({ type: z.literal('installed'), applicationId: z.string().regex(/^[A-Za-z]\w*(\.[A-Za-z]\w*)+$/) }).safeParse(data)
+      if (run.androidOperation === 'deployment' && deployment.success) run.androidApplicationId = deployment.data.applicationId
+      const report = z.object({ type: z.literal('logcat'), state: z.enum(['running', 'not-running', 'unknown']).optional(), pids: z.array(z.number().int().positive()).max(256).optional(), checkedAt: z.number().optional(), lastCrashAt: z.number().optional() }).safeParse(data)
+      if (run.androidOperation === 'logcat' && report.success) {
+        const { type, ...update } = report.data
+        run.logcat = { state: 'unknown', pids: [], checkedAt: 0, ...run.logcat, ...update }
+      }
+      this.emit('changed')
+    })
     const outDecoder = new StringDecoder('utf8'),
       errDecoder = new StringDecoder('utf8')
     child.stdout?.on('data', (chunk) => this.append(entry, outDecoder.write(chunk)))

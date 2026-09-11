@@ -197,3 +197,15 @@ the user's current keyboard focus. Backend tests and builds remain noninteractiv
 Only an explicitly requested local interactive session may use
 `DARSENA_ALLOW_INTERACTIVE_TESTS=1`. Hidden windows are not a substitute for
 native focus, keyboard and window-lifecycle tests.
+
+
+### Android Logcat
+
+Activity offers **Follow Logcat** on finished Android runs with a captured
+application ID. `FollowLogcat` starts/reuses the reader and emits its ID to Activity;
+`LogcatOutput` owns search, severity, follow-scroll and user-triggered native text
+export. Both use Nuxt UI controls. The existing native dialogs are unchanged.
+The reader and device process have separate statuses; stopping collection does
+not stop the app. The worktree is the originating context, not build verification.
+The MCP exposes this read-only device collection (see docs/mcp.md); Android
+build/install and destructive ADB actions remain unavailable through MCP.

@@ -137,8 +137,8 @@ try {
     undefined,
   )
   const labels = ['pnpm', 'npm', 'Yarn', 'Bun', 'Gradle', 'Python', 'Shell', 'Custom', 'Android']
-  assert.equal(await tasks.locator('.task-tool-badge .tool-icon').count(), labels.length)
-  const iconSizes = await tasks.locator('.task-tool-badge .tool-icon').evaluateAll((icons) =>
+  assert.ok(await tasks.locator('.task-folder-tools .tool-icon').count() > 0)
+  const iconSizes = await tasks.locator('.task-folder-tools .tool-icon').evaluateAll((icons) =>
     icons.map((icon) => ({
       width: icon.getBoundingClientRect().width,
       loaded: icon.tagName === 'IMG' ? icon.complete && icon.naturalWidth > 0 : icon.querySelectorAll('path').length > 0,
@@ -146,22 +146,22 @@ try {
   )
   assert.ok(iconSizes.every((icon) => icon.width === 16 && icon.loaded))
   assert.deepEqual(
-    (await tasks.locator('.task-tool-badge').allTextContents()).map((text) => text.trim()).sort(),
+    [...new Set(await tasks.locator('.task-folder-tools .task-tool-symbol').evaluateAll(nodes => nodes.map(n => n.getAttribute('aria-label'))))].sort(),
     labels.toSorted(),
   )
   const filter = tasks.getByRole('combobox', { name: 'Filter tasks by tool' })
   await filter.selectOption('script:yarn')
   await eventually(async () => (await tasks.locator('.task-row').count()) === 1)
-  assert.equal(await tasks.locator('.task-tool-badge').innerText(), 'Yarn')
+  assert.equal(await tasks.locator('.task-folder-tools .task-tool-symbol').getAttribute('aria-label'), 'Yarn')
   await filter.selectOption('gradle')
-  assert.equal(await tasks.locator('.task-tool-badge').innerText(), 'Gradle')
+  assert.equal(await tasks.locator('.task-folder-tools .task-tool-symbol').getAttribute('aria-label'), 'Gradle')
   await tasks.getByRole('textbox', { name: 'Search tasks' }).fill('no match')
   await tasks.getByText('No matching tasks.', { exact: true }).waitFor()
   await tasks.getByRole('button', { name: 'Clear filters' }).click()
   await eventually(async () => (await tasks.locator('.task-row').count()) === labels.length)
   await tasks.getByRole('textbox', { name: 'Search tasks' }).fill('Yarn')
   await eventually(async () => (await tasks.locator('.task-row').count()) === 1)
-  assert.equal(await tasks.locator('.task-tool-badge').innerText(), 'Yarn')
+  assert.equal(await tasks.locator('.task-folder-tools .task-tool-symbol').getAttribute('aria-label'), 'Yarn')
   await tasks.getByRole('textbox', { name: 'Search tasks' }).fill('')
   await tasks.getByRole('heading', { name: 'Tasks', exact: true }).click()
 
@@ -183,7 +183,7 @@ try {
   for (const theme of ['light', 'dark']) {
     await page.emulateMedia({ colorScheme: theme })
     await page.waitForTimeout(180)
-    const colors = await tasks.locator('.task-tool-badge').evaluateAll((badges) =>
+    const colors = await tasks.locator('.task-name strong').evaluateAll((badges) =>
       badges.map((badge) => ({
         label: badge.textContent,
         foreground: getComputedStyle(badge).color,
@@ -211,12 +211,9 @@ try {
   const layout = await tasks.locator('.task-row').evaluateAll((rows) =>
     rows.map((row) => {
       const content = row.querySelector('.task-info').getBoundingClientRect()
-      const badge = row.querySelector('.task-tool-badge').getBoundingClientRect()
       const actions = row.querySelector('.task-row-actions').getBoundingClientRect()
       return {
         contentRight: content.right,
-        badgeLeft: badge.left,
-        badgeRight: badge.right,
         actionsLeft: actions.left,
         actionsRight: actions.right,
         rowRight: row.getBoundingClientRect().right,
@@ -224,7 +221,7 @@ try {
     }),
   )
   for (const row of layout) {
-    assert.ok(row.contentRight <= row.badgeLeft && row.badgeRight <= row.actionsLeft)
+    assert.ok(row.contentRight <= row.actionsLeft)
     assert.ok(row.actionsRight <= row.rowRight + 1)
   }
   await page.screenshot({
