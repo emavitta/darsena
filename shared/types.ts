@@ -78,6 +78,7 @@ export interface TaskCatalog {
 }
 export type RunStatus = 'starting' | 'running' | 'stopping' | 'stopped' | 'succeeded' | 'failed'
 export interface Run {
+  androidOperation?: 'deployment' | 'app-action'
   androidDevice?: string
   id: string
   source: 'ui' | 'mcp'
@@ -133,6 +134,9 @@ export interface GitState {
   checkedAt: number
 }
 export interface Methods {
+  androidApps: { input: { projectId: string; worktree: string; folder: string; serial: string }; output: { user: string; packages: string[] } }
+  androidAppAction: { input: { projectId: string; worktree: string; folder: string; serial: string; applicationId: string; user: string; operation: 'start' | 'stop' | 'restart' | 'clear' | 'uninstall'; confirmed: boolean }; output: Run }
+
   gitState: { input: { projectId: string; worktree: string }; output: GitState }
   gitAction: { input: { projectId: string; worktree: string; action: GitAction; expectedHead: string; expectedBranch: string | null }; output: { state: GitState; message: string } }
 

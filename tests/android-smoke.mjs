@@ -19,6 +19,9 @@ else { const out=path.join(build,'outputs/apk/debug');fs.mkdirSync(out,{recursiv
 await chmod(path.join(android, 'gradlew'), 0o755)
 await writeFile(path.join(sdk, 'adb'), `#!/usr/bin/env node
 if(process.argv.includes('devices')) console.log('List of devices attached\\nfixture-device device model:Fixture_Pixel\\nlocked-device unauthorized');
+else if(process.argv.includes('get-current-user')) console.log('0');
+else if(process.argv.includes('packages')) console.log('package:app.darsena.fixture');
+else if(process.argv.includes('clear') || process.argv.includes('uninstall')) console.log('Success');
 else if(process.argv.includes('install')) console.log('Success');
 else if(process.argv.includes('shell')) console.log('Status: ok');
 else process.exit(1);
@@ -39,7 +42,7 @@ try {
   await page.getByRole('button', { name: /Favorites/ }).click()
   await group.getByRole('button', { name: 'Run Run on Android in android-app', exact: true }).click()
   const dialog = page.getByRole('dialog', { name: 'Run on Android', exact: true })
-  await dialog.getByRole('button', { name: 'Load Android variants' }).click()
+  await dialog.getByRole('button', { name: 'Sync Gradle' }).click()
   await eventually(async () => await dialog.getByRole('combobox').nth(0).innerText() === ':app:Debug')
   await eventually(async () => (await dialog.getByRole('combobox').nth(1).innerText()).includes('Fixture Pixel'))
   await dialog.getByRole('combobox').nth(1).click()
@@ -67,6 +70,40 @@ try {
   assert.equal(run.taskId, JSON.stringify(['gradle', 'android-app', 'darsena:android-launch']))
   assert.equal(run.androidDevice, 'fixture-device')
   assert.equal(await page.getByRole('button', { name: 'Activity', exact: true }).getAttribute('aria-expanded'), 'true')
+  // ADB actions operate on an explicitly selected installed app without a build.
+  async function openActions() {
+    await group.getByRole('button', { name: 'Run Run on Android in android-app', exact: true }).click()
+    await dialog.getByRole('button', { name: 'ADB actions', exact: true }).click()
+    const picker = dialog.getByRole('combobox', { name: 'Installed application ID' })
+    await eventually(async () => !(await picker.isDisabled()))
+    await picker.click()
+    await dialog.getByRole('option', { name: 'app.darsena.fixture', exact: true }).click()
+  }
+  await openActions()
+  await dialog.getByRole('button', { name: 'App actions', exact: true }).click()
+  await dialog.getByRole('menuitem', { name: 'Restart app', exact: true }).click()
+  await dialog.waitFor({ state: 'detached' })
+  await eventually(async () => (await page.evaluate(() => window.darsena.call('runs'))).some(r => r.name.startsWith('ADB · restart') && r.status === 'succeeded'))
+  const adbRun = (await page.evaluate(() => window.darsena.call('runs'))).find(r => r.name.startsWith('ADB'))
+  assert.equal(adbRun.androidDevice, 'fixture-device')
+  assert.match(adbRun.command, /app.darsena.fixture/)
+  const adbLogs = await page.evaluate(id => window.darsena.call('logs', { runId: id }), adbRun.id)
+  assert.doesNotMatch(adbLogs, /BUILD SUCCESSFUL/)
+  await openActions()
+  await dialog.getByRole('button', { name: 'App actions', exact: true }).click()
+  await dialog.getByRole('menuitem', { name: 'Clear app data…', exact: true }).click()
+  const confirmation = dialog.getByRole('group', { name: 'Confirm Android operation' })
+  await confirmation.waitFor()
+  const before = (await page.evaluate(() => window.darsena.call('runs'))).length
+  await confirmation.getByRole('button', { name: 'Cancel action' }).click()
+  assert.equal((await page.evaluate(() => window.darsena.call('runs'))).length, before)
+  await dialog.getByRole('button', { name: 'App actions', exact: true }).click()
+  await dialog.getByRole('menuitem', { name: 'Clear app data…', exact: true }).click()
+  await confirmation.scrollIntoViewIfNeeded()
+  await page.screenshot({ path: 'test-results/adb-confirm.png', animations: 'disabled' })
+  await confirmation.getByRole('button', { name: 'Clear app data', exact: true }).click()
+  await dialog.waitFor({ state: 'detached' })
+  await eventually(async () => (await page.evaluate(() => window.darsena.call('runs'))).some(r => r.name.startsWith('ADB · clear') && r.status === 'succeeded'))
   assert.deepEqual(errors, [])
   console.log('PASS: Android variant/device picker, disabled unauthorized device, modal overlay, managed build/install/launch and terminal history. Only fixture Gradle/ADB were executed.')
 } finally { if (desktop) await desktop.close(); await f.cleanup() }

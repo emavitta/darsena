@@ -21,6 +21,8 @@ const methods = new Set([
   'removeFolder',
   'tasks',
   'loadGradle',
+  'androidApps',
+  'androidAppAction',
   'androidDevices',
   'androidStart',
   'starTask',

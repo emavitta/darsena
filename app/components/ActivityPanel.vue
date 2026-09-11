@@ -119,7 +119,7 @@ function showPorts() {
             @click="emit('stop', current.id)"
           >
             <AppIcon name="Square" :size="12" />{{
-              current.status === 'stopping' ? 'Stopping…' : 'Stop task'
+              current.status === 'stopping' ? 'Stopping…' : current.androidOperation === 'app-action' ? 'Cancel ADB operation' : current.androidDevice ? 'Stop deployment' : 'Stop task'
             }}</button
           ><span v-else class="tag">{{ status(current) }}</span>
         </header>
