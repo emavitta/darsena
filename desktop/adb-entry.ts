@@ -1,0 +1,3 @@
+import { appAction } from './adb-actions.js'
+try { await appAction(JSON.parse(process.argv[2]!)) }
+catch (error) { console.error(error instanceof Error ? error.message : String(error)); process.exitCode = 1 }

@@ -1,4 +1,4 @@
-import { _electron as electron } from 'playwright'
+import { electron } from '../tests/desktop-launch.mjs'
 import { fixture, eventually } from '../tests/fixture.ts'
 import { mkdir, writeFile } from 'node:fs/promises'
 import path from 'node:path'

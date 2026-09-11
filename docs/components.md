@@ -172,3 +172,28 @@ not new MCP permissions.
 
 Copying paths uses the validated Electron clipboard bridge. Smoke tests await
 the asynchronous copy result before reading the native clipboard.
+
+## Android device actions
+
+AndroidAppActions is a collapsible section in the Run on Android dialog. It uses
+Nuxt UI controls portaled into that native dialog. The user explicitly selects
+an installed third-party application ID; no variant-to-installed-app association
+is inferred. Clear/uninstall have a target-specific confirmation.
+
+The desktop validates folder, device, package and Android user, then launches a
+managed ADB worker. It rechecks the user/package at execution and records device,
+application ID, user and action in Activity. Device operations share the Android
+deployment conflict guard; cancellation stops the local operation and cannot
+undo commands already completed on the device. These are not exposed through MCP.
+
+Sync Gradle refreshes task/variant discovery only, using the configuration-cache
+override for the temporary report. Actual builds retain project settings.
+
+## Desktop test focus policy
+
+All Electron smoke tests and brand previews use `tests/desktop-launch.mjs`.
+They run normally in GitHub Actions but fail before starting locally, protecting
+the user's current keyboard focus. Backend tests and builds remain noninteractive.
+Only an explicitly requested local interactive session may use
+`DARSENA_ALLOW_INTERACTIVE_TESTS=1`. Hidden windows are not a substitute for
+native focus, keyboard and window-lifecycle tests.

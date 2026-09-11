@@ -12,6 +12,8 @@ const { devices, loading, busy, error, refresh, start, loadVariants, variantsLoa
   { projectId: props.projectId, worktree: props.worktree },
   (id) => emit('started', id),
 )
+const adbBusy = shallowRef(false)
+const syncedAt = shallowRef('')
 const loadedCatalog = shallowRef(props.catalog)
 watch(() => props.catalog, value => { loadedCatalog.value = value })
 const selectOpen = reactive({ folder: false, variant: false, device: false })
@@ -22,7 +24,7 @@ function closeSelect(event: KeyboardEvent) {
 }
 async function load() {
   const catalog = await loadVariants(folder.value)
-  if (catalog) { loadedCatalog.value = catalog; emit('loaded') }
+  if (catalog) { loadedCatalog.value = catalog; syncedAt.value = new Date().toLocaleTimeString(); emit('loaded') }
 }
 const folder = shallowRef(props.initialFolder)
 const taskId = shallowRef('')
@@ -66,7 +68,7 @@ watch(devices, (items) => {
   <AppDialog
     id="android-launch-dialog"
     title="Run on Android"
-    :busy="busy || gradleBusy || variantsLoading"
+    :busy="busy || adbBusy || gradleBusy || variantsLoading"
     @close="emit('close')"
   >
     <div class="form-stack nuxt-ui-scope">
@@ -80,7 +82,7 @@ watch(devices, (items) => {
           v-model:open="selectOpen.variant"
           :content="{ onEscapeKeyDown: closeSelect }"
           :items="variants"
-          :disabled="busy || gradleBusy || variantsLoading || !variants.length"
+          :disabled="busy || adbBusy || gradleBusy || variantsLoading || !variants.length"
           placeholder="Choose a variant"
           portal="#android-launch-dialog"
           class="w-full"
@@ -88,14 +90,14 @@ watch(devices, (items) => {
         />
       </UFormField>
       <UButton
-        v-if="!sourceLoaded"
         color="neutral"
         variant="outline"
         :loading="gradleBusy || variantsLoading"
         @click="load"
-        >Load Android variants</UButton
+        >{{ variantsLoading ? 'Syncing…' : 'Sync Gradle' }}</UButton
       >
-      <p v-else-if="!variants.length" class="muted">
+      <p v-if="syncedAt" class="muted">Last synced {{ syncedAt }}</p>
+      <p v-if="sourceLoaded && !variants.length" class="muted">
         No Android install variants found. This folder may be a library or a non-Android Gradle
         project.
       </p>
@@ -105,7 +107,7 @@ watch(devices, (items) => {
           v-model:open="selectOpen.device"
           :content="{ onEscapeKeyDown: closeSelect }"
           :items="deviceOptions"
-          :disabled="busy || loading"
+          :disabled="busy || adbBusy || loading"
           placeholder="Choose a device"
           portal="#android-launch-dialog"
           class="w-full"
@@ -116,7 +118,7 @@ watch(devices, (items) => {
         color="neutral"
         variant="ghost"
         :loading="loading"
-        :disabled="busy"
+        :disabled="busy || adbBusy"
         icon="i-lucide-refresh-cw"
         @click="refresh(folder)"
         >Refresh devices</UButton
@@ -124,6 +126,7 @@ watch(devices, (items) => {
       <p v-if="!loading && !devices.length" class="muted">
         Connect a device with USB debugging authorized, or start an emulator in Android Studio.
       </p>
+      <AndroidAppActions v-if="serial" :key="serial" :project-id="projectId" :worktree="worktree" :folder="folder" :serial="serial" :disabled="busy || gradleBusy || variantsLoading" @busy="adbBusy = $event" @started="emit('started', $event)" />
       <p class="android-note">
         Build → install → launch. Installing the same application ID replaces its current build on
         the selected device, including a build from another worktree. Existing app data is kept when
@@ -138,13 +141,13 @@ watch(devices, (items) => {
         <UButton
           color="neutral"
           variant="ghost"
-          :disabled="busy || gradleBusy || variantsLoading"
+          :disabled="busy || adbBusy || gradleBusy || variantsLoading"
           @click="emit('close')"
           >Cancel</UButton
         >
         <UButton
           :loading="busy"
-          :disabled="!taskId || !serial || loading || gradleBusy || variantsLoading"
+          :disabled="adbBusy || !taskId || !serial || loading || gradleBusy || variantsLoading"
           icon="i-lucide-play"
           @click="start(taskId, serial)"
           >Build, install &amp; launch</UButton

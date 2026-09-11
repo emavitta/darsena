@@ -1,4 +1,4 @@
-import { _electron as electron } from 'playwright'
+import { electron } from './desktop-launch.mjs'
 import { mkdir, writeFile, chmod, access } from 'node:fs/promises'
 import path from 'node:path'
 import assert from 'node:assert/strict'
@@ -58,7 +58,7 @@ try {
   await sources.getByText('Gradle', { exact: true }).waitFor()
   await sources.getByText('Custom commands', { exact: true }).waitFor()
   await assert.rejects(access(path.join(f.root, folder, '.source-loaded')))
-  await sources.getByRole('button', { name: `Load Gradle tasks in ${folder}`, exact: true }).click()
+  await sources.getByRole('button', { name: `Sync Gradle in ${folder}`, exact: true }).click()
   const gradleRun = tasks.getByRole('button', {
     name: `Run :app:assembleDebug in ${folder}`,
     exact: true,
@@ -88,12 +88,12 @@ try {
   assert.ok(await gradleRun.isDisabled())
   await tasks.getByText('Load this task’s source in Sources.').waitFor()
   await sources.locator('summary').click()
-  await sources.getByRole('button', { name: `Load Gradle tasks in ${folder}`, exact: true }).click()
+  await sources.getByRole('button', { name: `Sync Gradle in ${folder}`, exact: true }).click()
   await eventually(() => gradleRun.isEnabled())
   // An explicitly loaded empty report is ready, and a removed favorite is unavailable, not un-loaded.
   await wrapper(f.linked, [])
   await sources
-    .getByRole('button', { name: `Refresh Gradle tasks in ${folder}`, exact: true })
+    .getByRole('button', { name: `Sync Gradle in ${folder}`, exact: true })
     .click()
   await sources.getByText('0 tasks', { exact: true }).waitFor()
   assert.ok(await gradleRun.isDisabled())

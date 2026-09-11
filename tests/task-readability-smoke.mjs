@@ -1,4 +1,4 @@
-import { _electron as electron } from 'playwright'
+import { electron } from './desktop-launch.mjs'
 import { mkdir, writeFile, chmod } from 'node:fs/promises'
 import path from 'node:path'
 import assert from 'node:assert/strict'
@@ -59,7 +59,7 @@ try {
   const tasks = page.locator('.tasks-section')
   await tasks.getByRole('button', { name: /All tasks/ }).click()
   await tasks.locator('summary').click()
-  await tasks.getByRole('button', { name: 'Load Gradle tasks in android-app' }).click()
+  await tasks.getByRole('button', { name: 'Sync Gradle in android-app' }).click()
   await tasks.getByRole('button', { name: 'Run :app:assembleDebug in android-app' }).waitFor()
   await tasks.locator('summary').click()
   assert.equal(await tasks.locator('.task-folder-group').count(), 5)

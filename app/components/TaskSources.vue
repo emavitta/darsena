@@ -39,13 +39,13 @@ const pending = computed(() => props.sources.filter((source) => !source.loaded).
           v-if="source.kind === 'gradle'"
           class="button small"
           :disabled="loading"
-          :aria-label="`${source.loaded ? 'Refresh' : 'Load'} Gradle tasks in ${source.folder}`"
+          :aria-label="`Sync Gradle in ${source.folder}`"
           v-tooltip="
             `Run Gradle to discover tasks in this worktree. This evaluates the build and may take a moment.\n${source.folder}`
           "
           @click="emit('load', source.folder)"
         >
-          <AppIcon name="RefreshCw" :size="12" />{{ source.loaded ? 'Refresh' : 'Load tasks' }}
+          <AppIcon name="RefreshCw" :size="12" />{{ loading ? 'Syncing…' : 'Sync Gradle' }}
         </button>
         <AppIcon v-else name="Check" :size="14" class="muted" />
       </div>

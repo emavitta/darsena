@@ -16,3 +16,13 @@ Use Nuxt UI for new shared controls and follow the theme/integration in
 remote fonts/icons or relax Electron CSP. Preserve native `AppDialog` until its
 scroll/focus consumers are explicitly migrated; portal overlays into that dialog.
 See `docs/components.md` and run the Preferences smoke test for shared-control changes.
+
+# Preserve the user's keyboard focus
+
+Never run local interactive Electron/UI smoke tests or native preview scripts
+unless the user explicitly requests an interactive test session. They can steal
+focus while the user is typing. Run desktop tests in GitHub Actions instead;
+local backend tests, type checks, builds and noninteractive checks remain allowed.
+The shared desktop launcher blocks local launches by default. Do not set
+DARSENA_ALLOW_INTERACTIVE_TESTS=1 or spoof GITHUB_ACTIONS to bypass this preference.
+The opt-in is only for an explicitly user-requested interactive test session.

@@ -45,7 +45,7 @@ export class Runner extends EventEmitter {
     task: Task,
     cwd: string,
     source: Run['source'] = 'ui',
-    options: { env?: NodeJS.ProcessEnv; displayCommand?: string; androidDevice?: string } = {},
+    options: { env?: NodeJS.ProcessEnv; displayCommand?: string; androidDevice?: string; androidOperation?: Run['androidOperation'] } = {},
   ): Run {
     if (this.shuttingDown) throw new Error('Darsena is shutting down.')
     const env: NodeJS.ProcessEnv = { ...process.env, ...options.env, NO_COLOR: '1' }
@@ -59,6 +59,7 @@ export class Runner extends EventEmitter {
     const run: Run = {
       id: randomUUID(),
       androidDevice: options.androidDevice,
+      androidOperation: options.androidDevice ? options.androidOperation || 'deployment' : undefined,
       source,
       projectId: project.id,
       projectName: project.name,

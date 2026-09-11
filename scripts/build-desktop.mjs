@@ -14,3 +14,5 @@ await build({
 await copyFile('desktop/preload.cjs', 'dist-electron/preload.cjs')
 
 await build({ entryPoints: ['desktop/android-entry.ts'], bundle: true, platform: 'node', target: 'node24', format: 'esm', outfile: 'dist-electron/android-entry.js' })
+
+await build({ entryPoints: ['desktop/adb-entry.ts'], bundle: true, platform: 'node', target: 'node24', format: 'esm', outfile: 'dist-electron/adb-entry.js' })

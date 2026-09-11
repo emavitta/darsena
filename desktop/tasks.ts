@@ -77,7 +77,9 @@ export class TaskDiscovery {
       await writeFile(init, script)
       const output = await command(
         './gradlew',
-        ['--init-script', init, '--console=plain', '--quiet', name],
+        // The temporary report inspects the live project/task model and is never reusable.
+        // Disable configuration caching only for discovery, not for the user's build tasks.
+        ['--no-configuration-cache', '--init-script', init, '--console=plain', '--quiet', name],
         cwd,
         120000,
       )

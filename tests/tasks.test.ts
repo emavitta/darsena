@@ -96,3 +96,25 @@ test('settings survive concurrent saves and invalid input is preserved rather th
   await assert.rejects(new Store(dir).load(), /preserved/)
   assert.equal(await readFile(path.join(dir, 'settings.json'), 'utf8'), 'bad data')
 })
+
+test('Gradle discovery disables configuration cache only for its temporary report', async (t) => {
+  const f = await fixture()
+  t.after(f.cleanup)
+  await writeFile(path.join(f.root, 'gradlew'), `#!/usr/bin/env node
+const fs = require('node:fs');
+const args = process.argv.slice(2);
+if (!args.includes('--no-configuration-cache')) throw Error('Discovery needs configuration cache disabled');
+const script = args[args.indexOf('--init-script') + 1];
+if (!fs.readFileSync(script, 'utf8').includes('rootProject.allprojects')) throw Error('Missing report');
+console.log('__DARSENA_TASKS__' + JSON.stringify([{name: ':app:installDebug', buildDirectory: process.cwd() + '/app/build'}]));
+`, { mode: 0o755 })
+  const properties = 'org.gradle.configuration-cache=true\n'
+  await writeFile(path.join(f.root, 'gradle.properties'), properties)
+  const discovery = new TaskDiscovery()
+  await discovery.loadGradle(f.root, '.')
+  const catalog = await discovery.list(f.project, f.root)
+  const task = catalog.tasks.find(task => task.name === ':app:installDebug')!
+  assert.equal(task.android?.variant, 'debug')
+  assert.deepEqual(task.args, [':app:installDebug'])
+  assert.equal(await readFile(path.join(f.root, 'gradle.properties'), 'utf8'), properties)
+})
