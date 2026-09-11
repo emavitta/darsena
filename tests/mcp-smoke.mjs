@@ -1,4 +1,4 @@
-import { _electron as electron } from 'playwright'
+import { electron } from './desktop-launch.mjs'
 import { Client, StreamableHTTPClientTransport } from '@modelcontextprotocol/client'
 import { mkdir, writeFile, readFile } from 'node:fs/promises'
 import { createServer } from 'node:net'

@@ -1,4 +1,4 @@
-import { _electron as electron } from 'playwright'
+import { electron } from './desktop-launch.mjs'
 import { mkdir, writeFile } from 'node:fs/promises'
 import path from 'node:path'
 import net from 'node:net'

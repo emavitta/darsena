@@ -188,3 +188,12 @@ undo commands already completed on the device. These are not exposed through MCP
 
 Sync Gradle refreshes task/variant discovery only, using the configuration-cache
 override for the temporary report. Actual builds retain project settings.
+
+## Desktop test focus policy
+
+All Electron smoke tests and brand previews use `tests/desktop-launch.mjs`.
+They run normally in GitHub Actions but fail before starting locally, protecting
+the user's current keyboard focus. Backend tests and builds remain noninteractive.
+Only an explicitly requested local interactive session may use
+`DARSENA_ALLOW_INTERACTIVE_TESTS=1`. Hidden windows are not a substitute for
+native focus, keyboard and window-lifecycle tests.
