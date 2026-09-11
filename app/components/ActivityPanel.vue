@@ -35,6 +35,7 @@ const cleanedLogs = computed(() =>
     .replace(/\r(?!\n)/g, '\n'),
 )
 function status(run: Run) {
+  if (run.androidOperation === 'logcat' && run.status === 'running') return 'Collecting logs'
   return {
     running: 'Running',
     starting: 'Starting',
@@ -114,12 +115,22 @@ function showPorts() {
             v-tooltip="
               current.status === 'stopping'
                 ? 'Waiting for this task’s processes to stop…'
-                : 'Stop this task and the child processes started with it.'
+                : current.androidOperation === 'logcat'
+                  ? 'Stop log collection only; leave the Android app running.'
+                  : 'Stop this task and the child processes started with it.'
             "
             @click="emit('stop', current.id)"
           >
             <AppIcon name="Square" :size="12" />{{
-              current.status === 'stopping' ? 'Stopping…' : current.androidOperation === 'app-action' ? 'Cancel ADB operation' : current.androidDevice ? 'Stop deployment' : 'Stop task'
+              current.status === 'stopping'
+                ? 'Stopping…'
+                : current.androidOperation === 'logcat'
+                  ? 'Stop Logcat'
+                  : current.androidOperation === 'app-action'
+                    ? 'Cancel ADB operation'
+                    : current.androidDevice
+                      ? 'Stop deployment'
+                      : 'Stop task'
             }}</button
           ><span v-else class="tag">{{ status(current) }}</span>
         </header>
@@ -142,7 +153,11 @@ function showPorts() {
             <span v-else-if="!compact && current.status === 'stopping'"
               >Waiting for this task’s processes to exit.</span
             >
-            <span v-else-if="!compact">Active in this worktree.</span>
+            <span v-else-if="!compact">{{
+              current.androidOperation === 'logcat'
+                ? 'Reading logs from the Android device.'
+                : 'Active in this worktree.'
+            }}</span>
           </div>
           <div class="run-origin muted">
             Started from {{ current.source === 'mcp' ? 'MCP' : 'the Darsena interface' }}
@@ -190,28 +205,46 @@ function showPorts() {
             </button>
           </div>
         </div>
-        <div class="log-toolbar">
-          <span
-            >Output <span v-if="current.pid" class="muted">· PID {{ current.pid }}</span></span
-          ><label
-            ><input
-              v-tooltip="
-                'Automatically scroll to the latest output. Turn off to read earlier lines.'
-              "
-              v-model="follow"
-              type="checkbox"
-            />Follow output</label
-          >
-        </div>
-        <pre ref="logElement" class="log-output">{{
-          cleanedLogs ||
-          (['running', 'starting', 'stopping'].includes(current.status)
-            ? 'Waiting for output…'
-            : 'No output was recorded.')
-        }}</pre>
-        <footer v-if="!compact" class="log-footer">
-          Output is retained for this app session, up to 524,288 characters per task.
-        </footer>
+        <FollowLogcat
+          v-if="
+            current.androidApplicationId &&
+            current.androidOperation !== 'logcat' &&
+            !['starting', 'running', 'stopping'].includes(current.status)
+          "
+          :key="current.id"
+          :run="current"
+          @started="emit('inspect', $event)"
+        />
+        <LogcatOutput
+          v-if="current.androidOperation === 'logcat'"
+          :key="current.id + '-logs'"
+          :run="current"
+          :logs="cleanedLogs"
+        />
+        <template v-else>
+          <div class="log-toolbar">
+            <span
+              >Output <span v-if="current.pid" class="muted">· PID {{ current.pid }}</span></span
+            ><label
+              ><input
+                v-tooltip="
+                  'Automatically scroll to the latest output. Turn off to read earlier lines.'
+                "
+                v-model="follow"
+                type="checkbox"
+              />Follow output</label
+            >
+          </div>
+          <pre ref="logElement" class="log-output">{{
+            cleanedLogs ||
+            (['running', 'starting', 'stopping'].includes(current.status)
+              ? 'Waiting for output…'
+              : 'No output was recorded.')
+          }}</pre>
+          <footer v-if="!compact" class="log-footer">
+            Output is retained for this app session, up to 524,288 characters per task.
+          </footer>
+        </template>
       </section>
       <div v-else-if="runs.length" class="empty-inspector">
         <AppIcon name="Terminal" :size="30" />

@@ -1,3 +1,8 @@
+import path from 'node:path'
+import { fileURLToPath } from 'node:url'
+import { androidDevices, findAdb } from './android.js'
+import { packageUid } from './logcat-worker.js'
+import { command } from './io.js'
 import { gitAction, gitState } from './git-actions.js'
 import type { Methods } from '../shared/types.js'
 import { Store } from './store.js'
@@ -32,6 +37,35 @@ export class WorkspaceService {
         throw new Error('Stop the tasks running in this worktree before pulling.')
       }
       return gitAction(context.worktree.path, input.action, input.expectedHead, input.expectedBranch)
+    })
+    this.startQueue = operation.catch(() => {})
+    return operation
+  }
+
+  startLogcat(runId: string, source: Run['source'] = 'ui', authorize: (run: Run) => void = () => {}) {
+    const operation = this.startQueue.then(async () => {
+      const origin = this.runner.list().find(r => r.id === runId)
+      if (!origin || !origin.androidApplicationId || !origin.androidDevice || active(origin) || origin.androidOperation === 'logcat') throw new Error('Choose a finished Android deployment or app operation with a known application ID.')
+      authorize(origin)
+      const context = await this.tree(origin.projectId, origin.worktree)
+      const folder = path.relative(context.worktree.path, origin.folder) || '.'
+      if (!context.project.folders.some(f => f.path === folder)) throw new Error('Android folder shortcut was removed.')
+      const cwd = await resolveFolder(context.worktree.path, folder)
+      if (!(await androidDevices(cwd)).some(d => d.serial === origin.androidDevice && d.state === 'device')) throw new Error('Device is disconnected or unauthorized.')
+      const adb = await findAdb(cwd)
+      const user = (await command(adb, ['-s', origin.androidDevice, 'shell', 'am', 'get-current-user'], cwd)).trim()
+      if (!/^\d+$/.test(user)) throw new Error('Cannot identify the Android user.')
+      const plan = { adb, cwd, serial: origin.androidDevice, applicationId: origin.androidApplicationId, user }
+      const uid = await packageUid(plan)
+      authorize(origin)
+      this.store.project(origin.projectId)
+      const duplicate = this.runner.list().find(r => active(r) && r.androidOperation === 'logcat' && r.projectId === origin.projectId && r.androidDevice === plan.serial && r.androidApplicationId === plan.applicationId)
+      if (duplicate) return duplicate
+      return this.runner.start(context.project, context.worktree, {
+        id: JSON.stringify(['logcat', plan.serial, plan.applicationId]), name: 'Logcat · ' + plan.applicationId,
+        folder, kind: 'custom', available: true, command: process.execPath,
+        args: [fileURLToPath(new URL('./logcat-entry.js', import.meta.url)), JSON.stringify({ ...plan, uid })],
+      }, cwd, source, { env: { ELECTRON_RUN_AS_NODE: '1' }, reports: true, androidOperation: 'logcat', androidDevice: plan.serial, androidApplicationId: plan.applicationId, androidVariant: origin.androidVariant, displayCommand: `Logcat · ${plan.applicationId} · ${plan.serial} · user ${user}` })
     })
     this.startQueue = operation.catch(() => {})
     return operation

@@ -20,7 +20,9 @@ await chmod(path.join(android, 'gradlew'), 0o755)
 await writeFile(path.join(sdk, 'adb'), `#!/usr/bin/env node
 if(process.argv.includes('devices')) console.log('List of devices attached\\nfixture-device device model:Fixture_Pixel\\nlocked-device unauthorized');
 else if(process.argv.includes('get-current-user')) console.log('0');
-else if(process.argv.includes('packages')) console.log('package:app.darsena.fixture');
+else if(process.argv.includes('packages')) console.log('package:app.darsena.fixture'+(process.argv.includes('-U')?' uid:10001':''));
+else if(process.argv.includes('ps')) console.log('10001 42 app.darsena.fixture');
+else if(process.argv.includes('logcat')) { console.log('09-11 12:00:00.000 42 42 E App: fixture error');setInterval(()=>console.log('09-11 12:00:01.000 42 42 I App: fixture info'),200); }
 else if(process.argv.includes('clear') || process.argv.includes('uninstall')) console.log('Success');
 else if(process.argv.includes('install')) console.log('Success');
 else if(process.argv.includes('shell')) console.log('Status: ok');
@@ -70,6 +72,16 @@ try {
   assert.equal(run.taskId, JSON.stringify(['gradle', 'android-app', 'darsena:android-launch']))
   assert.equal(run.androidDevice, 'fixture-device')
   assert.equal(await page.getByRole('button', { name: 'Activity', exact: true }).getAttribute('aria-expanded'), 'true')
+  assert.equal(run.androidApplicationId, 'app.darsena.fixture')
+  await page.getByRole('button', { name: 'Follow Logcat', exact: true }).click()
+  await page.getByLabel('Search Logcat').waitFor()
+  await eventually(async () => (await page.evaluate(() => window.darsena.call('runs'))).some(r => r.androidOperation === 'logcat' && r.logcat?.state === 'running'))
+  await page.getByLabel('Search Logcat').fill('fixture error')
+  await eventually(async () => (await page.locator('.logcat-text').innerText()).includes('fixture error'))
+  assert.ok(!(await page.locator('.logcat-text').innerText()).includes('fixture info'))
+  await page.screenshot({ path: 'test-results/android-logcat.png', animations: 'disabled' })
+  await page.getByRole('button', { name: 'Stop Logcat', exact: true }).click()
+  await eventually(async () => (await page.evaluate(() => window.darsena.call('runs'))).some(r => r.androidOperation === 'logcat' && r.status === 'stopped'))
   // ADB actions operate on an explicitly selected installed app without a build.
   async function openActions() {
     await group.getByRole('button', { name: 'Run Run on Android in android-app', exact: true }).click()

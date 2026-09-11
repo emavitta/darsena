@@ -62,6 +62,7 @@ const folderGroups = computed(() => {
     .map(([path, rows]) => ({
       path,
       rows,
+      tools: [...new Map(rows.map(({ tool }) => [tool.id, tool])).values()],
       label:
         path === '.'
           ? 'Worktree root'
@@ -99,7 +100,8 @@ function missingHint(task: Task) {
   return needsSource(task) ? 'Load this task’s source in Sources.' : 'Unavailable in this worktree'
 }
 function runHint(task: Task) {
-  if (task.action && task.available) return 'Choose an Android variant and device, then build, install and launch.'
+  if (task.action && task.available)
+    return 'Choose an Android variant and device, then build, install and launch.'
   if (running.value.has(task.id))
     return 'This task is already active in this worktree. Open Activity to view its output or stop it.'
   if (!task.available)
@@ -229,6 +231,18 @@ function runHint(task: Task) {
             <span class="task-folder-path mono" :title="group.path">{{
               group.path === '.' ? 'Root' : group.path
             }}</span>
+            <span class="task-folder-tools">
+              <span
+                v-for="tool in group.tools"
+                :key="tool.id"
+                v-tooltip="tool.label"
+                :title="tool.label"
+                :aria-label="tool.label"
+                class="task-tool-symbol"
+              >
+                <TaskToolIcon :icon="tool.icon" />
+              </span>
+            </span>
             <span class="task-folder-count">{{ group.rows.length }}</span>
           </button>
         </template>
@@ -255,6 +269,15 @@ function runHint(task: Task) {
             </button>
             <div class="task-info">
               <div class="task-name">
+                <span
+                  v-if="group.tools.length > 1"
+                  v-tooltip="tool.label + ': ' + tool.hint"
+                  :title="tool.label"
+                  :aria-label="tool.label"
+                  class="task-tool-symbol"
+                >
+                  <TaskToolIcon :icon="tool.icon" />
+                </span>
                 <strong v-tooltip="task.description || [task.command, ...task.args].join(' ')">{{
                   task.name
                 }}</strong>
@@ -268,7 +291,6 @@ function runHint(task: Task) {
               >
               <span v-if="!task.available" class="task-missing">{{ missingHint(task) }}</span>
             </div>
-            <TaskToolBadge :tool="tool" class="task-row-tool" />
             <div class="task-row-actions">
               <button
                 v-if="!task.action"
@@ -309,7 +331,8 @@ function runHint(task: Task) {
 
 <style scoped>
 .task-folder-group {
-  margin-top: 16px;
+  max-width: 860px;
+  margin-top: 12px;
 }
 .task-folder-heading {
   display: flex;
@@ -346,10 +369,37 @@ function runHint(task: Task) {
   white-space: nowrap;
 }
 .task-folder-count {
-  margin-left: auto;
   font-size: 12px;
   color: var(--muted);
   padding-left: 8px;
+}
+.task-folder-tools {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-left: auto;
+  flex-shrink: 0;
+}
+.task-tool-symbol {
+  display: inline-flex;
+  align-items: center;
+  flex-shrink: 0;
+}
+.task-tool-symbol :deep(.tool-icon) {
+  width: 16px;
+  height: 16px;
+}
+.task-folder-group .task-row {
+  grid-template-columns: 28px minmax(0, 1fr) auto;
+  gap: 10px;
+  padding: 10px 4px;
+  min-height: 52px;
+}
+.task-folder-group .task-info {
+  gap: 3px;
+}
+.task-toolbar {
+  max-width: 860px;
 }
 .folder-chevron {
   transition: transform 120ms ease;

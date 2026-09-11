@@ -314,3 +314,12 @@ Earlier design discussion: [analysis](docs/analysis.md),
 [task discovery](docs/task-discovery.md), [component boundaries](docs/components.md).
 This README describes the implemented version; those documents retain proposals
 that may belong to later increments.
+
+
+### Android app logs (development version)
+
+After an Android deployment, choose **Follow Logcat** in Activity to inspect the
+installed app's logs. Search, minimum severity, follow-scroll and text export are
+available alongside sampled app-process status. The reader follows PID changes;
+**Stop Logcat** stops collection without closing the device app. Agents can use
+`start_logcat`, `read_logcat` and `stop_logcat` for shared projects.
