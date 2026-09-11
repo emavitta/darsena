@@ -153,6 +153,8 @@ function viewConflictActivity() {
             :runs="runs"
             :busy="busy"
             :gradle-busy="gradleBusy"
+            @git-changed="refreshContext(true)"
+            @navigate="selectWorktree"
             @android-started="inspect"
             @android-loaded="refreshContext(true)"
             @open="openFolder"

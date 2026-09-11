@@ -135,6 +135,19 @@ with the project's name and path. It forgets Darsena's saved settings for that
 project; repository files and Git worktrees remain on disk. If the project has
 active tasks, the dialog directs you to Activity to stop them first.
 
+## Basic Git actions
+
+Every worktree shows its upstream and locally known ahead/behind counts.
+**Fetch** updates remote references for the project without changing working files.
+**Pull (ff-only)** fetches the upstream and fast-forwards only the selected worktree;
+it never creates a merge commit, rebases or automatically stashes changes.
+Commit or stash local edits and stop managed tasks in that worktree before pulling.
+Divergence and unfinished Git operations must be resolved in your Git tool.
+
+**Branches** lists local and remote branches and the worktrees using them.
+View worktree navigates Darsena without switching the checked-out Git branch.
+These controls work on the main checkout and linked worktrees alike.
+
 ## MCP for AI clients
 
 The development version includes a local MCP server under **Preferences → MCP**.

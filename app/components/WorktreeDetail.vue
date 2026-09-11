@@ -10,6 +10,8 @@ const props = defineProps<{
   gradleBusy: boolean
 }>()
 const emit = defineEmits<{
+  gitChanged: []
+  navigate: [path: string]
   androidLoaded: []
   androidStarted: [id: string]
   open: [folder: string, app: AppId]
@@ -83,6 +85,7 @@ const actions = computed<DropdownMenuItem[][]>(() => [
           />
         </UDropdownMenu>
       </div>
+      <WorktreeGit :project="project" :worktree="worktree" :runs="runs" @changed="emit('gitChanged')" @navigate="emit('navigate', $event)" />
     </header>
     <div class="detail-body">
       <FolderShortcuts

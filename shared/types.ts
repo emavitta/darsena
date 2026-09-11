@@ -119,7 +119,24 @@ export interface ListenerReport {
 }
 export type StartResult =
   { kind: 'started'; run: Run } | { kind: 'conflict'; message: string; runId?: string }
+export type GitAction = 'fetch' | 'pull'
+export interface GitState {
+  branch: string | null
+  head: string
+  upstream?: string
+  ahead?: number
+  behind?: number
+  dirty: boolean
+  operation?: string
+  branches: { ref: string; name: string; local: boolean; upstream?: string; remote: string; remoteRef: string; worktrees: string[] }[]
+  remotes: string[]
+  checkedAt: number
+}
 export interface Methods {
+  gitState: { input: { projectId: string; worktree: string }; output: GitState }
+  gitAction: { input: { projectId: string; worktree: string; action: GitAction; expectedHead: string; expectedBranch: string | null }; output: { state: GitState; message: string } }
+
+  copyText: { input: { text: string }; output: void }
   mcpStatus: { input: undefined; output: McpStatus }
   mcpConfigure: { input: { enabled: boolean; port: number }; output: McpStatus }
   mcpProject: { input: { projectId: string; allowed: boolean }; output: McpStatus }

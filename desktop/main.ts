@@ -1,5 +1,6 @@
 import {
   app,
+  clipboard,
   BrowserWindow,
   dialog,
   ipcMain,
@@ -73,6 +74,9 @@ const treeInput = projectInput.extend({ worktree: string })
 const taskInput = treeInput.extend({ taskId: string })
 const folderInput = treeInput.extend({ folder: string })
 const schemas: Record<keyof Methods, z.ZodType> = {
+  gitState: treeInput,
+  gitAction: treeInput.extend({ action: z.enum(['fetch', 'pull']), expectedHead: z.string().max(64), expectedBranch: string.nullable() }),
+  copyText: z.object({ text: z.string().max(32768) }),
   mcpStatus: z.undefined(),
   mcpConfigure: mcpConnectionSchema,
   mcpProject: mcpProjectSchema,
@@ -137,6 +141,9 @@ async function save() {
 const handlers: {
   [K in keyof Methods]: (input: Methods[K]['input']) => Promise<Methods[K]['output']>
 } = {
+  gitState: ({ projectId, worktree }) => workspace.gitState(projectId, worktree),
+  gitAction: async (input) => { try { return await workspace.gitAction(input) } finally { changed() } },
+  copyText: async ({ text }) => { clipboard.writeText(text) },
   mcpStatus: async () => mcp.status(),
   mcpConfigure: (input) => mcp.configure(input),
   mcpProject: ({ projectId, allowed }) => mcp.allowProject(projectId, allowed),

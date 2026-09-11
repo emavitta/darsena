@@ -352,7 +352,7 @@ export function useWorkspace() {
   }
   async function copy(text: string) {
     await action(async () => {
-      await navigator.clipboard.writeText(text)
+      await call('copyText', { text })
       toast.value = 'Path copied'
       clearTimeout(toastTimer)
       toastTimer = setTimeout(() => {

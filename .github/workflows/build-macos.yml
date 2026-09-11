@@ -60,6 +60,7 @@ jobs:
         run: |
           node --import tsx tests/ui-smoke.mjs
           node --import tsx tests/project-removal-smoke.mjs
+          node --import tsx tests/git-smoke.mjs
           node --import tsx tests/mcp-smoke.mjs
           node --import tsx tests/preferences-smoke.mjs
           node --import tsx tests/task-readability-smoke.mjs

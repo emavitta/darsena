@@ -152,3 +152,23 @@ it needs interactive device selection; ordinary Gradle commands remain separate 
 The project sidebar collapses to a 64px Nuxt UI rail with project monograms,
 tooltips, About, Add and Preferences. Activity occupies a separate full-width
 row spanning both sidebar and workspace, in either sidebar state.
+
+## Git overview and actions
+
+WorktreeGit adds upstream and ahead/behind information, explicit local refresh,
+fetch and fast-forward pull to every worktree. useWorktreeGit isolates async
+results by checkout and revision. GitBranchesDialog lists local and remote refs,
+filters by name/path and navigates to existing worktrees without checkout.
+
+The desktop service validates worktree membership and serializes Git operations
+with managed task starts. Pull refuses dirty/detached/unborn checkouts, ongoing
+Git operations and active managed tasks in that checkout. It fetches, revalidates
+the branch/HEAD/upstream, then merges the upstream commit with --ff-only and no
+auto-stash. It does not create merge commits or rebase. Fetch is explicit and
+shared across worktrees; ahead/behind numbers use local remote-tracking refs.
+External tools can still change a checkout concurrently; Git errors are shown
+without resets, retries or automatic conflict resolution. Git actions are UI-only,
+not new MCP permissions.
+
+Copying paths uses the validated Electron clipboard bridge. Smoke tests await
+the asynchronous copy result before reading the native clipboard.
