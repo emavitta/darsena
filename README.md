@@ -34,11 +34,11 @@ Built with **Electron, Nuxt 4, Vue 3 and TypeScript**, with **Nuxt UI** being ad
 
 ## Download
 
-**[Download Darsena v0.1.1 for macOS — Apple Silicon (DMG)](https://github.com/emavitta/darsena/releases/download/v0.1.1/Darsena-0.1.1-arm64.dmg)**
+**[Download Darsena v0.1.2 for macOS — Apple Silicon (DMG)](https://github.com/emavitta/darsena/releases/download/v0.1.2/Darsena-0.1.2-arm64.dmg)**
 
-The latest public preview is available on [GitHub Releases](https://github.com/emavitta/darsena/releases/tag/v0.1.1).
+The latest public preview is available on [GitHub Releases](https://github.com/emavitta/darsena/releases/tag/v0.1.2).
 Open the DMG and drag **Darsena** into **Applications**. A
-[ZIP containing the same app](https://github.com/emavitta/darsena/releases/download/v0.1.1/Darsena-0.1.1-arm64-mac.zip)
+[ZIP containing the same app](https://github.com/emavitta/darsena/releases/download/v0.1.2/Darsena-0.1.2-arm64-mac.zip)
 is also available. Choose a DMG or app ZIP from the release assets; GitHub's
 automatic **Source code** archives are for development.
 
@@ -51,8 +51,8 @@ before upload. This checks signature integrity; it does not provide Developer ID
 or notarization, so Gatekeeper warnings remain possible. Previously published
 installers are not changed by this fix.
 
-Each release includes [SHA-256 checksums](https://github.com/emavitta/darsena/releases/download/v0.1.1/SHA256SUMS-macos-arm64.txt)
-and a [build manifest](https://github.com/emavitta/darsena/releases/download/v0.1.1/build-macos-arm64.json)
+Each release includes [SHA-256 checksums](https://github.com/emavitta/darsena/releases/download/v0.1.2/SHA256SUMS-macos-arm64.txt)
+and a [build manifest](https://github.com/emavitta/darsena/releases/download/v0.1.2/build-macos-arm64.json)
 recording the version, target and exact source commit. Install updates manually
 from [Releases](https://github.com/emavitta/darsena/releases); in-app updating is
 not implemented yet.
@@ -252,7 +252,7 @@ The development server uses `127.0.0.1:3141`.
 
 ## Builds and releases
 
-The [v0.1.1 macOS preview](https://github.com/emavitta/darsena/releases/tag/v0.1.1)
+The [v0.1.2 macOS preview](https://github.com/emavitta/darsena/releases/tag/v0.1.2)
 was built and tested on GitHub Actions and is publicly downloadable. The
 following workflows are already active:
 
