@@ -22,9 +22,10 @@ await writeFile(
 let desktop
 try {
   desktop = await electron.launch({
-    args: [process.env.DARSENA_TEST_ASAR || '.'],
+    executablePath: process.env.DARSENA_EXECUTABLE,
+    args: process.env.DARSENA_EXECUTABLE ? [] : ['.'],
     cwd: process.cwd(),
-    env: { ...process.env, DARSENA_DATA_DIR: data, DARSENA_DEV_URL: '' },
+    env: { ...process.env, DARSENA_DATA_DIR: data, DARSENA_DEV_URL: '', DARSENA_TEST_PORT: '0' },
   })
   assert.equal(await desktop.evaluate(({ app }) => app.getPath('userData')), data)
   const page = await desktop.firstWindow()
@@ -32,11 +33,22 @@ try {
   const errors = []
   page.on('pageerror', (error) => errors.push(error.message))
   await page.getByRole('heading', { name: 'harbor-project', exact: true }).waitFor()
-  const tip = page.getByRole('tooltip')
+  const tip = page.locator('[data-reka-popper-content-wrapper]').filter({ has: page.locator('[data-state=delayed-open], [data-state=instant-open]') })
   async function hint(trigger, text) {
     await page.bringToFront()
+    await trigger.scrollIntoViewIfNeeded()
+    await page.waitForTimeout(300)
+    await page.mouse.move(0, 0)
     await trigger.hover()
-    await eventually(async () => (await tip.count()) === 1 && text.test(await tip.innerText()))
+    const target = await trigger.boundingBox()
+    if (target) await page.mouse.move(target.x + target.width / 2 + 1, target.y + target.height / 2)
+    try {
+      await eventually(async () => (await tip.count()) === 1 && text.test(await tip.innerText()))
+    } catch (error) {
+      console.log('Tooltip diagnosis', { expected: String(text), trigger: await trigger.evaluate(el => el.outerHTML), popups: await page.locator('[data-reka-popper-content-wrapper]').evaluateAll(els => els.map(el => el.outerHTML)) })
+      await page.screenshot({ path: 'test-results/tooltip-failure.png' })
+      throw error
+    }
     assert.match(await tip.innerText(), text)
     const rect = await tip.boundingBox()
     const viewport = await page.evaluate(() => ({ width: innerWidth, height: innerHeight }))
@@ -55,16 +67,18 @@ try {
   // A disabled action explains why it cannot be used.
   const disabled = page.getByRole('button', { name: 'Run missing-script in .' })
   assert.ok(await disabled.isDisabled())
-  await hint(disabled, /not available in the selected worktree/)
+  await hint(disabled.locator('..'), /not available in the selected worktree/)
   await page.keyboard.press('Escape')
 
   // Keyboard hints keep focus on the trigger and preserve its accessible name.
   await page.keyboard.press('Tab')
   const copy = page.getByRole('button', { name: 'Worktree actions' })
+  await copy.scrollIntoViewIfNeeded()
+  await page.waitForTimeout(300)
   await copy.focus()
   await tip.waitFor()
   assert.match(await tip.innerText(), /copy its path/)
-  assert.equal(await copy.getAttribute('aria-describedby'), await tip.getAttribute('id'))
+  assert.match(await copy.evaluate(el => document.getElementById(el.getAttribute('aria-describedby'))?.textContent || ''), /copy its path/)
   assert.ok(await copy.evaluate((el) => el === document.activeElement))
   await page.keyboard.press('Escape')
   await tip.waitFor({ state: 'hidden' })
@@ -76,12 +90,8 @@ try {
   await dialog.waitFor()
   await hint(dialog.getByRole('button', { name: 'Close dialog', exact: true }), /Close this dialog/)
   assert.ok(await tip.evaluate((el) => el.closest('dialog')?.open))
-  assert.ok(
-    await tip.evaluate((el) => {
-      const r = el.getBoundingClientRect()
-      return document.elementFromPoint(r.x + r.width / 2, r.y + r.height / 2) === el
-    }),
-  )
+  // Playwright waits for positioning/animation and verifies the visible content receives pointer events.
+  await tip.hover()
   await page.keyboard.press('Escape')
   await tip.waitFor({ state: 'hidden' })
   assert.ok(await dialog.isVisible())
@@ -91,7 +101,7 @@ try {
   // Explain both directions of a toggle after the saved state changes.
   await page.getByRole('button', { name: /All tasks/ }).click()
   const favorite = page.getByRole('button', { name: 'Favorite task check', exact: true })
-  await hint(favorite, /every worktree/)
+  await hint(favorite, /Favorite this task/)
   await favorite.click()
   await page.mouse.move(450, 40)
   await hint(

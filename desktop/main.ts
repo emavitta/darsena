@@ -1,3 +1,6 @@
+import { createUpdateChecker } from './updates.js'
+import { configurePreparation, preparationSchema } from './preparation.js'
+import { discoverWorkspaceFolders } from './workspace-folders.js'
 import {
   app,
   clipboard,
@@ -74,10 +77,12 @@ const projectInput = z.object({ projectId: string })
 const treeInput = projectInput.extend({ worktree: string })
 const taskInput = treeInput.extend({ taskId: string })
 const folderInput = treeInput.extend({ folder: string })
+const checkUpdates = createUpdateChecker(app.getVersion(), process.arch, process.platform)
 const schemas: Record<keyof Methods, z.ZodType> = {
   gitState: treeInput,
   gitAction: treeInput.extend({ action: z.enum(['fetch', 'pull']), expectedHead: z.string().max(64), expectedBranch: string.nullable() }),
   copyText: z.object({ text: z.string().max(32768) }),
+  checkUpdates: z.object({ force: z.boolean() }),
   mcpStatus: z.undefined(),
   mcpConfigure: mcpConnectionSchema,
   mcpProject: mcpProjectSchema,
@@ -93,6 +98,8 @@ const schemas: Record<keyof Methods, z.ZodType> = {
   selectProject: projectInput,
   worktrees: projectInput,
   selectWorktree: treeInput,
+  workspaceFolders: z.object({ projectId: string, worktree: string }),
+  addWorkspaceFolders: z.object({ projectId: string, worktree: string, folders: z.array(string).min(1).max(500) }),
   browseFolders: folderInput,
   addFolder: folderInput,
   removeFolder: projectInput.extend({ folderId: string }),
@@ -109,6 +116,7 @@ const schemas: Record<keyof Methods, z.ZodType> = {
     taskId: string,
     port: z.number().int().min(1).max(65535).optional(),
   }),
+  configurePreparation: preparationSchema,
   addCustom: projectInput.extend({
     task: z.object({
       name: string,
@@ -149,6 +157,7 @@ const handlers: {
   gitState: ({ projectId, worktree }) => workspace.gitState(projectId, worktree),
   gitAction: async (input) => { try { return await workspace.gitAction(input) } finally { changed() } },
   copyText: async ({ text }) => { clipboard.writeText(text) },
+  checkUpdates: ({ force }) => checkUpdates(force),
   mcpStatus: async () => mcp.status(),
   mcpConfigure: (input) => mcp.configure(input),
   mcpProject: ({ projectId, allowed }) => mcp.allowProject(projectId, allowed),
@@ -205,6 +214,19 @@ const handlers: {
   selectWorktree: async ({ projectId, worktree }) => {
     const t = await tree(projectId, worktree)
     t.project.lastWorktree = worktree
+    return save()
+  },
+  workspaceFolders: async ({ projectId, worktree }) => {
+    await tree(projectId, worktree)
+    return discoverWorkspaceFolders(worktree)
+  },
+  addWorkspaceFolders: async ({ projectId, worktree, folders }) => {
+    await tree(projectId, worktree)
+    const detected = await discoverWorkspaceFolders(worktree)
+    if (folders.some(folder => !detected.folders.some(f => f.path === folder))) throw new Error('Workspace changed. Refresh its folders before adding them.')
+    const shortcuts = await Promise.all([...new Set(folders)].map(folder => folderShortcut(worktree, folder)))
+    const project = store.project(projectId)
+    for (const shortcut of shortcuts) if (!project.folders.some(f => f.path === shortcut.path)) project.folders.push({ id: randomUUID(), ...shortcut })
     return save()
   },
   browseFolders: async ({ projectId, worktree, folder }) => {
@@ -282,6 +304,7 @@ const handlers: {
   },
   starTask: async ({ projectId, taskId }) => {
     const p = store.project(projectId)
+    if (p.favorites.includes(taskId)) await mcp.removeFavoriteGrant(projectId, taskId)
     p.favorites = p.favorites.includes(taskId)
       ? p.favorites.filter((id) => id !== taskId)
       : [...p.favorites, taskId]
@@ -289,6 +312,10 @@ const handlers: {
   },
   taskPort: async ({ projectId, taskId, port }) => {
     store.project(projectId).taskPreferences[taskId] = { port }
+    return save()
+  },
+  configurePreparation: async ({ projectId, command, args }) => {
+    configurePreparation(store.project(projectId), command, args, runner.list())
     return save()
   },
   addCustom: async ({ projectId, task }) => {
@@ -302,6 +329,7 @@ const handlers: {
   removeCustom: async ({ projectId, taskId }) => {
     const p = store.project(projectId)
     p.customTasks = p.customTasks.filter((t) => t.id !== taskId)
+    if (p.preparationTaskId === taskId) p.preparationTaskId = undefined
     p.favorites = p.favorites.filter((id) => id !== taskId)
     return save()
   },

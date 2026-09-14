@@ -2,6 +2,7 @@
 import type { Folder, FolderListing } from '../../shared/types'
 
 const props = defineProps<{
+  projectId: string
   worktreeName: string
   worktreePath: string
   folders: Folder[]
@@ -10,7 +11,13 @@ const props = defineProps<{
   saving: boolean
   error: string
 }>()
-const emit = defineEmits<{ close: []; browse: [folder: string]; save: [folder: string] }>()
+const emit = defineEmits<{
+  close: []
+  browse: [folder: string]
+  save: [folder: string]
+  saveWorkspace: [folders: string[]]
+}>()
+const mode = shallowRef<'browse' | 'workspace'>('browse')
 const filter = shallowRef('')
 const search = useTemplateRef('search')
 const currentPath = computed(() => props.listing?.path || '.')
@@ -37,7 +44,7 @@ watch(currentPath, async () => {
 </script>
 
 <template>
-  <AppDialog title="Add a folder shortcut" wide @close="emit('close')">
+  <AppDialog title="Add a folder shortcut" :busy="saving" wide @close="emit('close')">
     <div class="form-stack folder-picker">
       <div>
         <p>
@@ -48,78 +55,106 @@ watch(currentPath, async () => {
           The shortcut uses the same relative path in every worktree. No folders are created or
           copied.
         </p>
-        <p class="picker-root mono muted" v-tooltip="worktreePath">{{ worktreePath }}</p>
+        <AppTooltip :text="worktreePath"><p class="picker-root mono muted" >{{ worktreePath }}</p></AppTooltip>
       </div>
-      <nav class="folder-breadcrumbs" aria-label="Folder location">
-        <template v-for="(crumb, index) in breadcrumbs" :key="crumb.path">
-          <AppIcon v-if="index" name="ChevronRight" :size="12" />
-          <button
-            class="breadcrumb"
-            :aria-current="crumb.path === currentPath ? 'location' : undefined"
-            :disabled="unavailable"
-            v-tooltip="`Browse ${crumb.path === '.' ? 'the worktree root' : crumb.path}.`"
-            @click="emit('browse', crumb.path)"
-          >
-            {{ crumb.name }}
-          </button>
-        </template>
-      </nav>
-      <input
-        ref="search"
-        v-model="filter"
-        type="search"
-        aria-label="Filter subfolders"
-        placeholder="Filter subfolders…"
-        :disabled="saving"
+      <div class="nuxt-ui-scope folder-modes">
+        <UButton
+          color="neutral"
+          :variant="mode === 'browse' ? 'solid' : 'ghost'"
+          :disabled="saving"
+          @click="mode = 'browse'"
+          >Browse</UButton
+        >
+        <UButton
+          color="neutral"
+          :variant="mode === 'workspace' ? 'solid' : 'ghost'"
+          :disabled="saving"
+          @click="mode = 'workspace'"
+          >From workspace</UButton
+        >
+      </div>
+      <WorkspaceFolderSuggestions
+        v-if="mode === 'workspace'"
+        :project-id="projectId"
+        :worktree="worktreePath"
+        :folders="folders"
+        :saving="saving"
+        @save="emit('saveWorkspace', $event)"
       />
-      <div class="picker-entries" :aria-busy="loading">
-        <p v-if="loading" class="picker-empty muted" role="status">Reading folders…</p>
-        <ul v-else-if="visibleFolders.length" aria-label="Subfolders">
-          <li v-for="folder in visibleFolders" :key="folder.name">
-            <button
-              class="picker-entry"
-              :aria-label="`Browse ${folder.name}`"
-              :disabled="saving"
-              v-tooltip="`Browse subfolders and choose this shortcut.\n${folder.path}`"
-              @click="emit('browse', folder.path)"
+      <template v-else>
+        <nav class="folder-breadcrumbs" aria-label="Folder location">
+          <template v-for="(crumb, index) in breadcrumbs" :key="crumb.path">
+            <AppIcon v-if="index" name="ChevronRight" :size="12" />
+            <AppTooltip :text="`Browse ${crumb.path === '.' ? 'the worktree root' : crumb.path}.`"><button
+              class="breadcrumb"
+              :aria-current="crumb.path === currentPath ? 'location' : undefined"
+              :disabled="unavailable"
+              
+              @click="emit('browse', crumb.path)"
             >
-              <AppIcon name="Folder" :size="18" />
-              <span class="truncate">{{ folder.name }}</span>
-              <span v-if="saved.has(folder.path)" class="saved-label">Added</span>
-              <AppIcon name="ChevronRight" :size="14" />
-            </button>
-          </li>
-        </ul>
-        <p v-else class="picker-empty muted" role="status">
-          {{
-            filter
-              ? 'No matching subfolders.'
-              : listing
-                ? 'No subfolders here.'
-                : 'Folders could not be loaded.'
-          }}
-        </p>
-      </div>
+              {{ crumb.name }}
+            </button></AppTooltip>
+          </template>
+        </nav>
+        <input
+          ref="search"
+          v-model="filter"
+          type="search"
+          aria-label="Filter subfolders"
+          placeholder="Filter subfolders…"
+          :disabled="saving"
+        />
+        <div class="picker-entries" :aria-busy="loading">
+          <p v-if="loading" class="picker-empty muted" role="status">Reading folders…</p>
+          <ul v-else-if="visibleFolders.length" aria-label="Subfolders">
+            <li v-for="folder in visibleFolders" :key="folder.name">
+              <AppTooltip :text="`Browse subfolders and choose this shortcut.\n${folder.path}`"><button
+                class="picker-entry"
+                :aria-label="`Browse ${folder.name}`"
+                :disabled="saving"
+                
+                @click="emit('browse', folder.path)"
+              >
+                <AppIcon name="Folder" :size="18" />
+                <span class="truncate">{{ folder.name }}</span>
+                <span v-if="saved.has(folder.path)" class="saved-label">Added</span>
+                <AppIcon name="ChevronRight" :size="14" />
+              </button></AppTooltip>
+            </li>
+          </ul>
+          <p v-else class="picker-empty muted" role="status">
+            {{
+              filter
+                ? 'No matching subfolders.'
+                : listing
+                  ? 'No subfolders here.'
+                  : 'Folders could not be loaded.'
+            }}
+          </p>
+        </div>
+
+        <div class="picker-selection">
+          <span class="muted">Shortcut path</span>
+          <strong class="mono">{{ currentPath }}</strong>
+          <span v-if="saved.has(currentPath)" class="muted">Already added to this project</span>
+        </div>
+      </template>
       <p v-if="error" class="inline-error" role="alert">{{ error }}</p>
-      <div class="picker-selection">
-        <span class="muted">Shortcut path</span>
-        <strong class="mono">{{ currentPath }}</strong>
-        <span v-if="saved.has(currentPath)" class="muted">Already added to this project</span>
-      </div>
       <footer class="dialog-actions">
         <button class="button" :disabled="saving" @click="emit('close')">Cancel</button>
-        <button
-          class="button primary"
-          :disabled="unavailable || !listing || saved.has(currentPath)"
-          v-tooltip="
+        <AppTooltip :text="
             saved.has(currentPath)
               ? 'This folder already has a shortcut.'
               : 'Save this relative folder for all worktrees in the project.'
-          "
+          " v-if="mode === 'browse'"><button
+          
+          class="button primary"
+          :disabled="unavailable || !listing || saved.has(currentPath)"
+          
           @click="emit('save', currentPath)"
         >
           {{ saving ? 'Adding…' : 'Add shortcut' }}
-        </button>
+        </button></AppTooltip>
       </footer>
     </div>
   </AppDialog>

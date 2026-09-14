@@ -9,7 +9,7 @@
 - `HarborArtwork` presents the shared blue-and-gray illustration on a light plate
   in both system color schemes. Its panorama follows the user's photograph of the basin;
   the gate and inland oak remain in the distance, with a historic tram on the raised road.
-- `v-tooltip` provides shared hover/focus hints in the browser top layer, including
+- `AppTooltip` wraps Nuxt UI `UTooltip` for shared hover/focus hints, including
   inside native dialogs; preserves accessible labels, dismisses on Escape and
   cleans up when its trigger is removed. Copy stays with the relevant component.
 - `BrandAbout` presents the identity and artwork in a dialog; emits close.
@@ -52,8 +52,10 @@ Nuxt is a local SPA. Only the Electron backend accesses Git, filesystem,
 application launching and task processes. No task data is rendered as HTML.
 
 Tooltip behavior follows the [ARIA tooltip pattern](https://www.w3.org/WAI/ARIA/apg/patterns/tooltip/),
-using the [Popover API](https://developer.mozilla.org/en-US/docs/Web/API/Popover_API/Using)
-to avoid clipping at scroll containers and native dialogs.
+using Nuxt UI/Reka positioning and accessibility. AppDialog provides its element as
+the portal target so hints remain inside the native modal layer. Escape dismisses
+the hint first. Toasts use `useToast`; workspace listeners and polling use VueUse
+with automatic disposal. Desktop tooltip smoke checks run in GitHub Actions.
 
 ## Nuxt UI adoption
 
@@ -209,3 +211,37 @@ The reader and device process have separate statuses; stopping collection does
 not stop the app. The worktree is the originating context, not build verification.
 The MCP exposes this read-only device collection (see docs/mcp.md); Android
 build/install and destructive ADB actions remain unavailable through MCP.
+
+### Workspace folder suggestions
+
+Add a folder shortcut → From workspace reads `pnpm-workspace.yaml` (`packages`,
+including exclusions), or root `package.json` workspaces (array or legacy
+`{ packages: [] }`). pnpm takes precedence. Selection is explicit and batch saves
+revalidate discovery before adding non-duplicate relative shortcuts. Discovery
+uses the selected worktree and executes no project commands. The root shortcut
+is already present; packages must have a readable package.json.
+
+Scanning skips symlink directories and generated/dependency folders (node_modules,
+.git, .pnpm, .nuxt, .output, build, dist, .gradle), with a 5,000-folder and depth
+limit. Use Browse for folders outside these limits or not declared as packages.
+No Nx/Gradle module discovery or automatic workspace synchronization is included.
+
+### Worktree preparation
+
+The worktree detail offers one project-level setup command. Configure its executable
+and one argument per line; it always runs explicitly at the selected worktree root
+through the normal task runner, with duplicate prevention, Activity logs and Stop.
+No dependencies or environment files are automatically installed or copied.
+The command is also available in the normal custom task catalog. Configuration
+can be removed; changing it creates a new task ID so prior MCP grants cannot
+silently authorize different commands. Editing is blocked while preparation is
+active in any project worktree. Last results refer only to retained session runs,
+not to persistent readiness checks. Existing projects need no migration.
+
+Task rows expose MCP permissions through a Nuxt UI dropdown. Shared projects automatically authorize favorites; the star tooltip explains that removing a favorite revokes access without stopping existing runs. Non-favorites retain explicit grants. Preferences shows favorite grants as read-only checkboxes and names their source.
+
+Activity separates running tasks and history, with folder/task identity and compact branch context. Its upper edge supports pointer resizing and arrow-key resizing. Stop all uses the existing stop API on the confirmed snapshot of run IDs; later tasks and external daemons are excluded. The confirmation retains individual errors if any stop fails.
+
+Activity navigation uses Nuxt UI UTabs. Task secondary actions (configuration, MCP permission, custom-command removal) share one Nuxt UI dropdown; MCP authorization remains a passive row indicator.
+
+UpdateStatus shares release-check state between the titlebar notification and About. It uses Nuxt UI buttons and preserves the native AppDialog for release details. GitHub notes render as plain text.

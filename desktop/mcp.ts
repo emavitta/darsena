@@ -65,7 +65,7 @@ export class McpController {
     return {
       enabled,
       port,
-      projects: structuredClone(projects),
+      projects: Object.fromEntries(Object.entries(projects).filter(([id]) => this.hasProject(id)).map(([id, grant]) => [id, { tasks: [...new Set([...grant.tasks, ...this.workspace.store.project(id).favorites])] }])),
       listening: !!this.server?.listening,
       url: this.server?.listening ? `http://127.0.0.1:${port}/mcp` : undefined,
       error: this.error,
@@ -131,6 +131,8 @@ export class McpController {
   allowTask(input: z.infer<typeof mcpTaskSchema>) {
     return this.change(async () => {
       const grant = this.projectGrant(input.projectId)
+      if (!input.allowed && this.workspace.store.project(input.projectId).favorites.includes(input.taskId))
+        throw new Error('Remove this task from favorites to revoke MCP access.')
       if (input.allowed) {
         const catalog = await this.workspace.tasks(input.projectId, input.worktree)
         if (!catalog.tasks.some((task) => task.id === input.taskId && task.available))
@@ -177,8 +179,18 @@ export class McpController {
       throw new Error('Project is not shared with MCP. Enable access in Darsena Preferences → MCP.')
     return this.settings.projects[projectId]!
   }
+  private taskAllowed(projectId: string, taskId: string) {
+    return this.projectGrant(projectId).tasks.includes(taskId) || this.workspace.store.project(projectId).favorites.includes(taskId)
+  }
+  async removeFavoriteGrant(projectId: string, taskId: string) {
+    return this.change(async () => {
+      if (!this.hasProject(projectId)) return
+      const grant = this.projectGrant(projectId)
+      await this.persist({ ...this.settings, projects: { ...this.settings.projects, [projectId]: { tasks: grant.tasks.filter(id => id !== taskId) } } })
+    })
+  }
   private assertTask(projectId: string, taskId: string) {
-    if (!this.projectGrant(projectId).tasks.includes(taskId))
+    if (!this.taskAllowed(projectId, taskId))
       throw new Error('This task is not authorized for MCP. Allow it in Darsena Preferences → MCP.')
   }
   private validToken(authorization: string | undefined | null) {
@@ -267,7 +279,7 @@ export class McpController {
             ...catalog,
             tasks: catalog.tasks.map((task) => ({
               ...task,
-              mcpAllowed: grant.tasks.includes(task.id),
+              mcpAllowed: this.taskAllowed(projectId, task.id),
             })),
           }
         }),

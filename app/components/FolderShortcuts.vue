@@ -7,34 +7,34 @@ const emit = defineEmits<{ open: [folder: string, app: AppId]; add: []; remove: 
   <section class="detail-section">
     <div class="section-title">
       <h3>Open a folder</h3>
-      <button
-        v-tooltip="'Choose a subfolder inside this worktree and save a shortcut for the project.'"
+      <AppTooltip :text="'Choose a subfolder inside this worktree and save a shortcut for the project.'"><button
+        
         class="text-button"
         @click="emit('add')"
       >
         <AppIcon name="Plus" :size="14" />Add shortcut
-      </button>
+      </button></AppTooltip>
     </div>
     <div class="folder-list">
       <div v-for="folder in folders" :key="folder.id" class="folder-row">
         <div class="folder-symbol"><AppIcon name="FolderOpen" :size="19" /></div>
         <div class="folder-info">
           <strong>{{ folder.label }}</strong
-          ><span
-            v-tooltip="
+          ><AppTooltip :text="
               folder.path === '.'
                 ? 'The root folder of the selected worktree.'
                 : `Relative to the selected worktree.\n${folder.path}`
-            "
+            "><span
+            
             class="mono truncate"
             >{{ folder.path === '.' ? 'Worktree root' : folder.path }}</span
-          >
+          ></AppTooltip>
         </div>
         <div class="folder-actions">
-          <button
+          <AppTooltip :text="`Open ${folder.label} from the selected worktree in VS Code.`"><button
             class="icon-button folder-launch-button"
             :aria-label="`Open ${folder.label} in VS Code`"
-            v-tooltip="`Open ${folder.label} from the selected worktree in VS Code.`"
+            
             @click="emit('open', folder.path, 'vscode')"
           >
             <img
@@ -45,11 +45,11 @@ const emit = defineEmits<{ open: [folder: string, app: AppId]; add: []; remove: 
               height="28"
               draggable="false"
             />
-          </button>
-          <button
+          </button></AppTooltip>
+          <AppTooltip :text="`Open Terminal at ${folder.label} in the selected worktree.`"><button
             class="icon-button folder-launch-button"
             :aria-label="`Open ${folder.label} in Terminal`"
-            v-tooltip="`Open Terminal at ${folder.label} in the selected worktree.`"
+            
             @click="emit('open', folder.path, 'terminal')"
           >
             <img
@@ -60,11 +60,11 @@ const emit = defineEmits<{ open: [folder: string, app: AppId]; add: []; remove: 
               height="28"
               draggable="false"
             />
-          </button>
-          <button
+          </button></AppTooltip>
+          <AppTooltip :text="`Open ${folder.label} from the selected worktree in Android Studio.`"><button
             class="icon-button folder-launch-button"
             :aria-label="`Open ${folder.label} in Android Studio`"
-            v-tooltip="`Open ${folder.label} from the selected worktree in Android Studio.`"
+            
             @click="emit('open', folder.path, 'android-studio')"
           >
             <img
@@ -75,16 +75,16 @@ const emit = defineEmits<{ open: [folder: string, app: AppId]; add: []; remove: 
               height="28"
               draggable="false"
             />
-          </button>
-          <button
-            v-if="folder.id !== 'root'"
+          </button></AppTooltip>
+          <AppTooltip :text="'Remove this shortcut across the project. The folder stays on disk.'" v-if="folder.id !== 'root'"><button
+            
             class="icon-button subtle"
             :aria-label="`Remove ${folder.label} shortcut`"
-            v-tooltip="'Remove this shortcut across the project. The folder stays on disk.'"
+            
             @click="emit('remove', folder.id)"
           >
             <AppIcon name="X" :size="13" />
-          </button>
+          </button></AppTooltip>
         </div>
       </div>
     </div>

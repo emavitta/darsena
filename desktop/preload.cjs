@@ -1,5 +1,6 @@
 const { contextBridge, ipcRenderer } = require('electron')
 const methods = new Set([
+  'checkUpdates',
   'mcpStatus',
   'mcpConfigure',
   'mcpProject',
@@ -16,6 +17,8 @@ const methods = new Set([
   'selectProject',
   'worktrees',
   'selectWorktree',
+  'workspaceFolders',
+  'addWorkspaceFolders',
   'browseFolders',
   'addFolder',
   'removeFolder',
@@ -29,6 +32,7 @@ const methods = new Set([
   'androidStart',
   'starTask',
   'taskPort',
+  'configurePreparation',
   'addCustom',
   'removeCustom',
   'openFolder',

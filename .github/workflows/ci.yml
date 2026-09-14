@@ -41,15 +41,11 @@ jobs:
         run: pnpm build
       - name: Check desktop lifecycle and project removal
         run: |
-          node --import tsx tests/ui-smoke.mjs
-          node --import tsx tests/project-removal-smoke.mjs
-          node --import tsx tests/git-smoke.mjs
-          node --import tsx tests/story-scroll-smoke.mjs
-          node --import tsx tests/mcp-smoke.mjs
-          node --import tsx tests/preferences-smoke.mjs
-          node --import tsx tests/task-readability-smoke.mjs
-          node --import tsx tests/worktree-switcher-smoke.mjs
-          node --import tsx tests/android-smoke.mjs
+          desktop_failures=0
+          for desktop_test in ui project-removal git story-scroll mcp preferences tooltip task-readability worktree-switcher android; do
+            node --import tsx "tests/${desktop_test}-smoke.mjs" || desktop_failures=1
+          done
+          exit "$desktop_failures"
       - name: Save screenshots if a desktop check fails
         if: failure()
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1

@@ -34,28 +34,22 @@ Built with **Electron, Nuxt 4, Vue 3 and TypeScript**, with **Nuxt UI** being ad
 
 ## Download
 
-**[Download Darsena v0.1.2 for macOS — Apple Silicon (DMG)](https://github.com/emavitta/darsena/releases/download/v0.1.2/Darsena-0.1.2-arm64.dmg)**
+**[Darsena v1.0.0-rc.1](https://github.com/emavitta/darsena/releases/tag/v1.0.0-rc.1)** is a release candidate for macOS.
 
-The latest public preview is available on [GitHub Releases](https://github.com/emavitta/darsena/releases/tag/v0.1.2).
-Open the DMG and drag **Darsena** into **Applications**. A
-[ZIP containing the same app](https://github.com/emavitta/darsena/releases/download/v0.1.2/Darsena-0.1.2-arm64-mac.zip)
-is also available. Choose a DMG or app ZIP from the release assets; GitHub's
-automatic **Source code** archives are for development.
+| Mac | Download |
+| --- | --- |
+| Apple Silicon (M-series) | [DMG](https://github.com/emavitta/darsena/releases/download/v1.0.0-rc.1/Darsena-1.0.0-rc.1-arm64.dmg) |
+| Intel | [DMG](https://github.com/emavitta/darsena/releases/download/v1.0.0-rc.1/Darsena-1.0.0-rc.1-x64.dmg) |
 
-This preview supports **Apple Silicon Macs (M-series)**. It is ad-hoc signed but not
-notarized, so macOS may display a security warning when opening it. Intel Mac
-and Windows installers are not available yet.
+Both builds are Developer ID signed and notarized by Apple. Quit an existing
+Darsena instance, open the DMG and drag the app into Applications; settings are preserved.
+ZIP alternatives, SHA-256 checksums and source/signing manifests are available in
+the release assets. GitHub's automatic Source code archives are for development.
 
-New builds use an ad-hoc signature and verify the app inside both the DMG and ZIP
-before upload. This checks signature integrity; it does not provide Developer ID
-or notarization, so Gatekeeper warnings remain possible. Previously published
-installers are not changed by this fix.
-
-Each release includes [SHA-256 checksums](https://github.com/emavitta/darsena/releases/download/v0.1.2/SHA256SUMS-macos-arm64.txt)
-and a [build manifest](https://github.com/emavitta/darsena/releases/download/v0.1.2/build-macos-arm64.json)
-recording the version, target and exact source commit. Install updates manually
-from [Releases](https://github.com/emavitta/darsena/releases); in-app updating is
-not implemented yet.
+The app checks GitHub for updates and offers the download matching your Mac;
+installation remains manual. Previously published 0.x installers remain unchanged
+and may still trigger Gatekeeper warnings. Windows and Linux installers are not available.
+See [Signing and notarization](docs/signing.md) for maintainer setup.
 
 Git and your projects' toolchains need to be installed separately. To run
 Darsena from source, see [Development and checks](#development-and-checks).
@@ -153,8 +147,9 @@ These controls work on the main checkout and linked worktrees alike.
 The development version includes a local MCP server under **Preferences → MCP**.
 Enable it, share selected projects and copy the client configuration. Clients
 can inspect worktrees, tasks, runs, recent logs and associated listening ports.
-Authorize individual tasks to allow starting and stopping them; these permissions
-are independent of favorites.
+Favorites in shared projects are automatically authorized for starting and stopping.
+Use the MCP menu beside a task to authorize non-favorites as well. Removing a
+favorite revokes its access without stopping an existing run.
 
 MCP and the interface share the same runner and conflict checks. Agent-started
 runs appear in Activity with an **MCP** label. Closing the window keeps the
@@ -177,8 +172,7 @@ Tasks should stay attached to their launching process group. Independent,
 detached daemons and shared services such as a Gradle daemon are not claimed
 as managed just because a task contacted or started them.
 
-The public preview targets macOS on Apple Silicon. Developer ID signing,
-notarization and additional build architectures remain future work.
+The release candidate targets macOS on Apple Silicon and Intel. Distribution builds require Developer ID signing and notarization.
 
 ## Run on Android
 
@@ -323,3 +317,15 @@ installed app's logs. Search, minimum severity, follow-scroll and text export ar
 available alongside sampled app-process status. The reader follows PID changes;
 **Stop Logcat** stops collection without closing the device app. Agents can use
 `start_logcat`, `read_logcat` and `stop_logcat` for shared projects.
+
+### Update notifications
+
+Darsena checks public GitHub Releases at startup without authentication. About
+shows the installed version and offers a manual check. A newer release adds a
+small notification with plain-text notes, a matching macOS DMG when available,
+and the GitHub release page. Download and installation are manual. No task is
+stopped and nothing is installed automatically. Version 0.x and semver
+prerelease builds include prereleases; stable 1.x+ builds accept stable releases
+only. Drafts and equal/older versions are ignored. Checks are cached in memory
+for an hour (manual retries at most once per minute), with a ten-second timeout.
+Network errors do not interrupt work.

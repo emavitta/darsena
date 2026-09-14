@@ -5,15 +5,15 @@ const emit = defineEmits<{ story: [] }>()
 
 <template>
   <div class="brand-identity">
-    <button
-      v-if="story"
+    <AppTooltip :text="'Discover the harbor, gate, oak and tram in the Darsena icon.'" v-if="story"><button
+      
       class="brand-icon-button"
       aria-label="Read the story of Darsena"
-      v-tooltip="'Discover the harbor, gate, oak and tram in the Darsena icon.'"
+      
       @click="emit('story')"
     >
       <img class="brand-identity-icon" src="/brand/icon.png" width="112" height="112" alt="" />
-    </button>
+    </button></AppTooltip>
     <img v-else class="brand-identity-icon" src="/brand/icon.png" width="112" height="112" alt="" />
     <div>
       <p class="brand-wordmark">darsena</p>

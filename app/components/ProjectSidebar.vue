@@ -22,19 +22,17 @@ const sorted = computed(() =>
 <template>
   <aside class="sidebar" :class="{ collapsed }">
     <div v-if="collapsed" class="sidebar-rail nuxt-ui-scope">
-      <UButton
+      <AppTooltip :text="'About Darsena'"><UButton
         color="neutral"
         variant="ghost"
         class="rail-button"
         aria-label="About Darsena"
-        v-tooltip="'About Darsena'"
+        
         @click="emit('about')"
         ><img src="/brand/icon.png" width="28" height="28" alt=""
-      /></UButton>
+      /></UButton></AppTooltip>
       <div class="rail-projects">
-        <UButton
-          v-for="project in sorted"
-          :key="project.id"
+        <AppTooltip :text="project.name + '\n' + project.root" v-for="project in sorted" :key="project.id"><UButton
           color="neutral"
           :variant="selected === project.id ? 'soft' : 'ghost'"
           class="rail-button rail-project"
@@ -42,7 +40,7 @@ const sorted = computed(() =>
           :aria-label="project.name"
           :aria-pressed="selected === project.id"
           :data-project-selected="selected === project.id"
-          v-tooltip="project.name + '\n' + project.root"
+          
           @click="emit('select', project.id)"
         >
           {{
@@ -52,49 +50,49 @@ const sorted = computed(() =>
               .toUpperCase()
           }}
           <span v-if="project.starred" class="rail-star" aria-hidden="true">•</span>
-        </UButton>
-        <UButton
+        </UButton></AppTooltip>
+        <AppTooltip :text="'Add project'"><UButton
           color="neutral"
           variant="ghost"
           icon="i-lucide-plus"
           class="rail-button"
           aria-label="Add project"
           data-project-add
-          v-tooltip="'Add project'"
+          
           @click="emit('add')"
-        />
+        /></AppTooltip>
       </div>
-      <UButton
+      <AppTooltip :text="'Preferences'"><UButton
         color="neutral"
         variant="ghost"
         icon="i-lucide-settings-2"
         class="rail-button rail-settings"
         aria-label="Preferences 0.1"
-        v-tooltip="'Preferences'"
+        
         @click="emit('settings')"
-      />
+      /></AppTooltip>
     </div>
     <template v-else>
-      <button
+      <AppTooltip :text="'About Darsena: app version, artwork and the story behind the icon.'"><button
         class="sidebar-brand"
         aria-label="About Darsena"
-        v-tooltip="'About Darsena: app version, artwork and the story behind the icon.'"
+        
         @click="emit('about')"
       >
         <img class="sidebar-app-icon" src="/brand/icon.png" width="34" height="34" alt="" />
         <span>darsena</span>
-      </button>
+      </button></AppTooltip>
       <div class="sidebar-content">
         <div class="section-caption">
           <span>Projects</span
-          ><button
-            v-tooltip="'Choose a local Git repository to discover its worktrees.'"
+          ><AppTooltip :text="'Choose a local Git repository to discover its worktrees.'"><button
+            
             class="icon-button small"
             aria-label="Add project"
             @click="emit('add')"
           >
             <AppIcon name="Plus" :size="15" />
-          </button>
+          </button></AppTooltip>
         </div>
         <ProjectSidebarItem
           v-for="project in sorted"
@@ -107,29 +105,29 @@ const sorted = computed(() =>
           @copy="emit('copy', project.root)"
           @reveal="emit('reveal', project.id)"
         />
-        <button
-          v-tooltip="'Choose a local Git repository to discover its worktrees.'"
+        <AppTooltip :text="'Choose a local Git repository to discover its worktrees.'"><button
+          
           class="add-project"
           data-project-add
           @click="emit('add')"
         >
           <AppIcon name="Plus" :size="15" />Add project
-        </button>
+        </button></AppTooltip>
       </div>
       <div class="sidebar-bottom">
-        <p
-          v-tooltip="'Projects, preferences and task processes are managed on this Mac.'"
+        <AppTooltip :text="'Projects, preferences and task processes are managed on this Mac.'"><p
+          
           class="local-note"
         >
           <span class="status-dot" />Local to your Mac
-        </p>
-        <button
-          v-tooltip="'Choose folder applications and configure MCP access for AI tools.'"
+        </p></AppTooltip>
+        <AppTooltip :text="'Choose folder applications and configure MCP access for AI tools.'"><button
+          
           class="navigation-button"
           @click="emit('settings')"
         >
           <AppIcon name="Settings2" /><span>Preferences</span><span class="version">0.1</span>
-        </button>
+        </button></AppTooltip>
       </div>
     </template>
   </aside>

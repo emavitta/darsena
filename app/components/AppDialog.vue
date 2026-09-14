@@ -2,6 +2,7 @@
 const props = defineProps<{ title: string; wide?: boolean; busy?: boolean }>()
 const emit = defineEmits<{ close: [] }>()
 const element = useTemplateRef('element')
+provide('darsena-dialog-element', element)
 const titleId = useId()
 const backdropPress = shallowRef(false)
 function backdropClick(event: MouseEvent) {
@@ -29,15 +30,15 @@ onBeforeUnmount(() => element.value?.close())
   >
     <header class="dialog-header">
       <h2 :id="titleId">{{ props.title }}</h2>
-      <button
-        v-tooltip="'Close this dialog.'"
+      <AppTooltip :text="'Close this dialog.'"><button
+        
         class="icon-button"
         aria-label="Close dialog"
         :disabled="busy"
         @click="emit('close')"
       >
         <AppIcon name="X" />
-      </button>
+      </button></AppTooltip>
     </header>
     <div class="dialog-body"><slot /></div>
   </dialog>
