@@ -90,12 +90,8 @@ try {
   await dialog.waitFor()
   await hint(dialog.getByRole('button', { name: 'Close dialog', exact: true }), /Close this dialog/)
   assert.ok(await tip.evaluate((el) => el.closest('dialog')?.open))
-  assert.ok(
-    await tip.evaluate((el) => {
-      const r = el.getBoundingClientRect()
-      return el.contains(document.elementFromPoint(r.x + r.width / 2, r.y + r.height / 2))
-    }),
-  )
+  // Playwright waits for positioning/animation and verifies the visible content receives pointer events.
+  await tip.hover()
   await page.keyboard.press('Escape')
   await tip.waitFor({ state: 'hidden' })
   assert.ok(await dialog.isVisible())
