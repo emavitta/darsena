@@ -56,7 +56,7 @@ try {
   // A disabled action explains why it cannot be used.
   const disabled = page.getByRole('button', { name: 'Run missing-script in .' })
   assert.ok(await disabled.isDisabled())
-  await hint(disabled, /not available in the selected worktree/)
+  await hint(disabled.locator('..'), /not available in the selected worktree/)
   await page.keyboard.press('Escape')
 
   // Keyboard hints keep focus on the trigger and preserve its accessible name.

@@ -351,7 +351,7 @@ function runHint(task: Task) {
               <UDropdownMenu :items="taskMenu(task)" :content="{ align: 'end' }">
                 <UButton color="neutral" variant="ghost" size="xs" icon="i-lucide-ellipsis" :aria-label="`Actions for ${task.name} in ${task.folder}`" title="Task actions" />
               </UDropdownMenu>
-              <AppTooltip :text="runHint(task)"><button
+              <AppTooltip :text="runHint(task)"><span class="run-tooltip-trigger" :tabindex="!task.available || busy || running.has(task.id) ? 0 : undefined"><button
                 class="run-button"
                 :disabled="!task.available || busy || running.has(task.id)"
                 :aria-label="`Run ${task.name} in ${task.folder}`"
@@ -361,7 +361,7 @@ function runHint(task: Task) {
                 <AppIcon :name="running.has(task.id) ? 'Activity' : 'Play'" :size="13" />{{
                   running.has(task.id) ? 'Running' : 'Run'
                 }}
-              </button></AppTooltip>
+              </button></span></AppTooltip>
             </div>
           </div>
         </template>
@@ -371,6 +371,8 @@ function runHint(task: Task) {
 </template>
 
 <style scoped>
+.run-tooltip-trigger { display: inline-flex; }
+.run-tooltip-trigger > button:disabled { pointer-events: none; }
 .mcp-task-allowed {
   color: var(--muted);
   font-size: 11px;
