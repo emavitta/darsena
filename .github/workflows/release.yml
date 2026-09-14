@@ -12,7 +12,7 @@ jobs:
     uses: ./.github/workflows/build-macos.yml
     secrets: inherit
   release:
-    name: Collect tested macOS installers in a draft pre-release
+    name: Collect tested Apple Silicon and Intel installers in a draft pre-release
     needs: build
     runs-on: ubuntu-latest
     permissions:
@@ -41,6 +41,6 @@ jobs:
             gh release upload "$RELEASE_TAG" release-downloads/* --clobber
           else
             gh release create "$RELEASE_TAG" release-downloads/* \
-              --verify-tag --title "Darsena $RELEASE_TAG — macOS preview" \
+              --verify-tag --title "Darsena $RELEASE_TAG — macOS release candidate" \
               --notes-file "docs/releases/$RELEASE_TAG.md" --draft --prerelease
           fi

@@ -13,11 +13,24 @@ concurrency:
 
 jobs:
   build:
-    name: macOS · Apple Silicon
-    runs-on: macos-15
+    name: macOS · ${{ matrix.label }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - arch: arm64
+            label: Apple Silicon
+            runner: macos-15
+            appDirectory: mac-arm64
+          - arch: x64
+            label: Intel
+            runner: macos-15-intel
+            appDirectory: mac
+    runs-on: ${{ matrix.runner }}
     timeout-minutes: 60
     env:
       CSC_IDENTITY_AUTO_DISCOVERY: 'false'
+      DARSENA_ARCH: ${{ matrix.arch }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -65,7 +78,7 @@ jobs:
           trap 'rm -f "$APPLE_API_KEY"' EXIT
           umask 077
           printf '%s' "$APPLE_API_KEY_CONTENT" > "$APPLE_API_KEY"
-          pnpm exec electron-builder --config build/signed-macos.cjs --mac dmg zip --arm64 --publish never
+          pnpm exec electron-builder --config build/signed-macos.cjs --mac dmg zip --${{ matrix.arch }} --publish never
 
       - name: Verify Developer ID, notarization ticket and Gatekeeper
         env:
@@ -74,7 +87,7 @@ jobs:
 
       - name: Test the packaged app lifecycle and project removal
         env:
-          DARSENA_EXECUTABLE: ${{ github.workspace }}/release/mac-arm64/Darsena.app/Contents/MacOS/Darsena
+          DARSENA_EXECUTABLE: ${{ github.workspace }}/release/${{ matrix.appDirectory }}/Darsena.app/Contents/MacOS/Darsena
         run: |
           desktop_failures=0
           for desktop_test in ui project-removal git story-scroll mcp preferences tooltip task-readability worktree-switcher android; do
@@ -85,19 +98,19 @@ jobs:
       - name: Verify downloads and record their source
         working-directory: release
         run: |
-          for image in Darsena-*-arm64.dmg; do hdiutil verify "$image"; done
-          for archive in Darsena-*-arm64-mac.zip; do unzip -tq "$archive"; done
+          for image in Darsena-*-${{ matrix.arch }}.dmg; do hdiutil verify "$image"; done
+          for archive in Darsena-*-${{ matrix.arch }}-mac.zip; do unzip -tq "$archive"; done
           node ../scripts/release-manifest.mjs
 
       - name: Upload downloadable build
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
-          name: darsena-macos-arm64
+          name: darsena-macos-${{ matrix.arch }}
           path: |
             release/*.dmg
             release/*-mac.zip
-            release/SHA256SUMS-macos-arm64.txt
-            release/build-macos-arm64.json
+            release/SHA256SUMS-macos-${{ matrix.arch }}.txt
+            release/build-macos-${{ matrix.arch }}.json
           if-no-files-found: error
           retention-days: 14
           compression-level: 0
@@ -106,7 +119,7 @@ jobs:
         if: failure()
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
-          name: desktop-test-screenshots
+          name: desktop-test-screenshots-${{ matrix.arch }}
           path: test-results/*.png
           if-no-files-found: ignore
           retention-days: 7

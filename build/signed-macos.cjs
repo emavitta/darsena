@@ -5,6 +5,7 @@ if (!process.env.APPLE_KEYCHAIN_PROFILE && !(process.env.APPLE_API_KEY && proces
 }
 module.exports = {
   ...build,
+  dmg: { ...build.dmg, artifactName: 'Darsena-${version}-${arch}.${ext}' },
   forceCodeSigning: true,
-  mac: { ...build.mac, identity: process.env.CSC_NAME, hardenedRuntime: true, notarize: true },
+  mac: { ...build.mac, artifactName: 'Darsena-${version}-${arch}-mac.${ext}', identity: process.env.CSC_NAME, hardenedRuntime: true, notarize: true },
 }

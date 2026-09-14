@@ -34,29 +34,22 @@ Built with **Electron, Nuxt 4, Vue 3 and TypeScript**, with **Nuxt UI** being ad
 
 ## Download
 
-**[Download Darsena v0.1.2 for macOS — Apple Silicon (DMG)](https://github.com/emavitta/darsena/releases/download/v0.1.2/Darsena-0.1.2-arm64.dmg)**
+**[Darsena v1.0.0-rc.1](https://github.com/emavitta/darsena/releases/tag/v1.0.0-rc.1)** is a release candidate for macOS.
 
-The latest public preview is available on [GitHub Releases](https://github.com/emavitta/darsena/releases/tag/v0.1.2).
-Open the DMG and drag **Darsena** into **Applications**. A
-[ZIP containing the same app](https://github.com/emavitta/darsena/releases/download/v0.1.2/Darsena-0.1.2-arm64-mac.zip)
-is also available. Choose a DMG or app ZIP from the release assets; GitHub's
-automatic **Source code** archives are for development.
+| Mac | Download |
+| --- | --- |
+| Apple Silicon (M-series) | [DMG](https://github.com/emavitta/darsena/releases/download/v1.0.0-rc.1/Darsena-1.0.0-rc.1-arm64.dmg) |
+| Intel | [DMG](https://github.com/emavitta/darsena/releases/download/v1.0.0-rc.1/Darsena-1.0.0-rc.1-x64.dmg) |
 
-This preview supports **Apple Silicon Macs (M-series)**. It is ad-hoc signed but not
-notarized, so macOS may display a security warning when opening it. Intel Mac
-and Windows installers are not available yet.
+Both builds are Developer ID signed and notarized by Apple. Quit an existing
+Darsena instance, open the DMG and drag the app into Applications; settings are preserved.
+ZIP alternatives, SHA-256 checksums and source/signing manifests are available in
+the release assets. GitHub's automatic Source code archives are for development.
 
-The distribution workflow now signs with Developer ID, submits the app to Apple
-for notarization and staples the ticket before creating the DMG and ZIP. It verifies
-Gatekeeper acceptance and the ticket in both archives. Previously published
-installers remain unchanged; consult each build manifest for its signing status.
+The app checks GitHub for updates and offers the download matching your Mac;
+installation remains manual. Previously published 0.x installers remain unchanged
+and may still trigger Gatekeeper warnings. Windows and Linux installers are not available.
 See [Signing and notarization](docs/signing.md) for maintainer setup.
-
-Each release includes [SHA-256 checksums](https://github.com/emavitta/darsena/releases/download/v0.1.2/SHA256SUMS-macos-arm64.txt)
-and a [build manifest](https://github.com/emavitta/darsena/releases/download/v0.1.2/build-macos-arm64.json)
-recording the version, target and exact source commit. Install updates manually
-from [Releases](https://github.com/emavitta/darsena/releases); in-app updating is
-not implemented yet.
 
 Git and your projects' toolchains need to be installed separately. To run
 Darsena from source, see [Development and checks](#development-and-checks).
@@ -179,8 +172,7 @@ Tasks should stay attached to their launching process group. Independent,
 detached daemons and shared services such as a Gradle daemon are not claimed
 as managed just because a task contacted or started them.
 
-The public preview targets macOS on Apple Silicon. Additional build architectures
-remain future work. Distribution builds require Developer ID signing and notarization.
+The release candidate targets macOS on Apple Silicon and Intel. Distribution builds require Developer ID signing and notarization.
 
 ## Run on Android
 
