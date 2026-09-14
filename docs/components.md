@@ -209,3 +209,29 @@ The reader and device process have separate statuses; stopping collection does
 not stop the app. The worktree is the originating context, not build verification.
 The MCP exposes this read-only device collection (see docs/mcp.md); Android
 build/install and destructive ADB actions remain unavailable through MCP.
+
+### Workspace folder suggestions
+
+Add a folder shortcut → From workspace reads `pnpm-workspace.yaml` (`packages`,
+including exclusions), or root `package.json` workspaces (array or legacy
+`{ packages: [] }`). pnpm takes precedence. Selection is explicit and batch saves
+revalidate discovery before adding non-duplicate relative shortcuts. Discovery
+uses the selected worktree and executes no project commands. The root shortcut
+is already present; packages must have a readable package.json.
+
+Scanning skips symlink directories and generated/dependency folders (node_modules,
+.git, .pnpm, .nuxt, .output, build, dist, .gradle), with a 5,000-folder and depth
+limit. Use Browse for folders outside these limits or not declared as packages.
+No Nx/Gradle module discovery or automatic workspace synchronization is included.
+
+### Worktree preparation
+
+The worktree detail offers one project-level setup command. Configure its executable
+and one argument per line; it always runs explicitly at the selected worktree root
+through the normal task runner, with duplicate prevention, Activity logs and Stop.
+No dependencies or environment files are automatically installed or copied.
+The command is also available in the normal custom task catalog. Configuration
+can be removed; changing it creates a new task ID so prior MCP grants cannot
+silently authorize different commands. Editing is blocked while preparation is
+active in any project worktree. Last results refer only to retained session runs,
+not to persistent readiness checks. Existing projects need no migration.

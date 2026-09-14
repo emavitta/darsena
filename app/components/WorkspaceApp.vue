@@ -31,6 +31,7 @@ const {
   folderPicker,
   browseFolder,
   saveFolder,
+  saveWorkspaceFolders,
   closeFolderPicker,
   portTask,
   conflict,
@@ -153,6 +154,7 @@ function viewConflictActivity() {
             :runs="runs"
             :busy="busy"
             :gradle-busy="gradleBusy"
+            @preparation-saved="state = $event; refreshContext(true)"
             @git-changed="refreshContext(true)"
             @navigate="selectWorktree"
             @android-started="inspect"
@@ -239,6 +241,7 @@ function viewConflictActivity() {
     />
     <FolderShortcutDialog
       v-if="folderPicker"
+      :project-id="folderPicker.projectId"
       :worktree-name="folderPicker.worktreeName"
       :worktree-path="folderPicker.worktree"
       :folders="folderPicker.folders"
@@ -248,6 +251,7 @@ function viewConflictActivity() {
       :error="folderPicker.error"
       @browse="browseFolder"
       @save="saveFolder"
+      @save-workspace="saveWorkspaceFolders"
       @close="closeFolderPicker"
     />
     <CustomTaskDialog

@@ -28,6 +28,7 @@ const schema = z.object({
       starred: z.boolean(),
       folders: z.array(folder),
       favorites: z.array(z.string()),
+      preparationTaskId: z.string().optional(),
       customTasks: z.array(custom),
       taskPreferences: z.record(
         z.string(),

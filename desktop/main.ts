@@ -1,3 +1,5 @@
+import { configurePreparation, preparationSchema } from './preparation.js'
+import { discoverWorkspaceFolders } from './workspace-folders.js'
 import {
   app,
   clipboard,
@@ -93,6 +95,8 @@ const schemas: Record<keyof Methods, z.ZodType> = {
   selectProject: projectInput,
   worktrees: projectInput,
   selectWorktree: treeInput,
+  workspaceFolders: z.object({ projectId: string, worktree: string }),
+  addWorkspaceFolders: z.object({ projectId: string, worktree: string, folders: z.array(string).min(1).max(500) }),
   browseFolders: folderInput,
   addFolder: folderInput,
   removeFolder: projectInput.extend({ folderId: string }),
@@ -109,6 +113,7 @@ const schemas: Record<keyof Methods, z.ZodType> = {
     taskId: string,
     port: z.number().int().min(1).max(65535).optional(),
   }),
+  configurePreparation: preparationSchema,
   addCustom: projectInput.extend({
     task: z.object({
       name: string,
@@ -207,6 +212,19 @@ const handlers: {
     t.project.lastWorktree = worktree
     return save()
   },
+  workspaceFolders: async ({ projectId, worktree }) => {
+    await tree(projectId, worktree)
+    return discoverWorkspaceFolders(worktree)
+  },
+  addWorkspaceFolders: async ({ projectId, worktree, folders }) => {
+    await tree(projectId, worktree)
+    const detected = await discoverWorkspaceFolders(worktree)
+    if (folders.some(folder => !detected.folders.some(f => f.path === folder))) throw new Error('Workspace changed. Refresh its folders before adding them.')
+    const shortcuts = await Promise.all([...new Set(folders)].map(folder => folderShortcut(worktree, folder)))
+    const project = store.project(projectId)
+    for (const shortcut of shortcuts) if (!project.folders.some(f => f.path === shortcut.path)) project.folders.push({ id: randomUUID(), ...shortcut })
+    return save()
+  },
   browseFolders: async ({ projectId, worktree, folder }) => {
     await tree(projectId, worktree)
     return browseFolders(worktree, folder)
@@ -291,6 +309,10 @@ const handlers: {
     store.project(projectId).taskPreferences[taskId] = { port }
     return save()
   },
+  configurePreparation: async ({ projectId, command, args }) => {
+    configurePreparation(store.project(projectId), command, args, runner.list())
+    return save()
+  },
   addCustom: async ({ projectId, task }) => {
     if (path.isAbsolute(task.folder)) throw new Error('Use a folder path relative to the worktree.')
     const p = store.project(projectId)
@@ -302,6 +324,7 @@ const handlers: {
   removeCustom: async ({ projectId, taskId }) => {
     const p = store.project(projectId)
     p.customTasks = p.customTasks.filter((t) => t.id !== taskId)
+    if (p.preparationTaskId === taskId) p.preparationTaskId = undefined
     p.favorites = p.favorites.filter((id) => id !== taskId)
     return save()
   },

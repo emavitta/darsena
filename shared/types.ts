@@ -26,6 +26,7 @@ export interface Project {
   starred: boolean
   folders: Folder[]
   favorites: string[]
+  preparationTaskId?: string
   customTasks: CustomTask[]
   taskPreferences: Record<string, TaskPreference>
   lastWorktree?: string
@@ -162,10 +163,13 @@ export interface Methods {
   selectProject: { input: { projectId: string }; output: AppState }
   worktrees: { input: { projectId: string }; output: Worktree[] }
   selectWorktree: { input: { projectId: string; worktree: string }; output: AppState }
+  workspaceFolders: { input: { projectId: string; worktree: string }; output: WorkspaceFolders }
+  addWorkspaceFolders: { input: { projectId: string; worktree: string; folders: string[] }; output: AppState }
   browseFolders: {
     input: { projectId: string; worktree: string; folder: string }
     output: FolderListing
   }
+  configurePreparation: { input: { projectId: string; command: string; args: string[] }; output: AppState }
   addFolder: { input: { projectId: string; worktree: string; folder: string }; output: AppState }
   removeFolder: { input: { projectId: string; folderId: string }; output: AppState }
   tasks: { input: { projectId: string; worktree: string }; output: TaskCatalog }
@@ -208,3 +212,5 @@ export interface McpStatus {
   url?: string
   error?: string
 }
+
+export interface WorkspaceFolders { source?: string; folders: { path: string; name: string; taskCount: number }[]; warnings: string[] }

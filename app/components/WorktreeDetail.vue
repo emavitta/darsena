@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import type { DropdownMenuItem } from '@nuxt/ui'
-import type { AppId, Project, Run, Task, TaskCatalog, Worktree } from '../../shared/types'
+import type { AppState, AppId, Project, Run, Task, TaskCatalog, Worktree } from '../../shared/types'
 const props = defineProps<{
   project: Project
   worktree: Worktree
@@ -10,6 +10,7 @@ const props = defineProps<{
   gradleBusy: boolean
 }>()
 const emit = defineEmits<{
+  preparationSaved: [state: AppState]
   gitChanged: []
   navigate: [path: string]
   androidLoaded: []
@@ -88,6 +89,7 @@ const actions = computed<DropdownMenuItem[][]>(() => [
       <WorktreeGit :project="project" :worktree="worktree" :runs="runs" @changed="emit('gitChanged')" @navigate="emit('navigate', $event)" />
     </header>
     <div class="detail-body">
+      <WorktreePreparation :key="project.id + worktree.path" :project="project" :worktree="worktree" :runs="runs" :busy="busy" @start="emit('start', $event)" @saved="emit('preparationSaved', $event)" />
       <FolderShortcuts
         :folders="project.folders"
         @open="(folder, targetApp) => emit('open', folder, targetApp)"

@@ -325,6 +325,16 @@ export function useWorkspace() {
         }
     }
   }
+  async function saveWorkspaceFolders(folders: string[]) {
+    const picker = folderPicker.value
+    if (!picker || picker.saving) return
+    folderPicker.value = { ...picker, saving: true, error: '' }
+    try {
+      state.value = await call('addWorkspaceFolders', { projectId: picker.projectId, worktree: picker.worktree, folders })
+      folderPicker.value = undefined
+      await refreshContext(true)
+    } catch (e) { folderPicker.value = { ...picker, saving: false, error: e instanceof Error ? e.message : String(e) } }
+  }
   async function saveFolder(folder: string) {
     const picker = folderPicker.value
     if (!picker || picker.loading || picker.saving) return
@@ -495,6 +505,7 @@ export function useWorkspace() {
     folderPicker,
     browseFolder,
     saveFolder,
+    saveWorkspaceFolders,
     closeFolderPicker,
     portTask,
     conflict,
