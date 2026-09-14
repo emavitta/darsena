@@ -73,6 +73,8 @@ try {
   // Keyboard hints keep focus on the trigger and preserve its accessible name.
   await page.keyboard.press('Tab')
   const copy = page.getByRole('button', { name: 'Worktree actions' })
+  await copy.scrollIntoViewIfNeeded()
+  await page.waitForTimeout(300)
   await copy.focus()
   await tip.waitFor()
   assert.match(await tip.innerText(), /copy its path/)
