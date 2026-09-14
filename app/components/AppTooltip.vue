@@ -19,7 +19,7 @@ const portal = inject<Ref<HTMLDialogElement | null | undefined>>(
     :text="text"
     :portal="portal || true"
     :delay-duration="400"
-    :content="{ side: 'top', onEscapeKeyDown: dismiss }"
+    :content="{ side: 'top', collisionBoundary: portal || undefined, onEscapeKeyDown: dismiss }"
     :ui="{ content: 'nuxt-ui-scope max-w-80', text: 'whitespace-pre-line' }"
     ><slot
   /></UTooltip>
