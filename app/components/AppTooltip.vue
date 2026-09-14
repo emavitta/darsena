@@ -3,6 +3,7 @@ import type { Ref } from 'vue'
 defineProps<{ text?: string }>()
 const open = shallowRef(false)
 function dismiss(event: KeyboardEvent) {
+  if (!open.value) return
   event.preventDefault()
   event.stopPropagation()
   open.value = false

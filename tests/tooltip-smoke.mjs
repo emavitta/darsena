@@ -22,9 +22,10 @@ await writeFile(
 let desktop
 try {
   desktop = await electron.launch({
-    args: [process.env.DARSENA_TEST_ASAR || '.'],
+    executablePath: process.env.DARSENA_EXECUTABLE,
+    args: process.env.DARSENA_EXECUTABLE ? [] : ['.'],
     cwd: process.cwd(),
-    env: { ...process.env, DARSENA_DATA_DIR: data, DARSENA_DEV_URL: '' },
+    env: { ...process.env, DARSENA_DATA_DIR: data, DARSENA_DEV_URL: '', DARSENA_TEST_PORT: '0' },
   })
   assert.equal(await desktop.evaluate(({ app }) => app.getPath('userData')), data)
   const page = await desktop.firstWindow()
@@ -32,7 +33,7 @@ try {
   const errors = []
   page.on('pageerror', (error) => errors.push(error.message))
   await page.getByRole('heading', { name: 'harbor-project', exact: true }).waitFor()
-  const tip = page.locator('[data-reka-popper-content-wrapper]:visible')
+  const tip = page.locator('[data-reka-popper-content-wrapper]').filter({ has: page.locator('[data-state=delayed-open], [data-state=instant-open]') })
   async function hint(trigger, text) {
     await page.bringToFront()
     await trigger.hover()
