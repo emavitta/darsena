@@ -36,6 +36,8 @@ try {
   const tip = page.locator('[data-reka-popper-content-wrapper]').filter({ has: page.locator('[data-state=delayed-open], [data-state=instant-open]') })
   async function hint(trigger, text) {
     await page.bringToFront()
+    await trigger.scrollIntoViewIfNeeded()
+    await page.waitForTimeout(300)
     await page.mouse.move(0, 0)
     await trigger.hover()
     const target = await trigger.boundingBox()
