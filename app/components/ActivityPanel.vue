@@ -27,9 +27,11 @@ watch(() => props.runs.find(run => run.id === props.selected)?.status, (status) 
 })
 const shownRuns = computed(() => props.runs.filter(run => tab.value === 'history' ? !['starting', 'running', 'stopping'].includes(run.status) : ['starting', 'running', 'stopping'].includes(run.status)))
 const current = computed(() => shownRuns.value.find((r) => r.id === props.selected))
-watch([shownRuns, () => props.selected], () => {
-  if (tab.value !== 'ports' && !current.value && shownRuns.value[0]) emit('inspect', shownRuns.value[0].id)
-}, { immediate: true })
+function selectView(value: string | number) {
+  if (value === 'ports') { emit('scan'); return }
+  const candidates = props.runs.filter(run => value === 'history' ? !['starting', 'running', 'stopping'].includes(run.status) : ['starting', 'running', 'stopping'].includes(run.status))
+  if (!candidates.some(run => run.id === props.selected) && candidates[0]) emit('inspect', candidates[0].id)
+}
 const activeRuns = computed(() =>
   props.runs.filter((r) => ['running', 'starting', 'stopping'].includes(r.status)),
 )
@@ -97,7 +99,7 @@ watch(
           { label: `Running ${activeRuns.length}`, value: 'runs' },
           { label: `History ${runs.length - activeRuns.length}`, value: 'history' },
           { label: 'Listening ports', value: 'ports' },
-        ]" size="sm" aria-label="Activity views" @update:model-value="value => { if (value === 'ports') emit('scan') }" />
+        ]" size="sm" aria-label="Activity views" @update:model-value="selectView" />
       </div>
     </header>
     <div v-if="tab !== 'ports'" class="activity-content">
