@@ -1,7 +1,0 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="720" height="320" viewBox="0 0 720 320" fill="none">
-  <title>Darsena — Due sponde</title>
-  <desc>An editorial abstraction of two stone quays, a long city basin and the reflections along its edge.</desc>
-  <path d="M72 60h384c94.993 0 172 55.517 172 124v16h-48v-16c0-43.078-55.517-78-124-78H72V60Z" fill="#1D202A"/>
-  <path d="M648 260H264c-94.993 0-172-55.517-172-124v-16h48v16c0 43.078 55.517 78 124 78h384v46Z" fill="#1D202A"/>
-  <path d="M225 140h255M210 160h288M232 180h239" stroke="#293CE6" stroke-width="5"/>
-</svg>

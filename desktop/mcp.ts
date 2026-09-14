@@ -274,7 +274,7 @@ export class McpController {
         respond(async () => {
           this.projectGrant(projectId)
           const catalog = await this.workspace.tasks(projectId, worktree)
-          const grant = this.projectGrant(projectId)
+          this.projectGrant(projectId)
           return {
             ...catalog,
             tasks: catalog.tasks.map((task) => ({
