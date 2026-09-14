@@ -43,9 +43,7 @@ function duration(run: Run) {
           group.active ? 'No tasks are running.' : 'Finished and stopped tasks will appear here.'
         }}
       </p>
-      <AppTooltip :text="`View ${run.name} output.\n${run.folder}`" v-for="run in group.runs"><button
-        
-        :key="run.id"
+      <AppTooltip :text="`View ${run.name} output.\n${run.folder}`" v-for="run in group.runs" :key="run.id"><button
         class="run-entry"
         :class="{ selected: run.id === selected, 'active-entry': group.active }"
         :aria-pressed="run.id === selected"

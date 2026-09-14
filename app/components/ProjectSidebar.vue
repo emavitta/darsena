@@ -32,9 +32,7 @@ const sorted = computed(() =>
         ><img src="/brand/icon.png" width="28" height="28" alt=""
       /></UButton></AppTooltip>
       <div class="rail-projects">
-        <AppTooltip :text="project.name + '\n' + project.root" v-for="project in sorted"><UButton
-          
-          :key="project.id"
+        <AppTooltip :text="project.name + '\n' + project.root" v-for="project in sorted" :key="project.id"><UButton
           color="neutral"
           :variant="selected === project.id ? 'soft' : 'ghost'"
           class="rail-button rail-project"

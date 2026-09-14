@@ -205,9 +205,7 @@ watch(
             <div class="mono">{{ current.command }}</div>
             <div class="mono muted">Working folder: {{ current.folder }}</div>
             <div class="run-links">
-              <AppTooltip :text="`Open this address in your default browser.\n${url}`" v-for="url in current.urls"><button
-                
-                :key="url"
+              <AppTooltip :text="`Open this address in your default browser.\n${url}`" v-for="url in current.urls" :key="url"><button
                 class="text-button"
                 
                 @click="emit('openUrl', url)"
@@ -231,9 +229,7 @@ watch(
             Addresses from saved output; the task has ended.
           </p>
           <div v-if="!compact" class="run-links">
-            <AppTooltip :text="`Open this address in your default browser.\n${url}`" v-for="url in current.urls"><button
-              
-              :key="url"
+            <AppTooltip :text="`Open this address in your default browser.\n${url}`" v-for="url in current.urls" :key="url"><button
               class="text-button"
               
               @click="emit('openUrl', url)"

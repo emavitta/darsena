@@ -61,9 +61,7 @@ const activeCounts = computed(() => {
       <p v-else-if="!filtered.length" class="empty-small">
         {{ query ? 'No matching worktrees.' : 'No worktrees available.' }}
       </p>
-      <AppTooltip :text="worktreeSelectionHint(tree)" v-for="tree in filtered"><button
-        
-        :key="tree.path"
+      <AppTooltip :text="worktreeSelectionHint(tree)" v-for="tree in filtered" :key="tree.path"><button
         class="worktree-row"
         :class="{ selected: selected === tree.path, unavailable: !tree.exists || tree.bare }"
         

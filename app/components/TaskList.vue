@@ -289,9 +289,7 @@ function runHint(task: Task) {
               group.path === '.' ? 'Root' : group.path
             }}</span>
             <span class="task-folder-tools">
-              <AppTooltip :text="tool.label" v-for="tool in group.tools"><span
-                
-                :key="tool.id"
+              <AppTooltip :text="tool.label" v-for="tool in group.tools" :key="tool.id"><span
                 
                 :title="tool.label"
                 :aria-label="tool.label"
