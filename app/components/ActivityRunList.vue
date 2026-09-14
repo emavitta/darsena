@@ -43,13 +43,13 @@ function duration(run: Run) {
           group.active ? 'No tasks are running.' : 'Finished and stopped tasks will appear here.'
         }}
       </p>
-      <button
-        v-for="run in group.runs"
+      <AppTooltip :text="`View ${run.name} output.\n${run.folder}`" v-for="run in group.runs"><button
+        
         :key="run.id"
         class="run-entry"
         :class="{ selected: run.id === selected, 'active-entry': group.active }"
         :aria-pressed="run.id === selected"
-        v-tooltip="`View ${run.name} output.\n${run.folder}`"
+        
         @click="emit('inspect', run.id)"
       >
         <div class="entry-status">
@@ -68,22 +68,24 @@ function duration(run: Run) {
         </div>
         <div class="entry-project" :title="run.worktree">{{ run.projectName }}</div>
         <div v-if="run.source === 'mcp' || run.port || run.exitCode != null" class="entry-meta">
-          <span
-            v-if="run.source === 'mcp'"
+          <AppTooltip :text="'Started through Darsena’s MCP connection.'" v-if="run.source === 'mcp'"><span
+            
             class="tag"
-            v-tooltip="'Started through Darsena’s MCP connection.'"
+            
             >MCP</span
-          >
+          ></AppTooltip>
           <span v-if="group.active && run.port">Port {{ run.port }}</span>
           <span v-if="!group.active && run.exitCode != null">Exit {{ run.exitCode }}</span>
         </div>
-      </button>
+      </button></AppTooltip>
     </section>
   </div>
 </template>
 
 <style scoped>
-.entry-branch { margin-top: 5px; }
+.entry-branch {
+  margin-top: 5px;
+}
 
 .run-list {
   width: clamp(275px, 28vw, 350px);
@@ -182,7 +184,10 @@ function duration(run: Run) {
   color: var(--accent);
   overflow-wrap: anywhere;
 }
-.entry-folder svg { flex-shrink: 0; margin-top: 3px; }
+.entry-folder svg {
+  flex-shrink: 0;
+  margin-top: 3px;
+}
 .entry-project {
   font-size: 13px;
   color: var(--muted);

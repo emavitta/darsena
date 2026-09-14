@@ -7,8 +7,8 @@ const pending = computed(() => props.sources.filter((source) => !source.loaded).
 
 <template>
   <details v-if="sources.length" class="task-sources">
-    <summary
-      v-tooltip="'See where tasks come from and load sources that require an explicit refresh.'"
+    <AppTooltip :text="'See where tasks come from and load sources that require an explicit refresh.'"><summary
+      
     >
       <AppIcon name="ChevronRight" :size="13" class="source-chevron" />
       <span
@@ -16,7 +16,7 @@ const pending = computed(() => props.sources.filter((source) => !source.loaded).
       >
       <span v-if="loading" class="source-pending" role="status">Loading tasks…</span>
       <span v-else-if="pending" class="source-pending">{{ pending }} to load</span>
-    </summary>
+    </summary></AppTooltip>
     <div class="source-list">
       <p class="source-explanation">Tasks from every source appear together in the list below.</p>
       <div
@@ -26,27 +26,27 @@ const pending = computed(() => props.sources.filter((source) => !source.loaded).
       >
         <div class="source-info">
           <strong>{{ source.label }}</strong>
-          <span
+          <AppTooltip :text="`Source folder in the selected worktree: ${source.folder}`"><span
             class="mono muted"
-            v-tooltip="`Source folder in the selected worktree: ${source.folder}`"
+            
             >{{ source.folder === '.' ? 'Root' : source.folder }}</span
-          >
+          ></AppTooltip>
         </div>
         <span class="source-count muted">{{
           source.loaded ? `${source.count} tasks` : 'Not loaded'
         }}</span>
-        <button
-          v-if="source.kind === 'gradle'"
+        <AppTooltip :text="
+            `Run Gradle to discover tasks in this worktree. This evaluates the build and may take a moment.\n${source.folder}`
+          " v-if="source.kind === 'gradle'"><button
+          
           class="button small"
           :disabled="loading"
           :aria-label="`Sync Gradle in ${source.folder}`"
-          v-tooltip="
-            `Run Gradle to discover tasks in this worktree. This evaluates the build and may take a moment.\n${source.folder}`
-          "
+          
           @click="emit('load', source.folder)"
         >
           <AppIcon name="RefreshCw" :size="12" />{{ loading ? 'Syncing…' : 'Sync Gradle' }}
-        </button>
+        </button></AppTooltip>
         <AppIcon v-else name="Check" :size="14" class="muted" />
       </div>
       <p v-if="pending" class="source-explanation">

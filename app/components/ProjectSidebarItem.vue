@@ -13,12 +13,23 @@ const items = computed<DropdownMenuItem[][]>(() => [
     { label: 'Show in Finder', icon: 'i-lucide-folder-open', onSelect: () => emit('reveal') },
     { label: 'Copy project path', icon: 'i-lucide-copy', onSelect: () => emit('copy') },
   ],
-  [{ label: 'Remove from Darsena…', icon: 'i-lucide-trash-2', color: 'error', onSelect: () => emit('remove') }],
+  [
+    {
+      label: 'Remove from Darsena…',
+      icon: 'i-lucide-trash-2',
+      color: 'error',
+      onSelect: () => emit('remove'),
+    },
+  ],
 ])
 function contextMenu(event: MouseEvent) {
   contextRelease?.abort()
   cancelAnimationFrame(contextFrame)
-  const show = () => { contextFrame = requestAnimationFrame(() => { opened.value = true }) }
+  const show = () => {
+    contextFrame = requestAnimationFrame(() => {
+      opened.value = true
+    })
+  }
   if (event.buttons) {
     contextRelease = new AbortController()
     document.addEventListener('pointerup', show, { once: true, signal: contextRelease.signal })
@@ -43,20 +54,20 @@ onBeforeUnmount(() => {
     @contextmenu.prevent="contextMenu"
     @keydown="contextKey"
   >
-    <button
-      v-tooltip="`View this project’s worktrees.\n${project.root}`"
+    <AppTooltip :text="`View this project’s worktrees.\n${project.root}`"><button
+      
       class="project-select"
       :data-project-selected="selected"
       @click="emit('select')"
     >
       <AppIcon name="Folder" /><span class="truncate">{{ project.name }}</span>
-    </button>
-    <button
-      v-tooltip="
+    </button></AppTooltip>
+    <AppTooltip :text="
         project.starred
           ? 'Remove this project from favorites.'
           : 'Keep this project at the top of your project list.'
-      "
+      "><button
+      
       class="icon-button small star-button"
       :class="{ starred: project.starred }"
       :aria-label="`${project.starred ? 'Unfavorite' : 'Favorite'} ${project.name}`"
@@ -64,27 +75,32 @@ onBeforeUnmount(() => {
       @click="emit('star')"
     >
       <AppIcon name="Star" :size="13" />
-    </button>
+    </button></AppTooltip>
     <UDropdownMenu
       v-model:open="opened"
       :items="items"
       :content="{ align: 'start' }"
     >
-      <UButton
+      <AppTooltip :text="'Project actions: show in Finder, copy path or remove from Darsena.'"><UButton
         class="nuxt-ui-scope project-actions-trigger"
         color="neutral"
         variant="ghost"
         icon="i-lucide-ellipsis"
         :aria-label="`Actions for ${project.name}`"
-        v-tooltip="'Project actions: show in Finder, copy path or remove from Darsena.'"
-      />
+        
+      /></AppTooltip>
     </UDropdownMenu>
   </div>
 </template>
 
 <style scoped>
-.project-actions-trigger { flex-shrink: 0; opacity: 0.7; }
+.project-actions-trigger {
+  flex-shrink: 0;
+  opacity: 0.7;
+}
 .project-entry:hover .project-actions-trigger,
 .project-entry:focus-within .project-actions-trigger,
-.project-actions-trigger[aria-expanded='true'] { opacity: 1; }
+.project-actions-trigger[aria-expanded='true'] {
+  opacity: 1;
+}
 </style>

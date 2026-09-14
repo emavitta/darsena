@@ -4,10 +4,10 @@ defineProps<{ tool: TaskTool }>()
 </script>
 
 <template>
-  <span class="task-tool-badge" :class="`tool-${tool.tone}`" v-tooltip="tool.hint">
+  <AppTooltip :text="tool.hint"><span class="task-tool-badge" :class="`tool-${tool.tone}`" >
     <TaskToolIcon :icon="tool.icon" />
     <span>{{ tool.label }}</span>
-  </span>
+  </span></AppTooltip>
 </template>
 
 <style scoped>

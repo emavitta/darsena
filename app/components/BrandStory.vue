@@ -112,17 +112,17 @@ function openSource(event: MouseEvent, url: string) {
               {{ paragraph }}
             </p>
             <div class="story-sources">
-              <a
-                v-for="source in section.sources"
+              <AppTooltip :text="'Read the historical source in your browser.'" v-for="source in section.sources"><a
+                
                 :key="source.url"
                 :href="source.url"
                 target="_blank"
                 rel="noopener noreferrer"
-                v-tooltip="'Read the historical source in your browser.'"
+                
                 @click="openSource($event, source.url)"
               >
                 {{ source.label }}<AppIcon name="ArrowUpRight" :size="12" />
-              </a>
+              </a></AppTooltip>
             </div>
           </div>
         </section>

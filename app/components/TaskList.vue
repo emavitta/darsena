@@ -21,18 +21,56 @@ const emit = defineEmits<{
 const { status: mcpStatus, busy: mcpBusy, error: mcpError, perform: mcpPerform } = useMcpSettings()
 const mcpShared = computed(() => !!mcpStatus.value?.projects[props.projectId])
 function mcpAllowed(id: string) {
-  return mcpShared.value && (props.favorites.includes(id) || !!mcpStatus.value?.projects[props.projectId]?.tasks.includes(id))
+  return (
+    mcpShared.value &&
+    (props.favorites.includes(id) ||
+      !!mcpStatus.value?.projects[props.projectId]?.tasks.includes(id))
+  )
 }
 function taskMenu(task: Task) {
   return [
-    ...(!task.action ? [{ label: 'Configure task', icon: 'i-lucide-settings-2', disabled: props.busy, onSelect: () => emit('configure', task) }] : []),
+    ...(!task.action
+      ? [
+          {
+            label: 'Configure task',
+            icon: 'i-lucide-settings-2',
+            disabled: props.busy,
+            onSelect: () => emit('configure', task),
+          },
+        ]
+      : []),
     {
-    label: !mcpShared.value ? 'Share project in Preferences → MCP first' : props.favorites.includes(task.id) ? 'Allowed via favorites — unstar to revoke' : mcpAllowed(task.id) ? 'Revoke MCP access' : 'Allow through MCP',
-    icon: 'i-lucide-plug',
-    disabled: mcpBusy.value || !mcpShared.value || props.favorites.includes(task.id) || (!task.available && !mcpAllowed(task.id)),
-    onSelect: () => mcpPerform('mcpTask', { projectId: props.projectId, worktree: props.worktree, taskId: task.id, allowed: !mcpAllowed(task.id) }),
-  },
-  ...(task.kind === 'custom' ? [{ label: 'Remove command', icon: 'i-lucide-trash-2', disabled: props.busy, onSelect: () => emit('remove', task.id) }] : []),
+      label: !mcpShared.value
+        ? 'Share project in Preferences → MCP first'
+        : props.favorites.includes(task.id)
+          ? 'Allowed via favorites — unstar to revoke'
+          : mcpAllowed(task.id)
+            ? 'Revoke MCP access'
+            : 'Allow through MCP',
+      icon: 'i-lucide-plug',
+      disabled:
+        mcpBusy.value ||
+        !mcpShared.value ||
+        props.favorites.includes(task.id) ||
+        (!task.available && !mcpAllowed(task.id)),
+      onSelect: () =>
+        mcpPerform('mcpTask', {
+          projectId: props.projectId,
+          worktree: props.worktree,
+          taskId: task.id,
+          allowed: !mcpAllowed(task.id),
+        }),
+    },
+    ...(task.kind === 'custom'
+      ? [
+          {
+            label: 'Remove command',
+            icon: 'i-lucide-trash-2',
+            disabled: props.busy,
+            onSelect: () => emit('remove', task.id),
+          },
+        ]
+      : []),
   ]
 }
 const tasks = computed(() => props.catalog.tasks)
@@ -135,13 +173,13 @@ function runHint(task: Task) {
     <p v-if="mcpError" role="alert" class="inline-error">{{ mcpError }}</p>
     <div class="section-title">
       <h3>Tasks</h3>
-      <button
-        v-tooltip="'Save an executable and its arguments to run across this project’s worktrees.'"
+      <AppTooltip :text="'Save an executable and its arguments to run across this project’s worktrees.'"><button
+        
         class="text-button"
         @click="emit('custom')"
       >
         <AppIcon name="Plus" :size="14" />Custom command
-      </button>
+      </button></AppTooltip>
     </div>
     <TaskSources
       :sources="catalog.sources"
@@ -157,41 +195,41 @@ function runHint(task: Task) {
     </div>
     <div class="task-toolbar">
       <div class="segmented">
-        <button
+        <AppTooltip :text="'Show the tasks you starred for this project, across all its worktrees.'"><button
           :class="{ active: tab === 'favorites' }"
           :aria-pressed="tab === 'favorites'"
-          v-tooltip="'Show the tasks you starred for this project, across all its worktrees.'"
+          
           @click="tab = 'favorites'"
         >
           Favorites <span>{{ favorites.length }}</span></button
-        ><button
+        ></AppTooltip><AppTooltip :text="'Show discovered scripts, loaded Gradle tasks and saved custom commands.'"><button
           :class="{ active: tab === 'all' }"
           :aria-pressed="tab === 'all'"
-          v-tooltip="'Show discovered scripts, loaded Gradle tasks and saved custom commands.'"
+          
           @click="tab = 'all'"
         >
           All tasks <span>{{ tasks.length }}</span>
-        </button>
+        </button></AppTooltip>
       </div>
       <div class="task-filters">
-        <select
+        <AppTooltip :text="'Show tasks for one tool, such as pnpm, npm, Yarn or Gradle.'"><select
           v-model="toolFilter"
           aria-label="Filter tasks by tool"
           class="task-tool-filter"
-          v-tooltip="'Show tasks for one tool, such as pnpm, npm, Yarn or Gradle.'"
+          
         >
           <option value="all">All tools</option>
           <option v-for="tool in toolOptions" :key="tool.id" :value="tool.id">
             {{ tool.label }} ({{ tool.count }})
           </option>
-        </select>
+        </select></AppTooltip>
         <label class="task-search"
-          ><AppIcon name="Search" :size="14" /><input
+          ><AppIcon name="Search" :size="14" /><AppTooltip :text="'Filter tasks by name, working folder or tool.'"><input
             v-model="query"
             aria-label="Search tasks"
-            v-tooltip="'Filter tasks by name, working folder or tool.'"
+            
             placeholder="Find task…"
-        /></label>
+        /></AppTooltip></label>
       </div>
     </div>
     <div v-if="!visible.length" class="tasks-empty">
@@ -214,14 +252,14 @@ function runHint(task: Task) {
         }}
       </p>
       <button v-if="filtering" class="button small" @click="clearFilters">Clear filters</button>
-      <button
-        v-else-if="tab === 'favorites'"
-        v-tooltip="'Find tasks and star the ones you use often.'"
+      <AppTooltip :text="'Find tasks and star the ones you use often.'" v-else-if="tab === 'favorites'"><button
+        
+        
         class="button small"
         @click="tab = 'all'"
       >
         Browse all tasks<AppIcon name="ChevronRight" :size="14" />
-      </button>
+      </button></AppTooltip>
     </div>
     <section
       v-for="group in folderGroups"
@@ -251,16 +289,16 @@ function runHint(task: Task) {
               group.path === '.' ? 'Root' : group.path
             }}</span>
             <span class="task-folder-tools">
-              <span
-                v-for="tool in group.tools"
+              <AppTooltip :text="tool.label" v-for="tool in group.tools"><span
+                
                 :key="tool.id"
-                v-tooltip="tool.label"
+                
                 :title="tool.label"
                 :aria-label="tool.label"
                 class="task-tool-symbol"
               >
                 <TaskToolIcon :icon="tool.icon" />
-              </span>
+              </span></AppTooltip>
             </span>
             <span class="task-folder-count">{{ group.rows.length }}</span>
           </button>
@@ -272,60 +310,60 @@ function runHint(task: Task) {
             class="task-row"
             :class="{ unavailable: !task.available }"
           >
-            <button
+            <AppTooltip :text="
+                favorites.includes(task.id)
+                  ? (mcpShared ? 'Remove favorite and revoke MCP access. Running tasks are not stopped.' : 'Remove this task from the project’s favorites.')
+                  : (mcpShared ? 'Favorite this task and allow MCP clients to run it across this project’s worktrees.' : 'Favorite this task. Favorites are also allowed when you share this project with MCP.')
+              "><button
               class="icon-button star-button"
               :class="{ starred: favorites.includes(task.id) }"
               :aria-label="`${favorites.includes(task.id) ? 'Unfavorite' : 'Favorite'} task ${task.name}`"
               :aria-pressed="favorites.includes(task.id)"
-              v-tooltip="
-                favorites.includes(task.id)
-                  ? (mcpShared ? 'Remove favorite and revoke MCP access. Running tasks are not stopped.' : 'Remove this task from the project’s favorites.')
-                  : (mcpShared ? 'Favorite this task and allow MCP clients to run it across this project’s worktrees.' : 'Favorite this task. Favorites are also allowed when you share this project with MCP.')
-              "
+              
               @click="emit('star', task.id)"
             >
               <AppIcon name="Star" :size="18" />
-            </button>
+            </button></AppTooltip>
             <div class="task-info">
               <div class="task-name">
-                <span
-                  v-if="group.tools.length > 1"
-                  v-tooltip="tool.label + ': ' + tool.hint"
+                <AppTooltip :text="tool.label + ': ' + tool.hint" v-if="group.tools.length > 1"><span
+                  
+                  
                   :title="tool.label"
                   :aria-label="tool.label"
                   class="task-tool-symbol"
                 >
                   <TaskToolIcon :icon="tool.icon" />
-                </span>
-                <strong v-tooltip="task.description || [task.command, ...task.args].join(' ')">{{
+                </span></AppTooltip>
+                <AppTooltip :text="task.description || [task.command, ...task.args].join(' ')"><strong >{{
                   task.name
-                }}</strong>
+                }}</strong></AppTooltip>
               </div>
               <span v-if="task.action" class="muted">Build, install and launch</span>
-              <span
-                v-if="task.port"
+              <AppTooltip :text="'Darsena checks this TCP port before starting the task.'" v-if="task.port"><span
+                
                 class="mono muted"
-                v-tooltip="'Darsena checks this TCP port before starting the task.'"
+                
                 >Port {{ task.port }}</span
-              >
+              ></AppTooltip>
               <span v-if="!task.available" class="task-missing">{{ missingHint(task) }}</span>
             </div>
             <div class="task-row-actions nuxt-ui-scope">
-              <span v-if="mcpAllowed(task.id)" class="mcp-task-allowed" v-tooltip="'Allowed through MCP'" aria-label="Allowed through MCP">MCP</span>
+              <AppTooltip :text="'Allowed through MCP'" v-if="mcpAllowed(task.id)"><span  class="mcp-task-allowed"  aria-label="Allowed through MCP">MCP</span></AppTooltip>
               <UDropdownMenu :items="taskMenu(task)" :content="{ align: 'end' }">
                 <UButton color="neutral" variant="ghost" size="xs" icon="i-lucide-ellipsis" :aria-label="`Actions for ${task.name} in ${task.folder}`" title="Task actions" />
               </UDropdownMenu>
-              <button
+              <AppTooltip :text="runHint(task)"><button
                 class="run-button"
                 :disabled="!task.available || busy || running.has(task.id)"
                 :aria-label="`Run ${task.name} in ${task.folder}`"
-                v-tooltip="runHint(task)"
+                
                 @click="emit('start', task.id)"
               >
                 <AppIcon :name="running.has(task.id) ? 'Activity' : 'Play'" :size="13" />{{
                   running.has(task.id) ? 'Running' : 'Run'
                 }}
-              </button>
+              </button></AppTooltip>
             </div>
           </div>
         </template>
@@ -335,7 +373,10 @@ function runHint(task: Task) {
 </template>
 
 <style scoped>
-.mcp-task-allowed { color: var(--muted); font-size: 11px; }
+.mcp-task-allowed {
+  color: var(--muted);
+  font-size: 11px;
+}
 .task-folder-group {
   max-width: 860px;
   margin-top: 12px;

@@ -32,28 +32,28 @@ const activeCounts = computed(() => {
       <h2>
         Worktrees <span class="muted">{{ worktrees.length }}</span>
       </h2>
-      <button
-        class="icon-button"
-        :disabled="loading"
-        aria-label="Refresh worktrees"
-        v-tooltip="
+      <AppTooltip :text="
           loading
             ? 'Reading the worktrees and their Git status…'
             : 'Rescan Git for worktrees and update their local changes.'
-        "
+        "><button
+        class="icon-button"
+        :disabled="loading"
+        aria-label="Refresh worktrees"
+        
         @click="emit('refresh')"
       >
         <AppIcon name="RefreshCw" :class="{ spin: loading }" :size="15" />
-      </button>
+      </button></AppTooltip>
     </header>
     <label class="search-field"
-      ><AppIcon name="Search" :size="15" /><input
+      ><AppIcon name="Search" :size="15" /><AppTooltip :text="'Filter this project by worktree name, branch or path.'"><input
         v-model="query"
         data-worktree-search
         placeholder="Find a worktree…"
         aria-label="Find a worktree"
-        v-tooltip="'Filter this project by worktree name, branch or path.'"
-      /></label
+        
+      /></AppTooltip></label
     >
     <p v-if="error" class="inline-error pad" role="alert">{{ error }}</p>
     <div class="worktree-scroll">
@@ -61,12 +61,12 @@ const activeCounts = computed(() => {
       <p v-else-if="!filtered.length" class="empty-small">
         {{ query ? 'No matching worktrees.' : 'No worktrees available.' }}
       </p>
-      <button
-        v-for="tree in filtered"
+      <AppTooltip :text="worktreeSelectionHint(tree)" v-for="tree in filtered"><button
+        
         :key="tree.path"
         class="worktree-row"
         :class="{ selected: selected === tree.path, unavailable: !tree.exists || tree.bare }"
-        v-tooltip="worktreeSelectionHint(tree)"
+        
         :disabled="!tree.exists || tree.bare"
         :aria-current="selected === tree.path ? 'true' : undefined"
         @click="emit('select', tree.path)"
@@ -78,31 +78,31 @@ const activeCounts = computed(() => {
         </div>
         <div class="worktree-folder"><AppIcon name="Folder" :size="14" />{{ tree.name }}</div>
         <div class="worktree-path mono">{{ tree.path }}</div>
-        <div
-          v-if="activeCounts.has(tree.path)"
+        <AppTooltip :text="'Tasks running, starting or stopping in this worktree. See Activity for details.'" v-if="activeCounts.has(tree.path)"><div
+          
           class="worktree-active"
-          v-tooltip="'Tasks running, starting or stopping in this worktree. See Activity for details.'"
+          
         >
           <span class="status-dot" />
           {{ activeCounts.get(tree.path) }} active {{ activeCounts.get(tree.path) === 1 ? 'task' : 'tasks' }}
-        </div>
+        </div></AppTooltip>
         <div class="worktree-meta">
-          <span v-if="tree.main" v-tooltip="'The repository’s main working folder.'"
+          <AppTooltip :text="'The repository’s main working folder.'" v-if="tree.main"><span  
             >Main checkout</span
-          ><span v-else-if="!tree.exists" v-tooltip="worktreeStatusHint(tree)">Folder missing</span
-          ><span
-            v-else-if="tree.locked"
-            v-tooltip="`Git protects this worktree from pruning or removal.\n${tree.locked}`"
+          ></AppTooltip><AppTooltip :text="worktreeStatusHint(tree)" v-else-if="!tree.exists"><span  >Folder missing</span
+          ></AppTooltip><AppTooltip :text="`Git protects this worktree from pruning or removal.\n${tree.locked}`" v-else-if="tree.locked"><span
+            
+            
             >Locked</span
-          ><span v-else v-tooltip="`Current commit: ${tree.head}`">{{ tree.head.slice(0, 7) }}</span
-          ><span v-if="tree.error" v-tooltip="worktreeStatusHint(tree)">Status unknown</span
-          ><span v-else-if="tree.changed" v-tooltip="worktreeStatusHint(tree)" class="modified"
+          ></AppTooltip><AppTooltip :text="`Current commit: ${tree.head}`" v-else><span  >{{ tree.head.slice(0, 7) }}</span
+          ></AppTooltip><AppTooltip :text="worktreeStatusHint(tree)" v-if="tree.error"><span  >Status unknown</span
+          ></AppTooltip><AppTooltip :text="worktreeStatusHint(tree)" v-else-if="tree.changed"><span   class="modified"
             ><i />{{ tree.changed }} changed</span
-          ><span v-else-if="tree.changed === 0" v-tooltip="worktreeStatusHint(tree)" class="clean"
+          ></AppTooltip><AppTooltip :text="worktreeStatusHint(tree)" v-else-if="tree.changed === 0"><span   class="clean"
             >Clean</span
-          >
+          ></AppTooltip>
         </div>
-      </button>
+      </button></AppTooltip>
     </div>
     <footer class="column-foot">
       <AppIcon name="GitBranch" :size="13" />Discovered directly from Git

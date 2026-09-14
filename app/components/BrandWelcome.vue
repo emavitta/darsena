@@ -15,14 +15,14 @@ const emit = defineEmits<{ add: []; story: [] }>()
           <p v-else>Switch worktrees. Open your tools.<br />See what’s running, and where.</p>
         </div>
         <div v-if="!desktopOnly" class="welcome-action">
-          <button
-            v-tooltip="'Choose a local Git repository. Darsena discovers its existing worktrees.'"
+          <AppTooltip :text="'Choose a local Git repository. Darsena discovers its existing worktrees.'"><button
+            
             class="button primary large"
             :disabled="busy"
             @click="emit('add')"
           >
             <AppIcon name="Plus" :size="16" />Add your first project
-          </button>
+          </button></AppTooltip>
           <span>Start with a local Git repository.</span>
         </div>
       </div>

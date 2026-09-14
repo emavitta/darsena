@@ -42,7 +42,7 @@ jobs:
       - name: Check desktop lifecycle and project removal
         run: |
           desktop_failures=0
-          for desktop_test in ui project-removal git story-scroll mcp preferences task-readability worktree-switcher android; do
+          for desktop_test in ui project-removal git story-scroll mcp preferences tooltip task-readability worktree-switcher android; do
             node --import tsx "tests/${desktop_test}-smoke.mjs" || desktop_failures=1
           done
           exit "$desktop_failures"

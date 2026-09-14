@@ -7,12 +7,15 @@ const panelId = useId()
 const running = computed(() =>
   props.runs.filter((run) => ['starting', 'running', 'stopping'].includes(run.status)),
 )
-const failed = computed(() => props.runs.filter(run => run.status === 'failed').length)
+const failed = computed(() => props.runs.filter((run) => run.status === 'failed').length)
 const height = shallowRef<number>()
 let drag: { y: number; height: number } | undefined
 function resize(event: PointerEvent) {
   if (event.button !== 0) return
-  drag = { y: event.clientY, height: (event.currentTarget as HTMLElement).parentElement!.getBoundingClientRect().height }
+  drag = {
+    y: event.clientY,
+    height: (event.currentTarget as HTMLElement).parentElement!.getBoundingClientRect().height,
+  }
   ;(event.currentTarget as HTMLElement).setPointerCapture(event.pointerId)
 }
 function setHeight(value: number) {
@@ -50,17 +53,17 @@ function resizeKey(event: KeyboardEvent) {
       >
       <span class="dock-summary"><span v-if="failed" class="text-danger">{{ failed }} failed</span><span v-else>{{ running.length ? 'Across all projects' : 'No tasks running' }}</span></span>
       <StopAllTasks :runs="runs" />
-      <UButton
-        v-if="open"
+      <AppTooltip :text="
+          expanded ? 'Give more space to the worktree.' : 'Give more space to task output.'
+        " v-if="open"><UButton
+        
         color="neutral"
         variant="ghost"
         :aria-label="expanded ? 'Reduce Activity panel' : 'Enlarge Activity panel'"
         :icon="expanded ? 'i-lucide-minimize-2' : 'i-lucide-maximize-2'"
-        v-tooltip="
-          expanded ? 'Give more space to the worktree.' : 'Give more space to task output.'
-        "
+        
         @click="expanded = !expanded; height = undefined"
-      />
+      /></AppTooltip>
       <UButton
         color="neutral"
         variant="ghost"
@@ -78,8 +81,17 @@ function resizeKey(event: KeyboardEvent) {
 </template>
 
 <style scoped>
-.dock-resize { height: 6px; flex-shrink: 0; cursor: ns-resize; touch-action: none; background: var(--line); }
-.dock-resize:hover, .dock-resize:focus-visible { background: var(--accent); }
+.dock-resize {
+  height: 6px;
+  flex-shrink: 0;
+  cursor: ns-resize;
+  touch-action: none;
+  background: var(--line);
+}
+.dock-resize:hover,
+.dock-resize:focus-visible {
+  background: var(--accent);
+}
 .activity-dock {
   height: 54px;
   min-height: 54px;

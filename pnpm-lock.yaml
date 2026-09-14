@@ -32,6 +32,9 @@ importers:
       '@types/picomatch':
         specifier: ^4.0.3
         version: 4.0.3
+      '@vueuse/core':
+        specifier: 14.4.0
+        version: 14.4.0(vue@3.5.42(typescript@5.9.3))
       electron:
         specifier: 44.3.0
         version: 44.3.0

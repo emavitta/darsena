@@ -22,15 +22,33 @@ const tab = shallowRef<'runs' | 'history' | 'ports'>('runs')
 const allPorts = shallowRef(false)
 const follow = shallowRef(true)
 const logElement = useTemplateRef('logElement')
-watch(() => props.runs.find(run => run.id === props.selected)?.status, (status) => {
-  if (status && tab.value !== 'ports') tab.value = ['starting', 'running', 'stopping'].includes(status) ? 'runs' : 'history'
-})
-const shownRuns = computed(() => props.runs.filter(run => tab.value === 'history' ? !['starting', 'running', 'stopping'].includes(run.status) : ['starting', 'running', 'stopping'].includes(run.status)))
+watch(
+  () => props.runs.find((run) => run.id === props.selected)?.status,
+  (status) => {
+    if (status && tab.value !== 'ports')
+      tab.value = ['starting', 'running', 'stopping'].includes(status) ? 'runs' : 'history'
+  },
+)
+const shownRuns = computed(() =>
+  props.runs.filter((run) =>
+    tab.value === 'history'
+      ? !['starting', 'running', 'stopping'].includes(run.status)
+      : ['starting', 'running', 'stopping'].includes(run.status),
+  ),
+)
 const current = computed(() => shownRuns.value.find((r) => r.id === props.selected))
 function selectView(value: string | number) {
-  if (value === 'ports') { emit('scan'); return }
-  const candidates = props.runs.filter(run => value === 'history' ? !['starting', 'running', 'stopping'].includes(run.status) : ['starting', 'running', 'stopping'].includes(run.status))
-  if (!candidates.some(run => run.id === props.selected) && candidates[0]) emit('inspect', candidates[0].id)
+  if (value === 'ports') {
+    emit('scan')
+    return
+  }
+  const candidates = props.runs.filter((run) =>
+    value === 'history'
+      ? !['starting', 'running', 'stopping'].includes(run.status)
+      : ['starting', 'running', 'stopping'].includes(run.status),
+  )
+  if (!candidates.some((run) => run.id === props.selected) && candidates[0])
+    emit('inspect', candidates[0].id)
 }
 const activeRuns = computed(() =>
   props.runs.filter((r) => ['running', 'starting', 'stopping'].includes(r.status)),
@@ -117,27 +135,27 @@ watch(
             <div class="inspector-folder mono" :title="current.folder">
               <AppIcon name="Folder" :size="16" />{{ runFolderLabel(current) }}
             </div>
-            <button
-              v-tooltip="`Jump to the worktree where this task ran.\n${current.worktree}`"
+            <AppTooltip :text="`Jump to the worktree where this task ran.\n${current.worktree}`"><button
+              
               class="text-button inspector-worktree"
               @click="emit('locate', current)"
             >
               <AppIcon name="GitFork" :size="18" />{{
                 current.worktreeBranch || current.worktreeName
               }}<AppIcon name="ArrowUpRight" :size="15" />
-            </button>
+            </button></AppTooltip>
           </div>
-          <button
-            v-if="['running', 'starting', 'stopping'].includes(current.status)"
-            class="button stop"
-            :disabled="busy || current.status === 'stopping'"
-            v-tooltip="
+          <AppTooltip :text="
               current.status === 'stopping'
                 ? 'Waiting for this task’s processes to stop…'
                 : current.androidOperation === 'logcat'
                   ? 'Stop log collection only; leave the Android app running.'
                   : 'Stop this task and the child processes started with it.'
-            "
+            " v-if="['running', 'starting', 'stopping'].includes(current.status)"><button
+            
+            class="button stop"
+            :disabled="busy || current.status === 'stopping'"
+            
             @click="emit('stop', current.id)"
           >
             <AppIcon name="Square" :size="12" />{{
@@ -151,7 +169,7 @@ watch(
                       ? 'Stop deployment'
                       : 'Stop task'
             }}</button
-          ><span v-else class="tag">{{ status(current) }}</span>
+          ></AppTooltip><span v-else class="tag">{{ status(current) }}</span>
         </header>
         <div class="run-details">
           <div class="worktree-path mono" :title="compact ? current.worktree : undefined">
@@ -187,15 +205,15 @@ watch(
             <div class="mono">{{ current.command }}</div>
             <div class="mono muted">Working folder: {{ current.folder }}</div>
             <div class="run-links">
-              <button
-                v-for="url in current.urls"
+              <AppTooltip :text="`Open this address in your default browser.\n${url}`" v-for="url in current.urls"><button
+                
                 :key="url"
                 class="text-button"
-                v-tooltip="`Open this address in your default browser.\n${url}`"
+                
                 @click="emit('openUrl', url)"
               >
                 {{ url }}<AppIcon name="ArrowUpRight" :size="12" />
-              </button>
+              </button></AppTooltip>
             </div>
           </details>
           <template v-else>
@@ -213,15 +231,15 @@ watch(
             Addresses from saved output; the task has ended.
           </p>
           <div v-if="!compact" class="run-links">
-            <button
-              v-for="url in current.urls"
+            <AppTooltip :text="`Open this address in your default browser.\n${url}`" v-for="url in current.urls"><button
+              
               :key="url"
               class="text-button"
-              v-tooltip="`Open this address in your default browser.\n${url}`"
+              
               @click="emit('openUrl', url)"
             >
               {{ url }}<AppIcon name="ArrowUpRight" :size="12" />
-            </button>
+            </button></AppTooltip>
           </div>
         </div>
         <FollowLogcat
@@ -245,13 +263,13 @@ watch(
             <span
               >Output <span v-if="current.pid" class="muted">· PID {{ current.pid }}</span></span
             ><label
-              ><input
-                v-tooltip="
+              ><AppTooltip :text="
                   'Automatically scroll to the latest output. Turn off to read earlier lines.'
-                "
+                "><input
+                
                 v-model="follow"
                 type="checkbox"
-              />Follow output</label
+              /></AppTooltip>Follow output</label
             >
           </div>
           <pre ref="logElement" class="log-output"><template v-if="cleanedLogs"><template v-for="(part, index) in logParts" :key="index"><a v-if="part.url" class="log-link" :href="part.url" :title="`Open ${part.url} in browser`" @click.prevent="emit('openUrl', part.url)">{{ part.text }}</a><template v-else>{{ part.text }}</template></template></template><template v-else>{{ ['running', 'starting', 'stopping'].includes(current.status) ? 'Waiting for output…' : 'No output was recorded.' }}</template></pre>
@@ -268,17 +286,17 @@ watch(
     <section v-else class="ports-content">
       <div class="ports-toolbar">
         <label class="checkbox-label"
-          ><input
-            v-tooltip="'Also show TCP listeners that do not belong to a project added to Darsena.'"
+          ><AppTooltip :text="'Also show TCP listeners that do not belong to a project added to Darsena.'"><input
+            
             v-model="allPorts"
             type="checkbox"
-          />Include listeners outside added projects</label
-        ><button
-          v-tooltip="
+          /></AppTooltip>Include listeners outside added projects</label
+        ><AppTooltip :text="
             scanning
               ? 'Scanning TCP listeners visible to your macOS user…'
               : 'Scan again to see which processes currently hold TCP ports.'
-          "
+          "><button
+          
           class="button small"
           :disabled="scanning"
           @click="emit('scan')"
@@ -286,7 +304,7 @@ watch(
           <AppIcon name="RefreshCw" :class="{ spin: scanning }" :size="14" />{{
             scanning ? 'Scanning…' : 'Refresh'
           }}
-        </button>
+        </button></AppTooltip>
       </div>
       <p class="section-hint">
         TCP listeners visible to your macOS user. External processes keep their own lifecycle; task
@@ -304,50 +322,50 @@ watch(
         :key="`${listener.pid}:${listener.port}`"
         class="port-row"
       >
-        <span
-          v-tooltip="`This process is listening on TCP port ${listener.port}.`"
+        <AppTooltip :text="`This process is listening on TCP port ${listener.port}.`"><span
+          
           class="port-number mono"
           >:{{ listener.port }}</span
-        >
+        ></AppTooltip>
         <div class="port-info">
           <strong
             >{{ listener.command }}
-            <span
-              v-tooltip="
+            <AppTooltip :text="
                 listener.runId
                   ? 'Started and managed by Darsena.'
                   : 'Started outside Darsena. Its output is not captured here.'
-              "
+              "><span
+              
               class="task-kind"
               >{{ listener.runId ? 'Darsena' : 'External' }}</span
-            ></strong
-          ><span
-            v-tooltip="listener.cwd || 'The process’s working folder could not be read.'"
+            ></AppTooltip></strong
+          ><AppTooltip :text="listener.cwd || 'The process’s working folder could not be read.'"><span
+            
             class="truncate"
             >{{ listener.worktreeName || listener.cwd || 'Working folder unavailable' }}</span
-          ><span
-            v-tooltip="'The macOS process identifier and the network address it listens on.'"
+          ></AppTooltip><AppTooltip :text="'The macOS process identifier and the network address it listens on.'"><span
+            
             class="mono muted"
             >PID {{ listener.pid }} · {{ listener.address }}</span
-          >
+          ></AppTooltip>
         </div>
-        <button
-          v-if="listener.runId"
+        <AppTooltip :text="'Stop the Darsena task using this port and its child processes.'" v-if="listener.runId"><button
+          
           class="button small"
           :disabled="busy"
-          v-tooltip="'Stop the Darsena task using this port and its child processes.'"
+          
           @click="emit('stop', listener.runId)"
         >
           <AppIcon name="Square" :size="12" />Stop task</button
-        ><button
-          v-else
+        ></AppTooltip><AppTooltip :text="'Review and confirm before stopping this external process.'" v-else><button
+          
           class="button small"
           :disabled="busy"
-          v-tooltip="'Review and confirm before stopping this external process.'"
+          
           @click="emit('stopExternal', listener.pid, listener.port)"
         >
           Stop…
-        </button>
+        </button></AppTooltip>
       </div>
       <p v-if="report.checkedAt" class="section-hint">
         Checked {{ new Date(report.checkedAt).toLocaleTimeString() }}
@@ -362,8 +380,13 @@ watch(
   text-decoration: underline;
   text-underline-offset: 3px;
 }
-.log-link:hover { text-decoration-thickness: 2px; }
-.log-link:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.log-link:hover {
+  text-decoration-thickness: 2px;
+}
+.log-link:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
 
 .inspector-folder {
   display: flex;
@@ -374,7 +397,9 @@ watch(
   font-weight: 600;
   overflow-wrap: anywhere;
 }
-.inspector-folder svg { flex-shrink: 0; }
+.inspector-folder svg {
+  flex-shrink: 0;
+}
 .log-header {
   align-items: flex-start;
 }

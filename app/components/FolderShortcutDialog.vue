@@ -55,7 +55,7 @@ watch(currentPath, async () => {
           The shortcut uses the same relative path in every worktree. No folders are created or
           copied.
         </p>
-        <p class="picker-root mono muted" v-tooltip="worktreePath">{{ worktreePath }}</p>
+        <AppTooltip :text="worktreePath"><p class="picker-root mono muted" >{{ worktreePath }}</p></AppTooltip>
       </div>
       <div class="nuxt-ui-scope folder-modes">
         <UButton
@@ -85,15 +85,15 @@ watch(currentPath, async () => {
         <nav class="folder-breadcrumbs" aria-label="Folder location">
           <template v-for="(crumb, index) in breadcrumbs" :key="crumb.path">
             <AppIcon v-if="index" name="ChevronRight" :size="12" />
-            <button
+            <AppTooltip :text="`Browse ${crumb.path === '.' ? 'the worktree root' : crumb.path}.`"><button
               class="breadcrumb"
               :aria-current="crumb.path === currentPath ? 'location' : undefined"
               :disabled="unavailable"
-              v-tooltip="`Browse ${crumb.path === '.' ? 'the worktree root' : crumb.path}.`"
+              
               @click="emit('browse', crumb.path)"
             >
               {{ crumb.name }}
-            </button>
+            </button></AppTooltip>
           </template>
         </nav>
         <input
@@ -108,18 +108,18 @@ watch(currentPath, async () => {
           <p v-if="loading" class="picker-empty muted" role="status">Reading folders…</p>
           <ul v-else-if="visibleFolders.length" aria-label="Subfolders">
             <li v-for="folder in visibleFolders" :key="folder.name">
-              <button
+              <AppTooltip :text="`Browse subfolders and choose this shortcut.\n${folder.path}`"><button
                 class="picker-entry"
                 :aria-label="`Browse ${folder.name}`"
                 :disabled="saving"
-                v-tooltip="`Browse subfolders and choose this shortcut.\n${folder.path}`"
+                
                 @click="emit('browse', folder.path)"
               >
                 <AppIcon name="Folder" :size="18" />
                 <span class="truncate">{{ folder.name }}</span>
                 <span v-if="saved.has(folder.path)" class="saved-label">Added</span>
                 <AppIcon name="ChevronRight" :size="14" />
-              </button>
+              </button></AppTooltip>
             </li>
           </ul>
           <p v-else class="picker-empty muted" role="status">
@@ -142,19 +142,19 @@ watch(currentPath, async () => {
       <p v-if="error" class="inline-error" role="alert">{{ error }}</p>
       <footer class="dialog-actions">
         <button class="button" :disabled="saving" @click="emit('close')">Cancel</button>
-        <button
-          v-if="mode === 'browse'"
-          class="button primary"
-          :disabled="unavailable || !listing || saved.has(currentPath)"
-          v-tooltip="
+        <AppTooltip :text="
             saved.has(currentPath)
               ? 'This folder already has a shortcut.'
               : 'Save this relative folder for all worktrees in the project.'
-          "
+          " v-if="mode === 'browse'"><button
+          
+          class="button primary"
+          :disabled="unavailable || !listing || saved.has(currentPath)"
+          
           @click="emit('save', currentPath)"
         >
           {{ saving ? 'Adding…' : 'Add shortcut' }}
-        </button>
+        </button></AppTooltip>
       </footer>
     </div>
   </AppDialog>

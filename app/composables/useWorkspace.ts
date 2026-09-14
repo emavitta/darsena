@@ -1,3 +1,4 @@
+import { useEventListener, useIntervalFn, useDocumentVisibility } from '@vueuse/core'
 import type {
   AppId,
   AppState,
@@ -41,8 +42,8 @@ export function useWorkspace() {
     gradleBusy = shallowRef(false),
     scanning = shallowRef(false)
   const error = shallowRef(''),
-    contextError = shallowRef(''),
-    toast = shallowRef('')
+    contextError = shallowRef('')
+  const notifications = useToast()
   const activity = shallowRef(false),
     settings = shallowRef(false),
     customDialog = shallowRef(false)
@@ -59,14 +60,21 @@ export function useWorkspace() {
     switcherTrees.value = {}
     switcherErrors.value = []
     const revision = ++switcherRevision
-    await Promise.all(state.value.projects.map(async p => {
-      try {
-        const trees = await call('worktrees', { projectId: p.id })
-        if (revision === switcherRevision) switcherTrees.value = { ...switcherTrees.value, [p.id]: trees }
-      } catch (e) {
-        if (revision === switcherRevision) switcherErrors.value = [...switcherErrors.value, p.name + ': ' + (e instanceof Error ? e.message : String(e))]
-      }
-    }))
+    await Promise.all(
+      state.value.projects.map(async (p) => {
+        try {
+          const trees = await call('worktrees', { projectId: p.id })
+          if (revision === switcherRevision)
+            switcherTrees.value = { ...switcherTrees.value, [p.id]: trees }
+        } catch (e) {
+          if (revision === switcherRevision)
+            switcherErrors.value = [
+              ...switcherErrors.value,
+              p.name + ': ' + (e instanceof Error ? e.message : String(e)),
+            ]
+        }
+      }),
+    )
     if (revision === switcherRevision) switcherLoading.value = false
   }
   function closeSwitcher() {
@@ -78,7 +86,7 @@ export function useWorkspace() {
     if (switcherBusy.value) return
     switcherBusy.value = true
     try {
-      if (project.value?.id !== projectId && !await selectProject(projectId)) {
+      if (project.value?.id !== projectId && !(await selectProject(projectId))) {
         switcherErrors.value = [error.value || 'Could not open this project.']
         return
       }
@@ -114,9 +122,7 @@ export function useWorkspace() {
   let contextRevision = 0,
     fetchingRuns = false,
     refreshingContext = false
-  let toastTimer: ReturnType<typeof setTimeout> | undefined
   let cleanup: (() => void) | undefined
-  let poll: ReturnType<typeof setInterval> | undefined
 
   function call<K extends keyof Methods>(
     method: K,
@@ -330,10 +336,20 @@ export function useWorkspace() {
     if (!picker || picker.saving) return
     folderPicker.value = { ...picker, saving: true, error: '' }
     try {
-      state.value = await call('addWorkspaceFolders', { projectId: picker.projectId, worktree: picker.worktree, folders })
+      state.value = await call('addWorkspaceFolders', {
+        projectId: picker.projectId,
+        worktree: picker.worktree,
+        folders,
+      })
       folderPicker.value = undefined
       await refreshContext(true)
-    } catch (e) { folderPicker.value = { ...picker, saving: false, error: e instanceof Error ? e.message : String(e) } }
+    } catch (e) {
+      folderPicker.value = {
+        ...picker,
+        saving: false,
+        error: e instanceof Error ? e.message : String(e),
+      }
+    }
   }
   async function saveFolder(folder: string) {
     const picker = folderPicker.value
@@ -363,11 +379,7 @@ export function useWorkspace() {
   async function copy(text: string) {
     await action(async () => {
       await call('copyText', { text })
-      toast.value = 'Path copied'
-      clearTimeout(toastTimer)
-      toastTimer = setTimeout(() => {
-        toast.value = ''
-      }, 2000)
+      notifications.add({ title: 'Path copied', duration: 2000 })
     })
   }
   function requestRemoval(id: string) {
@@ -400,11 +412,7 @@ export function useWorkspace() {
         catalog.value = { tasks: [], sources: [], errors: [] }
         await refreshContext(true)
       }
-      toast.value = `${target.name} removed from Darsena`
-      clearTimeout(toastTimer)
-      toastTimer = setTimeout(() => {
-        toast.value = ''
-      }, 3000)
+      notifications.add({ title: `${target.name} removed from Darsena`, duration: 3000 })
       await nextTick()
       const nextProject = document.querySelector<HTMLButtonElement>(
         '[data-project-selected="true"]',
@@ -444,6 +452,16 @@ export function useWorkspace() {
     }
   }
 
+  const visibility = useDocumentVisibility()
+  useEventListener(window, 'focus', focus)
+  useEventListener(window, 'keydown', keydown)
+  const { resume: resumePolling } = useIntervalFn(
+    () => {
+      if (visibility.value === 'visible') focus()
+    },
+    10000,
+    { immediate: false },
+  )
   onMounted(async () => {
     bridge.value = !!window.darsena
     if (!bridge.value) {
@@ -458,21 +476,20 @@ export function useWorkspace() {
     cleanup = window.darsena?.onChange(() => {
       void refreshRuns()
     })
-    window.addEventListener('focus', focus)
-    window.addEventListener('keydown', keydown)
-    poll = setInterval(() => {
-      if (document.visibilityState === 'visible') focus()
-    }, 10000)
+    resumePolling()
   })
   onUnmounted(() => {
     cleanup?.()
-    clearInterval(poll)
-    clearTimeout(toastTimer)
-    window.removeEventListener('focus', focus)
-    window.removeEventListener('keydown', keydown)
   })
   return {
-    switcher, switcherLoading, switcherBusy, switcherTrees, switcherErrors, openSwitcher, closeSwitcher, switchToWorktree,
+    switcher,
+    switcherLoading,
+    switcherBusy,
+    switcherTrees,
+    switcherErrors,
+    openSwitcher,
+    closeSwitcher,
+    switchToWorktree,
     state,
     worktrees,
     selectedPath,
@@ -489,7 +506,6 @@ export function useWorkspace() {
     scanning,
     error,
     contextError,
-    toast,
     activity,
     settings,
     customDialog,

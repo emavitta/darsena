@@ -24,7 +24,6 @@ const {
   scanning,
   error,
   contextError,
-  toast,
   activity,
   settings,
   customDialog,
@@ -90,7 +89,9 @@ function viewConflictActivity() {
     :class="{ 'sidebar-collapsed': !sidebarOpen, 'has-activity': ready && bridge }"
   >
     <div class="titlebar">
-      <UButton
+      <AppTooltip :text="
+          sidebarOpen ? 'Reduce the projects sidebar to icons.' : 'Expand the projects sidebar.'
+        "><UButton
         class="nuxt-ui-scope sidebar-toggle"
         color="neutral"
         variant="ghost"
@@ -98,11 +99,9 @@ function viewConflictActivity() {
         :aria-label="sidebarOpen ? 'Collapse projects sidebar' : 'Expand projects sidebar'"
         :aria-expanded="sidebarOpen"
         aria-controls="projects-sidebar"
-        v-tooltip="
-          sidebarOpen ? 'Reduce the projects sidebar to icons.' : 'Expand the projects sidebar.'
-        "
+        
         @click="sidebarOpen = !sidebarOpen"
-      />
+      /></AppTooltip>
       <button
         class="titlebar-label switcher-trigger"
         aria-label="Switch worktree"
@@ -110,14 +109,14 @@ function viewConflictActivity() {
       >
         Search worktrees… <kbd>⌘ K</kbd>
       </button>
-      <button
-        v-if="activeRuns.length"
-        v-tooltip="'Open Activity to inspect or stop running tasks across all projects.'"
+      <AppTooltip :text="'Open Activity to inspect or stop running tasks across all projects.'" v-if="activeRuns.length"><button
+        
+        
         class="running-indicator"
         @click="activity = true"
       >
         <span class="status-dot" />{{ activeRuns.length }} running
-      </button>
+      </button></AppTooltip>
     </div>
     <ProjectSidebar
       :collapsed="!sidebarOpen"
@@ -199,17 +198,14 @@ function viewConflictActivity() {
     <div v-if="error" class="error-notice" role="alert">
       <AppIcon name="TriangleAlert" :size="18" />
       <p>{{ error }}</p>
-      <button
-        v-tooltip="'Dismiss this error message.'"
+      <AppTooltip :text="'Dismiss this error message.'"><button
+        
         class="icon-button"
         aria-label="Dismiss error"
         @click="error = ''"
       >
         <AppIcon name="X" :size="16" />
-      </button>
-    </div>
-    <div v-if="toast" class="toast" role="status">
-      <AppIcon name="Check" :size="15" />{{ toast }}
+      </button></AppTooltip>
     </div>
     <WorktreeSwitcher
       v-if="switcher"
@@ -274,35 +270,35 @@ function viewConflictActivity() {
         <p>{{ conflict.result.message }}</p>
         <p class="muted">Nothing was started in the selected worktree.</p>
         <footer class="dialog-actions">
-          <button
-            v-tooltip="'Leave the current process running and cancel the new task.'"
+          <AppTooltip :text="'Leave the current process running and cancel the new task.'"><button
+            
             class="button"
             @click="conflict = undefined"
           >
             Cancel</button
-          ><button
-            v-if="conflict.result.runId"
-            v-tooltip="'Read the output of the task already using this port.'"
+          ></AppTooltip><AppTooltip :text="'Read the output of the task already using this port.'" v-if="conflict.result.runId"><button
+            
+            
             class="button"
             @click="inspectConflict"
           >
             Inspect task</button
-          ><button
-            v-if="conflict.result.runId"
+          ></AppTooltip><AppTooltip :text="'Stop the conflicting task, then start this task in the selected worktree.'" v-if="conflict.result.runId"><button
+            
             class="button primary"
             :disabled="busy"
-            v-tooltip="'Stop the conflicting task, then start this task in the selected worktree.'"
+            
             @click="transfer"
           >
             Stop there &amp; start here</button
-          ><button
-            v-else
-            v-tooltip="'Inspect the process using this port in Activity.'"
+          ></AppTooltip><AppTooltip :text="'Inspect the process using this port in Activity.'" v-else><button
+            
+            
             class="button primary"
             @click="viewConflictActivity"
           >
             View Activity
-          </button>
+          </button></AppTooltip>
         </footer>
       </div></AppDialog
     >

@@ -9,7 +9,7 @@
 - `HarborArtwork` presents the shared blue-and-gray illustration on a light plate
   in both system color schemes. Its panorama follows the user's photograph of the basin;
   the gate and inland oak remain in the distance, with a historic tram on the raised road.
-- `v-tooltip` provides shared hover/focus hints in the browser top layer, including
+- `AppTooltip` wraps Nuxt UI `UTooltip` for shared hover/focus hints, including
   inside native dialogs; preserves accessible labels, dismisses on Escape and
   cleans up when its trigger is removed. Copy stays with the relevant component.
 - `BrandAbout` presents the identity and artwork in a dialog; emits close.
@@ -52,8 +52,10 @@ Nuxt is a local SPA. Only the Electron backend accesses Git, filesystem,
 application launching and task processes. No task data is rendered as HTML.
 
 Tooltip behavior follows the [ARIA tooltip pattern](https://www.w3.org/WAI/ARIA/apg/patterns/tooltip/),
-using the [Popover API](https://developer.mozilla.org/en-US/docs/Web/API/Popover_API/Using)
-to avoid clipping at scroll containers and native dialogs.
+using Nuxt UI/Reka positioning and accessibility. AppDialog provides its element as
+the portal target so hints remain inside the native modal layer. Escape dismisses
+the hint first. Toasts use `useToast`; workspace listeners and polling use VueUse
+with automatic disposal. Desktop tooltip smoke checks run in GitHub Actions.
 
 ## Nuxt UI adoption
 

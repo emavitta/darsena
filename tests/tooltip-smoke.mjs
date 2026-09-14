@@ -32,7 +32,7 @@ try {
   const errors = []
   page.on('pageerror', (error) => errors.push(error.message))
   await page.getByRole('heading', { name: 'harbor-project', exact: true }).waitFor()
-  const tip = page.getByRole('tooltip')
+  const tip = page.locator('[data-reka-popper-content-wrapper]:visible')
   async function hint(trigger, text) {
     await page.bringToFront()
     await trigger.hover()
@@ -64,7 +64,7 @@ try {
   await copy.focus()
   await tip.waitFor()
   assert.match(await tip.innerText(), /copy its path/)
-  assert.equal(await copy.getAttribute('aria-describedby'), await tip.getAttribute('id'))
+  assert.match(await copy.evaluate(el => document.getElementById(el.getAttribute('aria-describedby'))?.textContent || ''), /copy its path/)
   assert.ok(await copy.evaluate((el) => el === document.activeElement))
   await page.keyboard.press('Escape')
   await tip.waitFor({ state: 'hidden' })
@@ -79,7 +79,7 @@ try {
   assert.ok(
     await tip.evaluate((el) => {
       const r = el.getBoundingClientRect()
-      return document.elementFromPoint(r.x + r.width / 2, r.y + r.height / 2) === el
+      return el.contains(document.elementFromPoint(r.x + r.width / 2, r.y + r.height / 2))
     }),
   )
   await page.keyboard.press('Escape')
