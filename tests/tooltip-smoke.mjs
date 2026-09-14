@@ -91,7 +91,7 @@ try {
   // Explain both directions of a toggle after the saved state changes.
   await page.getByRole('button', { name: /All tasks/ }).click()
   const favorite = page.getByRole('button', { name: 'Favorite task check', exact: true })
-  await hint(favorite, /every worktree/)
+  await hint(favorite, /Favorite this task/)
   await favorite.click()
   await page.mouse.move(450, 40)
   await hint(
