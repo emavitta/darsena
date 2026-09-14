@@ -58,15 +58,11 @@ jobs:
         env:
           DARSENA_EXECUTABLE: ${{ github.workspace }}/release/mac-arm64/Darsena.app/Contents/MacOS/Darsena
         run: |
-          node --import tsx tests/ui-smoke.mjs
-          node --import tsx tests/project-removal-smoke.mjs
-          node --import tsx tests/git-smoke.mjs
-          node --import tsx tests/story-scroll-smoke.mjs
-          node --import tsx tests/mcp-smoke.mjs
-          node --import tsx tests/preferences-smoke.mjs
-          node --import tsx tests/task-readability-smoke.mjs
-          node --import tsx tests/worktree-switcher-smoke.mjs
-          node --import tsx tests/android-smoke.mjs
+          desktop_failures=0
+          for desktop_test in ui project-removal git story-scroll mcp preferences task-readability worktree-switcher android; do
+            node --import tsx "tests/${desktop_test}-smoke.mjs" || desktop_failures=1
+          done
+          exit "$desktop_failures"
 
       - name: Verify downloads and record their source
         working-directory: release
