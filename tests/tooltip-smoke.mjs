@@ -36,8 +36,17 @@ try {
   const tip = page.locator('[data-reka-popper-content-wrapper]').filter({ has: page.locator('[data-state=delayed-open], [data-state=instant-open]') })
   async function hint(trigger, text) {
     await page.bringToFront()
+    await page.mouse.move(0, 0)
     await trigger.hover()
-    await eventually(async () => (await tip.count()) === 1 && text.test(await tip.innerText()))
+    const target = await trigger.boundingBox()
+    if (target) await page.mouse.move(target.x + target.width / 2 + 1, target.y + target.height / 2)
+    try {
+      await eventually(async () => (await tip.count()) === 1 && text.test(await tip.innerText()))
+    } catch (error) {
+      console.log('Tooltip diagnosis', { expected: String(text), trigger: await trigger.evaluate(el => el.outerHTML), popups: await page.locator('[data-reka-popper-content-wrapper]').evaluateAll(els => els.map(el => el.outerHTML)) })
+      await page.screenshot({ path: 'test-results/tooltip-failure.png' })
+      throw error
+    }
     assert.match(await tip.innerText(), text)
     const rect = await tip.boundingBox()
     const viewport = await page.evaluate(() => ({ width: innerWidth, height: innerHeight }))
