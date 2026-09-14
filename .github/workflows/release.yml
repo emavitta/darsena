@@ -10,6 +10,7 @@ permissions:
 jobs:
   build:
     uses: ./.github/workflows/build-macos.yml
+    secrets: inherit
   release:
     name: Collect tested macOS installers in a draft pre-release
     needs: build

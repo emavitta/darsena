@@ -5,7 +5,14 @@ import path from 'node:path'
 
 const directory = path.resolve(process.argv[2] || 'release')
 const run = (command, args) => execFileSync(command, args, { stdio: 'inherit' })
-const verify = app => run('/usr/bin/codesign', ['--verify', '--deep', '--strict', '--verbose=2', app])
+const verify = app => {
+  run('/usr/bin/codesign', ['--verify', '--deep', '--strict', '--verbose=2', app])
+  if (process.env.DARSENA_REQUIRE_NOTARIZATION === '1') {
+    run('/usr/bin/codesign', ['--verify', '-R=anchor apple generic and certificate leaf[field.1.2.840.113635.100.6.1.13] exists', app])
+    run('/usr/bin/xcrun', ['stapler', 'validate', app])
+    run('/usr/sbin/spctl', ['--assess', '--type', 'execute', '--verbose=2', app])
+  }
+}
 verify(path.join(directory, 'mac-arm64/Darsena.app'))
 for (const file of readdirSync(directory).filter(name => /^Darsena-.*\.(dmg|zip)$/.test(name))) {
   const temporary = mkdtempSync(path.join(tmpdir(), 'darsena-signature-'))

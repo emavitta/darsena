@@ -46,10 +46,11 @@ This preview supports **Apple Silicon Macs (M-series)**. It is ad-hoc signed but
 notarized, so macOS may display a security warning when opening it. Intel Mac
 and Windows installers are not available yet.
 
-New builds use an ad-hoc signature and verify the app inside both the DMG and ZIP
-before upload. This checks signature integrity; it does not provide Developer ID
-or notarization, so Gatekeeper warnings remain possible. Previously published
-installers are not changed by this fix.
+The distribution workflow now signs with Developer ID, submits the app to Apple
+for notarization and staples the ticket before creating the DMG and ZIP. It verifies
+Gatekeeper acceptance and the ticket in both archives. Previously published
+installers remain unchanged; consult each build manifest for its signing status.
+See [Signing and notarization](docs/signing.md) for maintainer setup.
 
 Each release includes [SHA-256 checksums](https://github.com/emavitta/darsena/releases/download/v0.1.2/SHA256SUMS-macos-arm64.txt)
 and a [build manifest](https://github.com/emavitta/darsena/releases/download/v0.1.2/build-macos-arm64.json)
@@ -178,8 +179,8 @@ Tasks should stay attached to their launching process group. Independent,
 detached daemons and shared services such as a Gradle daemon are not claimed
 as managed just because a task contacted or started them.
 
-The public preview targets macOS on Apple Silicon. Developer ID signing,
-notarization and additional build architectures remain future work.
+The public preview targets macOS on Apple Silicon. Additional build architectures
+remain future work. Distribution builds require Developer ID signing and notarization.
 
 ## Run on Android
 

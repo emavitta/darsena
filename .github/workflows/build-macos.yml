@@ -15,7 +15,7 @@ jobs:
   build:
     name: macOS · Apple Silicon
     runs-on: macos-15
-    timeout-minutes: 25
+    timeout-minutes: 60
     env:
       CSC_IDENTITY_AUTO_DISCOVERY: 'false'
     steps:
@@ -48,10 +48,28 @@ jobs:
       - name: Build the application
         run: pnpm build
 
-      - name: Package ad-hoc signed DMG and ZIP
-        run: pnpm exec electron-builder --mac dmg zip --arm64 --publish never
+      - name: Package Developer ID signed and notarized DMG and ZIP
+        env:
+          CSC_LINK: ${{ secrets.MAC_CERTIFICATE_P12 }}
+          CSC_KEY_PASSWORD: ${{ secrets.MAC_CERTIFICATE_PASSWORD }}
+          CSC_NAME: ${{ secrets.MAC_SIGNING_IDENTITY }}
+          APPLE_API_KEY_CONTENT: ${{ secrets.APPLE_API_KEY_CONTENT }}
+          APPLE_API_KEY_ID: ${{ secrets.APPLE_API_KEY_ID }}
+          APPLE_API_ISSUER: ${{ secrets.APPLE_API_ISSUER }}
+        run: |
+          set -euo pipefail
+          : "${CSC_LINK:?Missing signing certificate}"
+          : "${CSC_KEY_PASSWORD:?Missing certificate password}"
+          : "${APPLE_API_KEY_CONTENT:?Missing notarization key}"
+          export APPLE_API_KEY="$RUNNER_TEMP/darsena-notary.p8"
+          trap 'rm -f "$APPLE_API_KEY"' EXIT
+          umask 077
+          printf '%s' "$APPLE_API_KEY_CONTENT" > "$APPLE_API_KEY"
+          pnpm exec electron-builder --config build/signed-macos.cjs --mac dmg zip --arm64 --publish never
 
-      - name: Verify the application signature
+      - name: Verify Developer ID, notarization ticket and Gatekeeper
+        env:
+          DARSENA_REQUIRE_NOTARIZATION: '1'
         run: node scripts/verify-macos.mjs
 
       - name: Test the packaged app lifecycle and project removal
