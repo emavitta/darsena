@@ -111,7 +111,8 @@ try {
   assert.deepEqual(saved.args, ['--', './scripts/start server.sh', 'a b', '$HOME', '&&'])
   assert.ok(state.projects[0].favorites.includes(saved.id))
   assert.equal((await page.evaluate(() => window.darsena.call('runs'))).length, 0)
-  await tasks.getByRole('button', { name: 'Configure prepare:local', exact: true }).click()
+  await tasks.getByRole('button', { name: /^Actions for prepare:local in / }).click()
+  await page.getByRole('menuitem', { name: 'Configure task', exact: true }).click()
   const portInput = dialog.getByRole('spinbutton', { name: 'Exclusive TCP port', exact: true })
   await portInput.fill('65536')
   await dialog.getByRole('button', { name: 'Save', exact: true }).click()
@@ -125,7 +126,8 @@ try {
       .port,
     9000,
   )
-  await tasks.getByRole('button', { name: 'Configure prepare:local', exact: true }).click()
+  await tasks.getByRole('button', { name: /^Actions for prepare:local in / }).click()
+  await page.getByRole('menuitem', { name: 'Configure task', exact: true }).click()
   assert.equal(await portInput.inputValue(), '9000')
   await dialog.screenshot({ path: 'test-results/task-port-dialog.png', animations: 'disabled' })
   await portInput.fill('')

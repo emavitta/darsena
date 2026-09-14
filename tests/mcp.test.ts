@@ -199,7 +199,7 @@ test('project/task revocation, token rotation and disabling take effect for exis
     command: process.execPath,
     args: ['-e', 'setInterval(()=>{},1000)'],
   })
-  const input = { projectId: f.project.id, worktree: f.root, taskId: 'wait' }
+  const input = { projectId: f.project.id, worktree: f.project.root, taskId: 'wait' }
   await mcp.allowProject(f.project.id, true)
   await mcp.allowTask({ ...input, allowed: true })
   const client = await connect()
@@ -258,14 +258,14 @@ test('MCP cannot run unknown tasks, escape a registered worktree, or implicitly 
     args: ['-e', 'process.exit(0)'],
   })
   await assert.rejects(
-    mcp.allowTask({ projectId: f.project.id, worktree: f.root, taskId: 'escape', allowed: true }),
+    mcp.allowTask({ projectId: f.project.id, worktree: f.project.root, taskId: 'escape', allowed: true }),
     /available/,
   )
   assert.equal(
     (
       await client.callTool({
         name: 'start_task',
-        arguments: { projectId: f.project.id, worktree: f.root, taskId: 'invented' },
+        arguments: { projectId: f.project.id, worktree: f.project.root, taskId: 'invented' },
       })
     ).isError,
     true,
@@ -282,7 +282,7 @@ test('a pending start rechecks authorization after the shared queue and filesyst
     command: process.execPath,
     args: ['-e', 'setInterval(()=>{},1000)'],
   })
-  const input = { projectId: f.project.id, worktree: f.root, taskId: 'wait' }
+  const input = { projectId: f.project.id, worktree: f.project.root, taskId: 'wait' }
   await mcp.allowProject(f.project.id, true)
   await mcp.allowTask({ ...input, allowed: true })
   const original = workspace.discovery.list.bind(workspace.discovery)
@@ -410,7 +410,7 @@ test('run inspection and bounded waiting distinguish outcomes and recheck sharin
     command: process.execPath,
     args: ['-e', 'setTimeout(()=>process.exit(0), 700)'],
   })
-  const input = { projectId: f.project.id, worktree: f.root, taskId: 'finish' }
+  const input = { projectId: f.project.id, worktree: f.project.root, taskId: 'finish' }
   await mcp.allowTask({ ...input, allowed: true })
   const { run } = await call(client, 'start_task', input)
   const pending = await call(client, 'wait_for_run', { runId: run.id, timeoutMs: 0 })
@@ -497,4 +497,31 @@ test('MCP Logcat reads only shared sessions and stopping logs does not require c
     (await client.callTool({ name: 'read_logcat', arguments: { runId: session.id } })).isError,
     true,
   )
+})
+
+
+test('favorites grant MCP execution only in shared projects and revocation preserves other grants', async (t) => {
+  const { f, mcp, connect } = await setup(t)
+  f.project.customTasks.push({ id: 'favorite', name: 'Favorite', folder: '.', command: process.execPath, args: ['-e', 'console.log("done")'] })
+  f.project.customTasks.push({ id: 'explicit', name: 'Explicit', folder: '.', command: process.execPath, args: ['-e', 'console.log("done")'] })
+  f.project.favorites.push('favorite')
+  const client = await connect()
+  const input = { projectId: f.project.id, worktree: f.project.root, taskId: 'favorite' }
+  assert.equal((await client.callTool({ name: 'start_task', arguments: input })).isError, true)
+  await mcp.allowProject(f.project.id, true)
+  assert.ok(mcp.status().projects[f.project.id]!.tasks.includes('favorite'))
+  const taskInput = { ...input, worktree: f.project.root }
+  const catalog = await call(client, 'list_tasks', { projectId: taskInput.projectId, worktree: taskInput.worktree })
+  assert.equal(catalog.tasks.find((task: any) => task.id === 'favorite').mcpAllowed, true)
+  await call(client, 'start_task', taskInput)
+  await mcp.allowTask({ ...taskInput, allowed: true })
+  await mcp.allowTask({ ...taskInput, taskId: 'explicit', allowed: true })
+  await mcp.removeFavoriteGrant(f.project.id, 'favorite')
+  f.project.favorites = []
+  assert.equal(mcp.status().projects[f.project.id]!.tasks.includes('favorite'), false)
+  assert.equal(mcp.status().projects[f.project.id]!.tasks.includes('explicit'), true)
+  assert.equal((await client.callTool({ name: 'start_task', arguments: taskInput })).isError, true)
+  await mcp.allowProject(f.project.id, false)
+  f.project.favorites.push('favorite')
+  assert.equal((await client.callTool({ name: 'start_task', arguments: taskInput })).isError, true)
 })

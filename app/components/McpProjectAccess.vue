@@ -115,7 +115,7 @@ onBeforeUnmount(() => {
     <div v-if="expanded && allowed" class="mcp-project-tasks">
       <p class="section-hint">
         Choose tasks that MCP clients may start or stop. These permissions apply across this
-        project’s worktrees, independently of favorites.
+        project’s worktrees. Favorites are automatically allowed; remove the star in the task list to revoke their access. Other tasks can be authorized separately.
       </p>
       <div class="mcp-task-toolbar">
         <label
@@ -142,14 +142,14 @@ onBeforeUnmount(() => {
           <input
             type="checkbox"
             :checked="taskIds.includes(task.id)"
-            :disabled="busy || (!task.available && !taskIds.includes(task.id))"
+            :disabled="busy || project.favorites.includes(task.id) || (!task.available && !taskIds.includes(task.id))"
             :aria-label="`Allow MCP to run ${task.name} in ${task.folder}`"
             @change="permission(task.id, ($event.target as HTMLInputElement).checked)"
           />
           <span class="mcp-task-name"
             ><strong>{{ task.name }}</strong
             ><small class="mono"
-              >{{ task.folder }}{{ !task.available ? ' · Unavailable here' : '' }}</small
+              >{{ task.folder }}{{ project.favorites.includes(task.id) ? ' · Allowed via favorites' : '' }}{{ !task.available ? ' · Unavailable here' : '' }}</small
             ></span
           >
           <TaskToolBadge :tool="taskTool(task)" />
@@ -170,7 +170,7 @@ onBeforeUnmount(() => {
       </p>
       <div v-for="id in missing" :key="id" class="mcp-missing">
         <span class="mono">Unavailable permission: {{ id }}</span
-        ><button class="text-button" :disabled="busy" @click="permission(id, false)">Revoke</button>
+        ><button class="text-button" :disabled="busy || project.favorites.includes(id)" @click="permission(id, false)">Revoke</button>
       </div>
     </div>
   </section>

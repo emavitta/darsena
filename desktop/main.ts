@@ -1,3 +1,4 @@
+import { createUpdateChecker } from './updates.js'
 import { configurePreparation, preparationSchema } from './preparation.js'
 import { discoverWorkspaceFolders } from './workspace-folders.js'
 import {
@@ -76,10 +77,12 @@ const projectInput = z.object({ projectId: string })
 const treeInput = projectInput.extend({ worktree: string })
 const taskInput = treeInput.extend({ taskId: string })
 const folderInput = treeInput.extend({ folder: string })
+const checkUpdates = createUpdateChecker(app.getVersion(), process.arch, process.platform)
 const schemas: Record<keyof Methods, z.ZodType> = {
   gitState: treeInput,
   gitAction: treeInput.extend({ action: z.enum(['fetch', 'pull']), expectedHead: z.string().max(64), expectedBranch: string.nullable() }),
   copyText: z.object({ text: z.string().max(32768) }),
+  checkUpdates: z.object({ force: z.boolean() }),
   mcpStatus: z.undefined(),
   mcpConfigure: mcpConnectionSchema,
   mcpProject: mcpProjectSchema,
@@ -154,6 +157,7 @@ const handlers: {
   gitState: ({ projectId, worktree }) => workspace.gitState(projectId, worktree),
   gitAction: async (input) => { try { return await workspace.gitAction(input) } finally { changed() } },
   copyText: async ({ text }) => { clipboard.writeText(text) },
+  checkUpdates: ({ force }) => checkUpdates(force),
   mcpStatus: async () => mcp.status(),
   mcpConfigure: (input) => mcp.configure(input),
   mcpProject: ({ projectId, allowed }) => mcp.allowProject(projectId, allowed),
@@ -300,6 +304,7 @@ const handlers: {
   },
   starTask: async ({ projectId, taskId }) => {
     const p = store.project(projectId)
+    if (p.favorites.includes(taskId)) await mcp.removeFavoriteGrant(projectId, taskId)
     p.favorites = p.favorites.includes(taskId)
       ? p.favorites.filter((id) => id !== taskId)
       : [...p.favorites, taskId]

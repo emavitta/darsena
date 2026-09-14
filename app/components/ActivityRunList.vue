@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { runFolderLabel } from '../../shared/run-labels'
 import type { Run } from '../../shared/types'
 const props = defineProps<{ runs: Run[]; selected?: string; compact?: boolean }>()
 const emit = defineEmits<{ inspect: [id: string] }>()
@@ -32,7 +33,7 @@ function duration(run: Run) {
 
 <template>
   <div class="run-list" :class="{ 'run-list-compact': compact }">
-    <section v-for="group in groups" :key="group.title" :aria-label="group.label" class="run-group">
+    <section v-for="group in groups.filter(group => group.runs.length)" :key="group.title" :aria-label="group.label" class="run-group">
       <header class="group-heading">
         <h2>{{ group.title }}</h2>
         <span>{{ group.runs.length }}</span>
@@ -48,7 +49,7 @@ function duration(run: Run) {
         class="run-entry"
         :class="{ selected: run.id === selected, 'active-entry': group.active }"
         :aria-pressed="run.id === selected"
-        v-tooltip="`View ${run.name} output.\n${run.worktree}`"
+        v-tooltip="`View ${run.name} output.\n${run.folder}`"
         @click="emit('inspect', run.id)"
       >
         <div class="entry-status">
@@ -58,14 +59,14 @@ function duration(run: Run) {
             >{{ status(run) }}</span
           ><span class="run-duration">{{ duration(run) }}</span>
         </div>
+        <div class="entry-task">{{ run.name }}</div>
+        <div class="entry-folder mono" :title="run.folder"><AppIcon name="Folder" :size="14" />{{ runFolderLabel(run) }}</div>
         <div class="entry-branch">
           <AppIcon name="GitFork" :size="16" /><strong>{{
             run.worktreeBranch || run.worktreeName
           }}</strong>
         </div>
-        <div class="entry-task">{{ run.name }}</div>
-        <div class="entry-project">{{ run.projectName }}</div>
-        <div class="entry-path mono">{{ run.worktree }}</div>
+        <div class="entry-project" :title="run.worktree">{{ run.projectName }}</div>
         <div v-if="run.source === 'mcp' || run.port || run.exitCode != null" class="entry-meta">
           <span
             v-if="run.source === 'mcp'"
@@ -82,6 +83,8 @@ function duration(run: Run) {
 </template>
 
 <style scoped>
+.entry-branch { margin-top: 5px; }
+
 .run-list {
   width: clamp(275px, 28vw, 350px);
   padding: 14px;
@@ -150,7 +153,7 @@ function duration(run: Run) {
   display: flex;
   align-items: flex-start;
   gap: 7px;
-  font-size: 17px;
+  font-size: 15px;
   line-height: 1.35;
   overflow-wrap: anywhere;
 }
@@ -168,6 +171,18 @@ function duration(run: Run) {
   margin-top: 9px;
   overflow-wrap: anywhere;
 }
+.entry-folder {
+  display: flex;
+  align-items: flex-start;
+  gap: 7px;
+  margin-top: 5px;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.45;
+  color: var(--accent);
+  overflow-wrap: anywhere;
+}
+.entry-folder svg { flex-shrink: 0; margin-top: 3px; }
 .entry-project {
   font-size: 13px;
   color: var(--muted);
@@ -214,7 +229,7 @@ function duration(run: Run) {
 }
 .run-list-compact .entry-task {
   margin-top: 5px;
-  font-size: 13px;
+  font-size: 14px;
 }
 .run-list-compact .entry-project {
   margin-top: 2px;

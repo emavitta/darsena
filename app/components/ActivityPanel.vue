@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { runFolderLabel } from '../../shared/run-labels'
 import type { ListenerReport, Run } from '../../shared/types'
 const props = defineProps<{
   compact?: boolean
@@ -17,11 +18,18 @@ const emit = defineEmits<{
   openUrl: [url: string]
   locate: [run: Run]
 }>()
-const tab = shallowRef<'runs' | 'ports'>('runs')
+const tab = shallowRef<'runs' | 'history' | 'ports'>('runs')
 const allPorts = shallowRef(false)
 const follow = shallowRef(true)
 const logElement = useTemplateRef('logElement')
-const current = computed(() => props.runs.find((r) => r.id === props.selected))
+watch(() => props.runs.find(run => run.id === props.selected)?.status, (status) => {
+  if (status && tab.value !== 'ports') tab.value = ['starting', 'running', 'stopping'].includes(status) ? 'runs' : 'history'
+})
+const shownRuns = computed(() => props.runs.filter(run => tab.value === 'history' ? !['starting', 'running', 'stopping'].includes(run.status) : ['starting', 'running', 'stopping'].includes(run.status)))
+const current = computed(() => shownRuns.value.find((r) => r.id === props.selected))
+watch([shownRuns, () => props.selected], () => {
+  if (tab.value !== 'ports' && !current.value && shownRuns.value[0]) emit('inspect', shownRuns.value[0].id)
+}, { immediate: true })
 const activeRuns = computed(() =>
   props.runs.filter((r) => ['running', 'starting', 'stopping'].includes(r.status)),
 )
@@ -34,6 +42,24 @@ const cleanedLogs = computed(() =>
     .replace(/\x1b\[[0-?]*[ -/]*[@-~]/g, '')
     .replace(/\r(?!\n)/g, '\n'),
 )
+const logParts = computed(() => {
+  const text = cleanedLogs.value
+  const parts: { text: string; url?: string }[] = []
+  let offset = 0
+  for (const match of text.matchAll(/https?:\/\/[^\s<>"'`]+/g)) {
+    const url = match[0].replace(/[.,;:!?)}\]]+$/, '')
+    try {
+      new URL(url)
+    } catch {
+      continue
+    }
+    if (match.index > offset) parts.push({ text: text.slice(offset, match.index) })
+    parts.push({ text: url, url })
+    offset = match.index + url.length
+  }
+  if (offset < text.length) parts.push({ text: text.slice(offset) })
+  return parts
+})
 function status(run: Run) {
   if (run.androidOperation === 'logcat' && run.status === 'running') return 'Collecting logs'
   return {
@@ -54,10 +80,6 @@ watch(
     }
   },
 )
-function showPorts() {
-  tab.value = 'ports'
-  emit('scan')
-}
 </script>
 <template>
   <main class="activity-panel" :class="{ 'activity-compact': compact }">
@@ -70,26 +92,18 @@ function showPorts() {
           and stopped runs are kept in History.
         </p>
       </div>
-      <div class="segmented">
-        <button
-          v-tooltip="'Inspect tasks started by Darsena and read their output for this app session.'"
-          :class="{ active: tab === 'runs' }"
-          @click="tab = 'runs'"
-        >
-          Task runs</button
-        ><button
-          v-tooltip="'Find processes using TCP ports, including servers started outside Darsena.'"
-          :class="{ active: tab === 'ports' }"
-          @click="showPorts"
-        >
-          Listening ports
-        </button>
+      <div class="nuxt-ui-scope activity-tabs">
+        <UTabs v-model="tab" :content="false" :items="[
+          { label: `Running ${activeRuns.length}`, value: 'runs' },
+          { label: `History ${runs.length - activeRuns.length}`, value: 'history' },
+          { label: 'Listening ports', value: 'ports' },
+        ]" size="sm" aria-label="Activity views" @update:model-value="value => { if (value === 'ports') emit('scan') }" />
       </div>
     </header>
-    <div v-if="tab === 'runs'" class="activity-content">
+    <div v-if="tab !== 'ports'" class="activity-content">
       <ActivityRunList
         :compact="compact"
-        :runs="runs"
+        :runs="shownRuns"
         :selected="selected"
         @inspect="emit('inspect', $event)"
       />
@@ -98,6 +112,9 @@ function showPorts() {
           <div class="inspector-identity">
             <div class="run-project">{{ current.projectName }}</div>
             <h3>{{ current.name }}</h3>
+            <div class="inspector-folder mono" :title="current.folder">
+              <AppIcon name="Folder" :size="16" />{{ runFolderLabel(current) }}
+            </div>
             <button
               v-tooltip="`Jump to the worktree where this task ran.\n${current.worktree}`"
               class="text-button inspector-worktree"
@@ -235,20 +252,15 @@ function showPorts() {
               />Follow output</label
             >
           </div>
-          <pre ref="logElement" class="log-output">{{
-            cleanedLogs ||
-            (['running', 'starting', 'stopping'].includes(current.status)
-              ? 'Waiting for output…'
-              : 'No output was recorded.')
-          }}</pre>
+          <pre ref="logElement" class="log-output"><template v-if="cleanedLogs"><template v-for="(part, index) in logParts" :key="index"><a v-if="part.url" class="log-link" :href="part.url" :title="`Open ${part.url} in browser`" @click.prevent="emit('openUrl', part.url)">{{ part.text }}</a><template v-else>{{ part.text }}</template></template></template><template v-else>{{ ['running', 'starting', 'stopping'].includes(current.status) ? 'Waiting for output…' : 'No output was recorded.' }}</template></pre>
           <footer v-if="!compact" class="log-footer">
             Output is retained for this app session, up to 524,288 characters per task.
           </footer>
         </template>
       </section>
-      <div v-else-if="runs.length" class="empty-inspector">
+      <div v-else class="empty-inspector">
         <AppIcon name="Terminal" :size="30" />
-        <p>Select a task to inspect its output.</p>
+        <p>{{ shownRuns.length ? 'Select a task to inspect its output.' : tab === 'history' ? 'No completed tasks yet.' : 'No tasks running. Previous output is in History.' }}</p>
       </div>
     </div>
     <section v-else class="ports-content">
@@ -343,6 +355,24 @@ function showPorts() {
 </template>
 
 <style scoped>
+.log-link {
+  color: var(--accent);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.log-link:hover { text-decoration-thickness: 2px; }
+.log-link:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+.inspector-folder {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  color: var(--accent);
+  font-size: 15px;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+.inspector-folder svg { flex-shrink: 0; }
 .log-header {
   align-items: flex-start;
 }
@@ -526,7 +556,7 @@ function showPorts() {
 }
 .activity-compact .run-inspector {
   display: grid;
-  grid-template-rows: auto minmax(0, 1fr) auto minmax(65px, 2fr);
+  grid-template-rows: auto auto auto minmax(65px, 1fr);
   overflow: hidden;
 }
 .activity-compact .log-header {
@@ -535,7 +565,7 @@ function showPorts() {
 .activity-compact .run-details {
   padding: 0 12px 4px;
   min-height: 0;
-  max-height: none;
+  max-height: 85px;
   align-content: flex-start;
   overflow: auto;
 }

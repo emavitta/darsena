@@ -98,6 +98,7 @@ const actions = computed<DropdownMenuItem[][]>(() => [
       />
       <AndroidLaunchDialog v-if="androidFolder !== undefined" :initial-folder="androidFolder" :key="worktree.path" :project-id="project.id" :worktree="worktree.path" :catalog="catalog" :gradle-busy="gradleBusy" @close="androidFolder = undefined" @started="androidStarted" @loaded="emit('androidLoaded')" />
       <TaskList
+        :project-id="project.id"
         :folders="project.folders"
         :catalog="catalog"
         :favorites="project.favorites"

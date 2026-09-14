@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import type { Folder, Run, Task, TaskCatalog } from '../../shared/types'
 const props = defineProps<{
+  projectId: string
   folders: Folder[]
   catalog: TaskCatalog
   favorites: string[]
@@ -17,6 +18,23 @@ const emit = defineEmits<{
   remove: [id: string]
   loadSource: [folder: string]
 }>()
+const { status: mcpStatus, busy: mcpBusy, error: mcpError, perform: mcpPerform } = useMcpSettings()
+const mcpShared = computed(() => !!mcpStatus.value?.projects[props.projectId])
+function mcpAllowed(id: string) {
+  return mcpShared.value && (props.favorites.includes(id) || !!mcpStatus.value?.projects[props.projectId]?.tasks.includes(id))
+}
+function taskMenu(task: Task) {
+  return [
+    ...(!task.action ? [{ label: 'Configure task', icon: 'i-lucide-settings-2', disabled: props.busy, onSelect: () => emit('configure', task) }] : []),
+    {
+    label: !mcpShared.value ? 'Share project in Preferences → MCP first' : props.favorites.includes(task.id) ? 'Allowed via favorites — unstar to revoke' : mcpAllowed(task.id) ? 'Revoke MCP access' : 'Allow through MCP',
+    icon: 'i-lucide-plug',
+    disabled: mcpBusy.value || !mcpShared.value || props.favorites.includes(task.id) || (!task.available && !mcpAllowed(task.id)),
+    onSelect: () => mcpPerform('mcpTask', { projectId: props.projectId, worktree: props.worktree, taskId: task.id, allowed: !mcpAllowed(task.id) }),
+  },
+  ...(task.kind === 'custom' ? [{ label: 'Remove command', icon: 'i-lucide-trash-2', disabled: props.busy, onSelect: () => emit('remove', task.id) }] : []),
+  ]
+}
 const tasks = computed(() => props.catalog.tasks)
 const pendingSources = computed(() => props.catalog.sources.some((source) => !source.loaded))
 const tab = shallowRef<'favorites' | 'all'>('favorites')
@@ -114,6 +132,7 @@ function runHint(task: Task) {
 </script>
 <template>
   <section class="detail-section tasks-section">
+    <p v-if="mcpError" role="alert" class="inline-error">{{ mcpError }}</p>
     <div class="section-title">
       <h3>Tasks</h3>
       <button
@@ -260,8 +279,8 @@ function runHint(task: Task) {
               :aria-pressed="favorites.includes(task.id)"
               v-tooltip="
                 favorites.includes(task.id)
-                  ? 'Remove this task from the project’s favorites.'
-                  : 'Favorite this task once to find it in every worktree of this project.'
+                  ? (mcpShared ? 'Remove favorite and revoke MCP access. Running tasks are not stopped.' : 'Remove this task from the project’s favorites.')
+                  : (mcpShared ? 'Favorite this task and allow MCP clients to run it across this project’s worktrees.' : 'Favorite this task. Favorites are also allowed when you share this project with MCP.')
               "
               @click="emit('star', task.id)"
             >
@@ -291,25 +310,11 @@ function runHint(task: Task) {
               >
               <span v-if="!task.available" class="task-missing">{{ missingHint(task) }}</span>
             </div>
-            <div class="task-row-actions">
-              <button
-                v-if="!task.action"
-                class="icon-button subtle"
-                :aria-label="`Configure ${task.name}`"
-                v-tooltip="'Set a fixed TCP port to check for conflicts before starting this task.'"
-                @click="emit('configure', task)"
-              >
-                <AppIcon name="Settings2" :size="14" />
-              </button>
-              <button
-                v-if="task.kind === 'custom'"
-                class="icon-button subtle"
-                :aria-label="`Remove command ${task.name}`"
-                v-tooltip="'Remove this saved command from the project. No files are deleted.'"
-                @click="emit('remove', task.id)"
-              >
-                <AppIcon name="Trash2" :size="14" />
-              </button>
+            <div class="task-row-actions nuxt-ui-scope">
+              <span v-if="mcpAllowed(task.id)" class="mcp-task-allowed" v-tooltip="'Allowed through MCP'" aria-label="Allowed through MCP">MCP</span>
+              <UDropdownMenu :items="taskMenu(task)" :content="{ align: 'end' }">
+                <UButton color="neutral" variant="ghost" size="xs" icon="i-lucide-ellipsis" :aria-label="`Actions for ${task.name} in ${task.folder}`" title="Task actions" />
+              </UDropdownMenu>
               <button
                 class="run-button"
                 :disabled="!task.available || busy || running.has(task.id)"
@@ -330,6 +335,7 @@ function runHint(task: Task) {
 </template>
 
 <style scoped>
+.mcp-task-allowed { color: var(--muted); font-size: 11px; }
 .task-folder-group {
   max-width: 860px;
   margin-top: 12px;

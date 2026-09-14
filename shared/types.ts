@@ -138,6 +138,7 @@ export interface GitState {
   checkedAt: number
 }
 export interface Methods {
+  checkUpdates: { input: { force: boolean }; output: UpdateStatus }
   exportLogcat: { input: { runId: string }; output: boolean }
   startLogcat: { input: { runId: string }; output: Run }
   androidApps: { input: { projectId: string; worktree: string; folder: string; serial: string }; output: { user: string; packages: string[] } }
@@ -214,3 +215,5 @@ export interface McpStatus {
 }
 
 export interface WorkspaceFolders { source?: string; folders: { path: string; name: string; taskCount: number }[]; warnings: string[] }
+
+export interface UpdateStatus { currentVersion: string; includePrereleases: boolean; checkedAt: number; error?: string; release?: { version: string; notes: string; url: string; downloadUrl?: string } }

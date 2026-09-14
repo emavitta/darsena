@@ -30,8 +30,9 @@ async function showStory() {
     <div ref="content">
       <BrandStory v-if="story" @back="backToAbout" @open-url="emit('openUrl', $event)" />
       <div v-else class="brand-about">
-        <BrandIdentity caption="Version 0.1 · Made for macOS" story @story="showStory" />
+        <BrandIdentity caption="Made for macOS" story @story="showStory" />
         <HarborArtwork />
+        <UpdateStatus />
         <div class="about-description">
           <p>
             Named after Milan’s inland harbor, where waterways brought materials and people

@@ -178,6 +178,7 @@ function viewConflictActivity() {
         <BrandWelcome v-else :busy="busy" @add="addProject" @story="about = 'story'" />
       </div>
     </div>
+    <UpdateStatus v-if="ready && bridge" compact />
     <ActivityDock v-if="ready && bridge" v-model:open="activity" :runs="runs">
       <ActivityPanel
         compact

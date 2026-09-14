@@ -7,20 +7,35 @@ const panelId = useId()
 const running = computed(() =>
   props.runs.filter((run) => ['starting', 'running', 'stopping'].includes(run.status)),
 )
-const summary = computed(() => {
-  const run = running.value[0]
-  if (!run) return 'No tasks running'
-  const label = `${run.projectName} · ${run.name} · ${run.worktreeBranch || run.worktreeName}`
-  return running.value.length > 1 ? `${label} · +${running.value.length - 1} more` : label
-})
+const failed = computed(() => props.runs.filter(run => run.status === 'failed').length)
+const height = shallowRef<number>()
+let drag: { y: number; height: number } | undefined
+function resize(event: PointerEvent) {
+  if (event.button !== 0) return
+  drag = { y: event.clientY, height: (event.currentTarget as HTMLElement).parentElement!.getBoundingClientRect().height }
+  ;(event.currentTarget as HTMLElement).setPointerCapture(event.pointerId)
+}
+function setHeight(value: number) {
+  height.value = Math.max(220, Math.min(window.innerHeight * 0.8, value))
+}
+function move(event: PointerEvent) {
+  if (drag) setHeight(drag.height + drag.y - event.clientY)
+}
+function resizeKey(event: KeyboardEvent) {
+  if (!['ArrowUp', 'ArrowDown'].includes(event.key)) return
+  event.preventDefault()
+  setHeight((height.value || window.innerHeight * 0.44) + (event.key === 'ArrowUp' ? 30 : -30))
+}
 </script>
 
 <template>
   <section
     class="activity-dock"
     :class="{ open, enlarged: open && expanded }"
+    :style="open && height ? { height: `${height}px` } : undefined"
     aria-label="Activity dock"
   >
+    <div v-if="open" class="dock-resize" role="separator" aria-label="Resize Activity panel" aria-orientation="horizontal" tabindex="0" @pointerdown="resize" @pointermove="move" @pointerup="drag = undefined" @lostpointercapture="drag = undefined" @keydown="resizeKey" />
     <header class="dock-toolbar nuxt-ui-scope">
       <UButton
         aria-label="Activity"
@@ -33,7 +48,8 @@ const summary = computed(() => {
         @click="open = !open"
         >Activity <span class="dock-count">{{ running.length }} active</span></UButton
       >
-      <span class="dock-summary truncate" :title="summary">{{ summary }}</span>
+      <span class="dock-summary"><span v-if="failed" class="text-danger">{{ failed }} failed</span><span v-else>{{ running.length ? 'Across all projects' : 'No tasks running' }}</span></span>
+      <StopAllTasks :runs="runs" />
       <UButton
         v-if="open"
         color="neutral"
@@ -43,7 +59,7 @@ const summary = computed(() => {
         v-tooltip="
           expanded ? 'Give more space to the worktree.' : 'Give more space to task output.'
         "
-        @click="expanded = !expanded"
+        @click="expanded = !expanded; height = undefined"
       />
       <UButton
         color="neutral"
@@ -62,6 +78,8 @@ const summary = computed(() => {
 </template>
 
 <style scoped>
+.dock-resize { height: 6px; flex-shrink: 0; cursor: ns-resize; touch-action: none; background: var(--line); }
+.dock-resize:hover, .dock-resize:focus-visible { background: var(--accent); }
 .activity-dock {
   height: 54px;
   min-height: 54px;

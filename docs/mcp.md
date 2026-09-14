@@ -69,9 +69,12 @@ ready; inspect its output or check the returned URL.
 
 ## Task permissions and conflicts
 
-Favorites and MCP execution permissions are independent. A favorite is not
-automatically authorized. Removing project access also removes that project's
-task permissions; sharing it again starts with read-only access.
+In shared projects, favorites are automatically authorized for MCP. Removing a
+favorite revokes that task's permission, including a previous explicit grant;
+it does not stop an existing run. Non-favorites can be authorized from the MCP
+menu beside each task or Preferences → MCP. Existing explicit grants are kept.
+Removing project access also removes its explicit task grants. Sharing it again
+authorizes its current favorites. Private projects remain inaccessible.
 
 An authorized task runs its **current definition in the requested checkout**.
 This is permission to execute project code, not a sandbox or approval of a fixed

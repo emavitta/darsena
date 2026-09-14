@@ -37,7 +37,12 @@ export function useMcpSettings() {
     if (!error.value)
       notice.value = 'Token replaced. Copy the new configuration into your MCP clients.'
   }
+  let unsubscribe: (() => void) | undefined
+  onBeforeUnmount(() => unsubscribe?.())
   onMounted(() => {
+    unsubscribe = window.darsena?.onChange(() => {
+      void window.darsena!.call('mcpStatus', undefined).then(value => { status.value = value }).catch(() => {})
+    })
     void perform('mcpStatus')
   })
   return { status, busy, error, notice, perform, copyConfiguration, rotateToken }

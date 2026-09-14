@@ -153,8 +153,9 @@ These controls work on the main checkout and linked worktrees alike.
 The development version includes a local MCP server under **Preferences → MCP**.
 Enable it, share selected projects and copy the client configuration. Clients
 can inspect worktrees, tasks, runs, recent logs and associated listening ports.
-Authorize individual tasks to allow starting and stopping them; these permissions
-are independent of favorites.
+Favorites in shared projects are automatically authorized for starting and stopping.
+Use the MCP menu beside a task to authorize non-favorites as well. Removing a
+favorite revokes its access without stopping an existing run.
 
 MCP and the interface share the same runner and conflict checks. Agent-started
 runs appear in Activity with an **MCP** label. Closing the window keeps the
@@ -323,3 +324,15 @@ installed app's logs. Search, minimum severity, follow-scroll and text export ar
 available alongside sampled app-process status. The reader follows PID changes;
 **Stop Logcat** stops collection without closing the device app. Agents can use
 `start_logcat`, `read_logcat` and `stop_logcat` for shared projects.
+
+### Update notifications
+
+Darsena checks public GitHub Releases at startup without authentication. About
+shows the installed version and offers a manual check. A newer release adds a
+small notification with plain-text notes, a matching macOS DMG when available,
+and the GitHub release page. Download and installation are manual. No task is
+stopped and nothing is installed automatically. Version 0.x and semver
+prerelease builds include prereleases; stable 1.x+ builds accept stable releases
+only. Drafts and equal/older versions are ignored. Checks are cached in memory
+for an hour (manual retries at most once per minute), with a ten-second timeout.
+Network errors do not interrupt work.

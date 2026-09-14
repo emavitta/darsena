@@ -235,3 +235,11 @@ can be removed; changing it creates a new task ID so prior MCP grants cannot
 silently authorize different commands. Editing is blocked while preparation is
 active in any project worktree. Last results refer only to retained session runs,
 not to persistent readiness checks. Existing projects need no migration.
+
+Task rows expose MCP permissions through a Nuxt UI dropdown. Shared projects automatically authorize favorites; the star tooltip explains that removing a favorite revokes access without stopping existing runs. Non-favorites retain explicit grants. Preferences shows favorite grants as read-only checkboxes and names their source.
+
+Activity separates running tasks and history, with folder/task identity and compact branch context. Its upper edge supports pointer resizing and arrow-key resizing. Stop all uses the existing stop API on the confirmed snapshot of run IDs; later tasks and external daemons are excluded. The confirmation retains individual errors if any stop fails.
+
+Activity navigation uses Nuxt UI UTabs. Task secondary actions (configuration, MCP permission, custom-command removal) share one Nuxt UI dropdown; MCP authorization remains a passive row indicator.
+
+UpdateStatus shares release-check state between the titlebar notification and About. It uses Nuxt UI buttons and preserves the native AppDialog for release details. GitHub notes render as plain text.
