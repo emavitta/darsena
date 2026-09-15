@@ -34,12 +34,12 @@ Built with **Electron, Nuxt 4, Vue 3 and TypeScript**, with **Nuxt UI** being ad
 
 ## Download
 
-**[Darsena v1.0.0-rc.1](https://github.com/emavitta/darsena/releases/tag/v1.0.0-rc.1)** is a release candidate for macOS.
+**[Darsena v1.0.0-rc.2](https://github.com/emavitta/darsena/releases/tag/v1.0.0-rc.2)** is a release candidate for macOS.
 
 | Mac | Download |
 | --- | --- |
-| Apple Silicon (M-series) | [DMG](https://github.com/emavitta/darsena/releases/download/v1.0.0-rc.1/Darsena-1.0.0-rc.1-arm64.dmg) |
-| Intel | [DMG](https://github.com/emavitta/darsena/releases/download/v1.0.0-rc.1/Darsena-1.0.0-rc.1-x64.dmg) |
+| Apple Silicon (M-series) | [DMG](https://github.com/emavitta/darsena/releases/download/v1.0.0-rc.2/Darsena-1.0.0-rc.2-arm64.dmg) |
+| Intel | [DMG](https://github.com/emavitta/darsena/releases/download/v1.0.0-rc.2/Darsena-1.0.0-rc.2-x64.dmg) |
 
 Both builds are Developer ID signed and notarized by Apple. Quit an existing
 Darsena instance, open the DMG and drag the app into Applications; settings are preserved.
