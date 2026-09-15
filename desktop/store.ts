@@ -34,6 +34,7 @@ const schema = z.object({
         z.string(),
         z.object({ port: z.number().int().min(1).max(65535).optional() }),
       ),
+      androidLaunches: z.record(z.string(), z.object({ taskId: z.string(), serial: z.string() })).optional(),
       lastWorktree: z.string().optional(),
     }),
   ),

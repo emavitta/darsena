@@ -29,6 +29,7 @@ export interface Project {
   preparationTaskId?: string
   customTasks: CustomTask[]
   taskPreferences: Record<string, TaskPreference>
+  androidLaunches?: Record<string, { taskId: string; serial: string }>
   lastWorktree?: string
 }
 export interface AppState {

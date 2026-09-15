@@ -306,6 +306,9 @@ const handlers: {
     if (runner.list().some(r => active(r) && r.androidOperation !== 'logcat' && r.androidDevice === input.serial)) throw new Error('A deployment to this device is already running.')
     const plan = { cwd, worktree: input.worktree, ...task.android, adb: await findAdb(cwd), serial: input.serial }
     if (runner.list().some(r => active(r) && r.androidOperation !== 'logcat' && r.androidDevice === input.serial)) throw new Error('A deployment to this device is already running.')
+    project.androidLaunches = { ...project.androidLaunches, [task.folder]: { taskId: input.taskId, serial: input.serial } }
+    await save()
+    if (runner.list().some(r => active(r) && r.androidOperation !== 'logcat' && r.androidDevice === input.serial)) throw new Error('A deployment to this device is already running.')
     return runner.start(project, selectedTree, { ...task, id: androidTaskId, name: 'Android · ' + task.android.variant + ' → ' + input.serial, command: process.execPath, args: [path.join(base, 'android-entry.js'), JSON.stringify(plan)] }, cwd, 'ui', { androidDevice: input.serial, env: { ELECTRON_RUN_AS_NODE: '1' }, reports: true, androidVariant: task.android.variant, displayCommand: task.android.assembleTask + ' → install → launch on ' + input.serial })
   },
   starTask: async ({ projectId, taskId }) => {

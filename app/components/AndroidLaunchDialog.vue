@@ -44,25 +44,34 @@ const deviceOptions = computed(() =>
     disabled: d.state !== 'device',
   })),
 )
-watch(
-  folder,
-  (value) => {
-    taskId.value = ''
-    serial.value = ''
-    void refresh(value)
-  },
-  { immediate: true },
-)
-watch(variants, (items) => {
-  if (!items.some((i) => i.value === taskId.value)) taskId.value = items[0]?.value || ''
+const saved = shallowRef<{ taskId: string; serial: string }>()
+const preferencesReady = shallowRef(false)
+onMounted(async () => {
+  try {
+    const state = await window.darsena!.call('state')
+    saved.value = state.projects.find(p => p.id === props.projectId)?.androidLaunches?.[folder.value]
+  } catch {
+    // A failed preference read must not prevent a manual launch.
+  } finally {
+    preferencesReady.value = true
+    void refresh(folder.value)
+  }
 })
+watch([variants, preferencesReady], ([items, ready]) => {
+  if (!ready || items.some(i => i.value === taskId.value)) return
+  taskId.value = saved.value
+    ? (items.some(i => i.value === saved.value!.taskId) ? saved.value.taskId : '')
+    : items[0]?.value || ''
+}, { immediate: true })
 watch(devices, (items) => {
-  if (!items.some((i) => i.serial === serial.value && i.state === 'device'))
-    serial.value =
-      items.filter((i) => i.state === 'device').length === 1
-        ? items.find((i) => i.state === 'device')!.serial
-        : ''
+  if (items.some(i => i.serial === serial.value && i.state === 'device')) return
+  const available = items.filter(i => i.state === 'device')
+  serial.value = saved.value
+    ? (available.some(i => i.serial === saved.value!.serial) ? saved.value.serial : '')
+    : available.length === 1 ? available[0]!.serial : ''
 })
+const missingVariant = computed(() => saved.value && sourceLoaded.value && !variants.value.some(i => i.value === saved.value!.taskId) && !taskId.value)
+const missingDevice = computed(() => saved.value && !loading.value && !devices.value.some(i => i.serial === saved.value!.serial && i.state === 'device') && !serial.value)
 </script>
 <template>
   <AppDialog
@@ -76,6 +85,9 @@ watch(devices, (items) => {
       <UFormField label="Android folder">
         <p class="mono android-context">{{ folder === '.' ? 'Worktree root' : folder }}</p>
       </UFormField>
+      <p v-if="saved" class="muted">Last launch settings are remembered for this Android folder across worktrees.</p>
+      <p v-if="missingVariant" role="status">The saved variant is unavailable in this worktree. Choose a variant.</p>
+      <p v-if="missingDevice" role="status">The saved device is disconnected or unauthorized. Connect it or choose another device.</p>
       <UFormField label="Module and variant">
         <USelect
           v-model="taskId"
