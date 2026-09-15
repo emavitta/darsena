@@ -173,6 +173,7 @@ export interface Methods {
   configurePreparation: { input: { projectId: string; command: string; args: string[] }; output: AppState }
   addFolder: { input: { projectId: string; worktree: string; folder: string }; output: AppState }
   removeFolder: { input: { projectId: string; folderId: string }; output: AppState }
+  environment: { input: { projectId: string; worktree: string }; output: EnvironmentCheck[] }
   tasks: { input: { projectId: string; worktree: string }; output: TaskCatalog }
   androidDevices: { input: { projectId: string; worktree: string; folder: string }; output: AndroidDevice[] }
   androidStart: { input: { projectId: string; worktree: string; taskId: string; serial: string }; output: Run }
@@ -217,3 +218,5 @@ export interface McpStatus {
 export interface WorkspaceFolders { source?: string; folders: { path: string; name: string; taskCount: number }[]; warnings: string[] }
 
 export interface UpdateStatus { currentVersion: string; includePrereleases: boolean; checkedAt: number; error?: string; release?: { version: string; notes: string; url: string; downloadUrl?: string } }
+
+export interface EnvironmentCheck { name: string; path?: string; hint: string }

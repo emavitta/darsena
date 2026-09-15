@@ -23,6 +23,7 @@ const methods = new Set([
   'addFolder',
   'removeFolder',
   'tasks',
+  'environment',
   'loadGradle',
   'exportLogcat',
   'startLogcat',

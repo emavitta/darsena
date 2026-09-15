@@ -378,7 +378,7 @@ function runHint(task: Task) {
   font-size: 11px;
 }
 .task-folder-group {
-  max-width: 860px;
+  width: 100%;
   margin-top: 12px;
 }
 .task-folder-heading {
@@ -446,7 +446,7 @@ function runHint(task: Task) {
   gap: 3px;
 }
 .task-toolbar {
-  max-width: 860px;
+  width: 100%;
 }
 .folder-chevron {
   transition: transform 120ms ease;

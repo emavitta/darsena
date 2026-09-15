@@ -113,6 +113,7 @@ const actions = computed<DropdownMenuItem[][]>(() => [
     </header>
     <div class="detail-body">
       <WorktreePreparation :key="project.id + worktree.path" :project="project" :worktree="worktree" :runs="runs" :busy="busy" @start="emit('start', $event)" @saved="emit('preparationSaved', $event)" />
+      <EnvironmentDiagnostics :key="project.id + worktree.path" :project-id="project.id" :worktree="worktree.path" />
       <FolderShortcuts
         :folders="project.folders"
         @open="(folder, targetApp) => emit('open', folder, targetApp)"
