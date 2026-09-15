@@ -28,3 +28,10 @@ await writeFile(
   path.join(root, `release/build-macos-${arch}.json`),
   JSON.stringify({ version, target: `macos-${arch}`, commit, signed, signing: signed ? 'Developer ID' : 'ad-hoc', notarized }, null, 2) + '\n',
 )
+
+if (signed && notarized) {
+  const zip = files.find(file => file.endsWith('.zip'))
+  const buffer = await readFile(path.join(root, 'release', zip))
+  const sha512 = createHash('sha512').update(buffer).digest('base64')
+  await writeFile(path.join(root, 'release', arch + '-mac.yml'), JSON.stringify({ version, files: [{ url: zip, sha512, size: buffer.length }], path: zip, sha512 }, null, 2) + '\n')
+}

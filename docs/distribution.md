@@ -108,3 +108,20 @@ an updater to Darsena.
 
 See [electron-builder's Actions guide](https://www.electron.build/docs/github-actions/)
 and [GitHub Releases](https://docs.github.com/en/repositories/releasing-projects-on-github/about-releases).
+
+## In-app installation
+
+The updater uses electron-updater/Squirrel.Mac with explicit download and install
+buttons. It requires a packaged Developer ID signed app from this team in a
+writable location. Ad-hoc development builds continue to use the manual DMG.
+
+Release manifests include `arm64-mac.yml` and `x64-mac.yml`, each referencing the
+notarized ZIP from that same build and its SHA-512 checksum. These files are
+uploaded alongside the installers. The feed points to a specific GitHub release
+selected by the existing stable/prerelease policy. No extra hosting is required.
+
+Downloading never quits the app; automatic installation on ordinary quit is
+disabled. Install and restart is rejected while tasks are active, stops MCP
+accepting work, and delegates replacement/signature verification to macOS's
+Squirrel updater. Installation errors remain visible and the manual DMG link
+is retained. RC2 predates this installer and must itself be installed manually.

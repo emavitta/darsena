@@ -139,6 +139,9 @@ export interface GitState {
   checkedAt: number
 }
 export interface Methods {
+  downloadUpdate: { input: undefined; output: InstallStatus }
+  installUpdate: { input: undefined; output: void }
+  updateInstallation: { input: undefined; output: InstallStatus }
   checkUpdates: { input: { force: boolean }; output: UpdateStatus }
   exportLogcat: { input: { runId: string }; output: boolean }
   startLogcat: { input: { runId: string }; output: Run }
@@ -221,3 +224,5 @@ export interface WorkspaceFolders { source?: string; folders: { path: string; na
 export interface UpdateStatus { currentVersion: string; includePrereleases: boolean; checkedAt: number; error?: string; release?: { version: string; notes: string; url: string; downloadUrl?: string } }
 
 export interface EnvironmentCheck { name: string; path?: string; hint: string }
+
+export interface InstallStatus { phase: "idle" | "downloading" | "ready" | "installing" | "error"; percent: number; error?: string }

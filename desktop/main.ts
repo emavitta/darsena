@@ -1,3 +1,4 @@
+import { createMacInstaller } from './mac-updater.js'
 import { environmentChecks } from './diagnostics.js'
 import { createUpdateChecker } from './updates.js'
 import { configurePreparation, preparationSchema } from './preparation.js'
@@ -79,11 +80,17 @@ const treeInput = projectInput.extend({ worktree: string })
 const taskInput = treeInput.extend({ taskId: string })
 const folderInput = treeInput.extend({ folder: string })
 const checkUpdates = createUpdateChecker(app.getVersion(), process.arch, process.platform)
+const installer = createMacInstaller(() => checkUpdates(true), () => {
+  if (quitting && !quitReady) { quitting = false; void mcp.resumeAfterFailedQuit() }
+})
 const schemas: Record<keyof Methods, z.ZodType> = {
   environment: treeInput,
   gitState: treeInput,
   gitAction: treeInput.extend({ action: z.enum(['fetch', 'pull']), expectedHead: z.string().max(64), expectedBranch: string.nullable() }),
   copyText: z.object({ text: z.string().max(32768) }),
+  downloadUpdate: z.undefined(),
+  installUpdate: z.undefined(),
+  updateInstallation: z.undefined(),
   checkUpdates: z.object({ force: z.boolean() }),
   mcpStatus: z.undefined(),
   mcpConfigure: mcpConnectionSchema,
@@ -159,6 +166,22 @@ const handlers: {
   gitState: ({ projectId, worktree }) => workspace.gitState(projectId, worktree),
   gitAction: async (input) => { try { return await workspace.gitAction(input) } finally { changed() } },
   copyText: async ({ text }) => { clipboard.writeText(text) },
+  updateInstallation: async () => ({ ...installer.status }),
+  downloadUpdate: async () => { void installer.download(); return { ...installer.status } },
+  installUpdate: async () => {
+    if (runner.list().some(active)) throw new Error('Stop running tasks before installing the update.')
+    if (installer.status.phase !== 'ready') throw new Error('Download the update first.')
+    quitting = true
+    try {
+      await mcp.shutdown()
+      if (runner.list().some(active)) throw new Error('A task started. Stop it before installing.')
+      installer.install(0)
+    } catch (error) {
+      quitting = false
+      await mcp.resumeAfterFailedQuit()
+      throw error
+    }
+  },
   checkUpdates: ({ force }) => checkUpdates(force),
   mcpStatus: async () => mcp.status(),
   mcpConfigure: (input) => mcp.configure(input),
@@ -463,7 +486,7 @@ app.on('activate', () => {
 app.on('before-quit', (event) => {
   if (quitReady) return
   event.preventDefault()
-  if (quitting) return
+  if (quitting && installer.status.phase !== 'installing') return
   quitting = true
   void Promise.all([mcp.shutdown(), runner.shutdown()])
     .then(() => {
@@ -510,6 +533,7 @@ if (gotLock)
             !(origin.startsWith('darsena://app/') || (devUrl && new URL(origin).origin === devUrl))
           )
             throw new Error('Untrusted sender.')
+          if (quitting && !['updateInstallation', 'runs'].includes(method)) throw new Error('Darsena is preparing to quit.')
           if (!Object.hasOwn(schemas, method)) throw new Error('Unknown operation.')
           const name = method as keyof Methods
           const parsed = schemas[name].parse(input)
