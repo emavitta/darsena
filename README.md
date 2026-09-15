@@ -288,7 +288,7 @@ It is not part of the current downloads.
 - `desktop/`: Git, discovery, process supervision, listeners and Electron bridge.
 - `shared/`: typed bridge contracts.
 - `public/brand/`: desktop icon master, small vector mark and harbor illustration.
-- `design/`: independent identity proposals, comparison board and selected direction.
+- `docs/branding.md`: artwork sources and icon regeneration instructions.
 - `tests/`: isolated behavioral and desktop tests.
 
 The app icon is a flat map of the Darsena basin and its two canals,
@@ -299,15 +299,12 @@ marks Porta Ticinese, a green crown represents the oak, and a small yellow-orang
 rectangle recalls Milan’s tram. The welcome and About
 screens share an illustrated view of the basin, Porta Ticinese and a historic
 Milan tram, in blue and pale gray. The working UI uses neutral surfaces in light/dark
-appearance. Compare [the three new studies](design/proposals/cartografica-v2/preview.png)
-or read [the current design notes](design/final/README.md).
+appearance. See [artwork sources and maintenance](docs/branding.md).
 Click **Darsena** at the top of the sidebar to view the illustration and app identity
 at any time, including when projects are already present.
 
-Earlier design discussion: [analysis](docs/analysis.md),
-[task discovery](docs/task-discovery.md), [component boundaries](docs/components.md).
-This README describes the implemented version; those documents retain proposals
-that may belong to later increments.
+Implementation notes: [task discovery](docs/task-discovery.md) and
+[component boundaries](docs/components.md).
 
 
 ### Android app logs (development version)
