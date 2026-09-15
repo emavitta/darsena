@@ -29,6 +29,7 @@ else if(process.argv.includes('shell')) console.log('Status: ok');
 else process.exit(1);
 `)
 await chmod(path.join(sdk, 'adb'), 0o755)
+f.project.androidLaunches = { 'android-app': { taskId: 'removed-variant', serial: 'disconnected-device' } }
 await writeFile(path.join(data, 'settings.json'), JSON.stringify({ version: 1, projects: [f.project], selectedProject: f.project.id, apps: {} }))
 let desktop
 try {
@@ -45,7 +46,13 @@ try {
   await group.getByRole('button', { name: 'Run Run on Android in android-app', exact: true }).click()
   const dialog = page.getByRole('dialog', { name: 'Run on Android', exact: true })
   await dialog.getByRole('button', { name: 'Sync Gradle' }).click()
-  await eventually(async () => await dialog.getByRole('combobox').nth(0).innerText() === ':app:Debug')
+  await dialog.getByText('The saved variant is unavailable in this worktree. Choose a variant.').waitFor()
+  await dialog.getByText('The saved device is disconnected or unauthorized. Connect it or choose another device.').waitFor()
+  assert.ok(await dialog.getByRole('button', { name: 'Build, install & launch' }).isDisabled())
+  await dialog.getByRole('combobox').nth(0).click()
+  await page.getByRole('option', { name: ':app:Debug', exact: true }).click()
+  await dialog.getByRole('combobox').nth(1).click()
+  await page.getByRole('option', { name: /Fixture Pixel/ }).click()
   await eventually(async () => (await dialog.getByRole('combobox').nth(1).innerText()).includes('Fixture Pixel'))
   await dialog.getByRole('combobox').nth(1).click()
   assert.ok(await dialog.getByRole('option', { name: /locked-device/ }).getAttribute('aria-disabled') === 'true')
@@ -61,6 +68,12 @@ try {
   await dialog.getByRole('button', { name: 'Build, install & launch' }).click()
   await dialog.waitFor({ state: 'detached' })
   await eventually(async () => (await page.evaluate(() => window.darsena.call('runs'))).some(r => r.name.startsWith('Android') && r.status === 'succeeded'))
+  const savedState = await page.evaluate(() => window.darsena.call('state'))
+  assert.deepEqual(savedState.projects[0].androidLaunches['android-app'], { taskId: JSON.stringify(['gradle', 'android-app', ':app:installDebug']), serial: 'fixture-device' })
+  await group.getByRole('button', { name: 'Run Run on Android in android-app', exact: true }).click()
+  await eventually(async () => (await dialog.getByRole('combobox').nth(1).innerText()).includes('Fixture Pixel'))
+  assert.equal(await dialog.getByRole('combobox').nth(0).innerText(), ':app:Debug')
+  await dialog.getByRole('button', { name: 'Cancel', exact: true }).click()
   const run = (await page.evaluate(() => window.darsena.call('runs')))[0]
   const logs = await page.evaluate(id => window.darsena.call('logs', { runId: id }), run.id)
   assert.match(logs, /\[1\/3\] Build/)
