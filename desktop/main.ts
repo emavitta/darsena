@@ -1,3 +1,4 @@
+import { environmentChecks } from './diagnostics.js'
 import { createUpdateChecker } from './updates.js'
 import { configurePreparation, preparationSchema } from './preparation.js'
 import { discoverWorkspaceFolders } from './workspace-folders.js'
@@ -79,6 +80,7 @@ const taskInput = treeInput.extend({ taskId: string })
 const folderInput = treeInput.extend({ folder: string })
 const checkUpdates = createUpdateChecker(app.getVersion(), process.arch, process.platform)
 const schemas: Record<keyof Methods, z.ZodType> = {
+  environment: treeInput,
   gitState: treeInput,
   gitAction: treeInput.extend({ action: z.enum(['fetch', 'pull']), expectedHead: z.string().max(64), expectedBranch: string.nullable() }),
   copyText: z.object({ text: z.string().max(32768) }),
@@ -244,6 +246,10 @@ const handlers: {
     const p = store.project(projectId)
     p.folders = p.folders.filter((f) => f.id !== folderId || f.id === 'root')
     return save()
+  },
+  environment: async ({ projectId, worktree }) => {
+    const t = await tree(projectId, worktree)
+    return environmentChecks(t.worktree.path, await discovery.list(t.project, t.worktree.path))
   },
   tasks: async ({ projectId, worktree }) => {
     const t = await tree(projectId, worktree)
