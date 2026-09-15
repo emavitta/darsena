@@ -29,14 +29,16 @@ onMounted(() => { if (!status.value) void check() })
         <div class="form-stack nuxt-ui-scope">
           <p>{{ status.currentVersion }} → {{ status.release.version }}</p>
           <pre class="release-notes">{{ status.release.notes || 'Release notes are available on GitHub.' }}</pre>
-          <UButton v-if="status.release.downloadUrl" @click="open(status.release.downloadUrl)">Download macOS DMG</UButton>
+          <UpdateInstaller v-if="status.release.downloadUrl" />
+          <UButton v-if="status.release.downloadUrl" @click="open(status.release.downloadUrl)">Download DMG manually</UButton>
           <UButton color="neutral" variant="ghost" @click="open(status.release.url)">View release on GitHub</UButton>
-          <p class="muted">Download and install manually after quitting Darsena. Your tasks will not be interrupted by this check.</p>
+          <p class="muted">The DMG remains available for manual installation.</p>
         </div>
       </AppDialog>
       <div v-else class="form-stack">
         <pre class="release-notes">{{ status.release.notes || 'Release notes are available on GitHub.' }}</pre>
-        <UButton v-if="status.release.downloadUrl" @click="open(status.release.downloadUrl)">Download macOS DMG</UButton>
+        <UpdateInstaller v-if="status.release.downloadUrl" />
+          <UButton v-if="status.release.downloadUrl" @click="open(status.release.downloadUrl)">Download macOS DMG</UButton>
         <UButton color="neutral" variant="ghost" @click="open(status.release.url)">View release on GitHub</UButton>
       </div>
     </template>

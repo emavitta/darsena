@@ -111,6 +111,7 @@ jobs:
             release/*-mac.zip
             release/SHA256SUMS-macos-${{ matrix.arch }}.txt
             release/build-macos-${{ matrix.arch }}.json
+            release/${{ matrix.arch }}-mac.yml
           if-no-files-found: error
           retention-days: 14
           compression-level: 0
