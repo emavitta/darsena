@@ -1,0 +1,8 @@
+# Wait seven days before resolving newly published dependency versions.
+minimumReleaseAge: 10080
+
+# Explicitly allow only the dependency install scripts required by our build.
+onlyBuiltDependencies:
+  - electron
+  - esbuild
+  - sharp
