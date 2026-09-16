@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="public/brand/icon.png" width="80" height="80" alt="Darsena: a map of the harbor, with Porta Ticinese, a green oak and a yellow-orange tram">
+  <img src="public/brand/icon.png" width="80" height="80" alt="Darsena: a harbor, canals, a gate, an oak and a tram seen from above">
 </p>
 
 <h1 align="center">Darsena</h1>
@@ -11,318 +11,184 @@
 
 <p align="center">
   <a href="#download">Download for macOS</a> ·
-  <a href="#use">Get started</a> ·
-  <a href="https://github.com/emavitta/darsena/releases">Releases</a> ·
-  <a href="docs/distribution.md">Build &amp; distribute</a>
+  <a href="#get-started">Get started</a> ·
+  <a href="#android">Android</a> ·
+  <a href="#connect-an-ai-client">Connect an AI client</a>
 </p>
 
 <p align="center">
-  <img src="public/brand/waterfront-v12.png" width="880" alt="Milan’s Darsena illustrated in blue, with Porta Ticinese, the oak and a historic tram">
+  <img src="public/brand/waterfront-v12.png" width="880" alt="Milan’s Darsena, with Porta Ticinese, an oak and a historic tram">
 </p>
 
-<p align="center">
-  <sub>Named after Milan’s Darsena. Made for the work happening on your Mac.</sub><br>
-  <sub>macOS · Apple Silicon · Early preview</sub>
-</p>
+<p align="center"><sub>macOS · Apple Silicon &amp; Intel</sub></p>
 
----
+## Why Darsena?
 
-Darsena brings your Git worktrees, folder shortcuts and running tasks together.
-Work on branches created by you, a teammate or an agent, using the tools you already know.
+Working on several branches often means juggling folders, editor windows and
+terminals. When each checkout has its own development server, it becomes easy to
+lose track of which version is running or where a command was started.
 
-Built with **Electron, Nuxt 4, Vue 3 and TypeScript**, with **Nuxt UI** being adopted for shared controls.
+Darsena brings your Git worktrees, project folders and development tasks into one
+place. A worktree is a separate checkout of a repository, usually on a different
+branch. Whether you work alone, with teammates or with coding agents, Darsena helps
+you move between those checkouts and keep their running processes in view.
+
+Keep using your editor, terminal and Android Studio. Use Darsena to open them in
+the right folder, start frequent tasks and inspect their output without losing
+your place.
 
 ## Download
 
-**[Darsena v1.0.0-rc.2](https://github.com/emavitta/darsena/releases/tag/v1.0.0-rc.2)** is a release candidate for macOS.
+**[Download Darsena 1.0.0-rc.2](https://github.com/emavitta/darsena/releases/tag/v1.0.0-rc.2)** — a macOS release candidate.
 
-| Mac | Download |
+| Your Mac | Installer |
 | --- | --- |
-| Apple Silicon (M-series) | [DMG](https://github.com/emavitta/darsena/releases/download/v1.0.0-rc.2/Darsena-1.0.0-rc.2-arm64.dmg) |
-| Intel | [DMG](https://github.com/emavitta/darsena/releases/download/v1.0.0-rc.2/Darsena-1.0.0-rc.2-x64.dmg) |
+| Apple Silicon (M-series) | [Download DMG](https://github.com/emavitta/darsena/releases/download/v1.0.0-rc.2/Darsena-1.0.0-rc.2-arm64.dmg) |
+| Intel | [Download DMG](https://github.com/emavitta/darsena/releases/download/v1.0.0-rc.2/Darsena-1.0.0-rc.2-x64.dmg) |
 
-Both builds are Developer ID signed and notarized by Apple. Quit an existing
-Darsena instance, open the DMG and drag the app into Applications; settings are preserved.
-ZIP alternatives, SHA-256 checksums and source/signing manifests are available in
-the release assets. GitHub's automatic Source code archives are for development.
+Both installers are signed with Developer ID and notarized by Apple.
+Open the DMG and drag Darsena into **Applications**. If you already have Darsena,
+quit it completely before replacing it; your saved projects and settings are kept.
+ZIP downloads are also available on the release page.
 
-The app checks GitHub for updates and offers the download matching your Mac;
-installation remains manual. Previously published 0.x installers remain unchanged
-and may still trigger Gatekeeper warnings. Windows and Linux installers are not available.
-See [Signing and notarization](docs/signing.md) for maintainer setup.
+You need Git and the tools your projects use, such as Node.js or a Java JDK,
+installed on your Mac. Darsena does not install these for you. Windows and Linux
+installers are not currently available.
 
-Git and your projects' toolchains need to be installed separately. To run
-Darsena from source, see [Development and checks](#development-and-checks).
+### Updates
 
-## Use
+Darsena checks GitHub Releases for newer versions. Open **About** to check manually
+and read release notes. The RC2 download above uses manual installation: download
+the matching DMG, quit Darsena and replace the app in Applications.
 
-1. **Add project**: choose a Git repository or one of its linked worktrees.
-2. Select a worktree. Discovery uses Git’s registry, regardless of who created it.
-   Press **⌘K** (or use **Search worktrees** in the title bar) to search all saved
-   projects by project name, branch or path. Results show active task counts;
-   switching keeps the Activity panel and its selected run in place.
-3. **Add shortcut**: browse subfolders inside that worktree using the built-in
-   picker. Breadcrumbs stay within the worktree; folders already added are marked.
-   The relative shortcut follows you across worktrees. Open it in VS Code,
-   Terminal or Android Studio. This saves a shortcut, without creating or copying folders.
-4. **Tasks → All tasks**: browse scripts, loaded Gradle tasks and custom commands
-   together. **Sources** shows their folders and any sources still to load. Star the ones
-   you use. Favorites belong to the project; definitions come from the selected
-   worktree. Missing favorites remain visible as unavailable.
-   Each row has an icon and readable tool badge; **All tools** filters by the
-   recognized tool, including saved commands. Search also matches tool names.
-5. **Run**: execute inside Darsena. **Activity** shows command, folder, worktree,
-   status, output and Stop across all projects.
+Release candidates also check for newer prereleases. Stable versions check for
+stable releases. Checking for updates does not interrupt running tasks.
 
-Pause over a control for a short explanation, or focus it with **Tab**.
-Tooltips also explain Git states and unavailable actions. **Esc** dismisses a hint;
-inside a dialog, press Esc again to close the dialog.
+## Get started
 
-For mago-app, add `shells/wtc-android` and the service folders whose scripts you
-want to browse. Adding projects or folders does not install or execute anything.
+1. **Add a project.** Choose a Git repository or one of its linked worktrees.
+   Darsena finds the worktrees registered with Git.
+2. **Choose a worktree.** See its branch, path and local changes. Press **⌘K**
+   to search across all your saved projects and worktrees.
+3. **Open a folder.** Launch VS Code, Terminal or Android Studio in the selected
+   checkout. Add shortcuts for folders you visit often; the same relative shortcut
+   follows you when you switch worktrees. In supported monorepos, Darsena can
+   suggest folders from pnpm, npm, Yarn or Bun workspace settings.
+4. **Find your tasks.** Open **Tasks → All tasks**, search or filter by tool,
+   and star the commands you use most. Favorites belong to the project, while
+   their commands come from the selected worktree.
+5. **Run and inspect.** Start a task and open **Activity** at the bottom to see
+   its status, working folder and output.
 
-## Tasks and listening ports
+Adding a project or folder does not execute its scripts. Removing a project from
+Darsena leaves its repository and worktrees on disk.
 
-- Reads package.json scripts and detects npm, pnpm, Yarn or Bun from each folder's
-  `packageManager` field or lockfile, walking up to the worktree root as needed.
-  Nested npm packages with their own lockfile do not inherit an outer pnpm/Yarn runner.
-- **Tasks → Sources → Load tasks** on a folder containing `gradlew` gets a structured task report,
-  including subprojects. This explicitly evaluates the Gradle build and requires
-  a compatible JDK and working wrapper.
-- **Custom command** supports an executable, separate arguments (one per line)
-  and a relative folder for other toolchains and setup scripts. **Shell script**
-  accepts a file path such as `scripts/dev.sh` and an explicit Bash, Zsh or Sh
-  interpreter; executable permission is not required in this mode. Paths and
-  arguments with spaces do not need surrounding quotes. Saving does not run it.
-  Recognized executables get a tool icon; `.sh` files get a Shell icon and unknown
-  commands keep a generic terminal icon. Recognition does not check installation
-  or add automatic discovery. See [tool coverage and next steps](docs/task-tools.md).
-- The task settings button declares an optional **exclusive TCP port**. Darsena
-  checks for conflicts before launching; this does not configure the server or
-  infer the port of an arbitrary script.
-- When a managed task holds that port, **Stop there & start here** stops it
-  before attempting the new execution. Failed starts remain visible with logs.
-- **Activity lives in a bottom panel** beside your current project and worktree.
-  Its collapsed bar keeps the active-task count visible. Open it for runs, saved
-  output and listening ports; switching worktrees keeps the inspected run in place.
-  Use the enlarge control when you need more room for logs. Collapsing the panel
-  does not stop tasks.
-- **Activity → Listening ports** lists visible TCP listeners and associates
-  them with worktrees when possible. Stopping an external process asks for
-  confirmation and signals only that PID.
+## Tasks, logs and ports
 
-## Lifecycle and settings
+Darsena reads `package.json` scripts and recognizes npm, pnpm, Yarn and Bun.
+For Gradle projects, explicitly load tasks from a folder containing `gradlew`;
+this evaluates the Gradle build and needs a compatible Java installation.
 
-Closing the window keeps Darsena and its tasks running. Reopen from the Dock.
-**Quit Darsena** stops managed process groups before exiting. External processes
-remain independent. Up to 30 completed runs and 524,288 characters of output per run are
-retained during the app session.
+Use **Custom command** for other tools or shell scripts. Choose the executable,
+arguments and working folder, then save it for reuse. **Prepare worktree** lets
+you save a setup command for the project and run it explicitly in a checkout.
 
-Personal settings are saved atomically under Electron’s user data folder,
-normally `~/Library/Application Support/Darsena/settings.json` on macOS.
-**Preferences** configures alternative application bundles for folder shortcuts.
-The app reads PATH and JAVA_HOME from your login shell when available.
+The **Activity** panel stays available as you navigate. Collapsed, it shows a
+brief summary; expanded, it shows runs, logs and listening ports. You can follow
+output, open links printed by a task, stop an individual run or stop all managed
+tasks. Collapsing the panel does not stop anything.
 
-Use **…** beside a project, or right-click its row, for **Show in Finder**,
-**Copy project path** and **Remove from Darsena…**. Removal asks for confirmation
-with the project's name and path. It forgets Darsena's saved settings for that
-project; repository files and Git worktrees remain on disk. If the project has
-active tasks, the dialog directs you to Activity to stop them first.
+If a task needs an exclusive TCP port, declare it in the task’s settings. Darsena
+checks for conflicts before starting it. When another managed task holds the
+port, **Stop there & start here** lets you move the execution to the selected
+worktree. This setting checks the port; it does not change the server’s own
+configuration.
 
-## Basic Git actions
+**Listening ports** also shows visible servers started outside Darsena, with
+worktree associations when they can be determined. Stopping an external process
+requires confirmation.
 
-Every worktree shows its upstream and locally known ahead/behind counts.
-**Fetch** updates remote references for the project without changing working files.
-**Pull (ff-only)** fetches the upstream and fast-forwards only the selected worktree;
-it never creates a merge commit, rebases or automatically stashes changes.
-Commit or stash local edits and stop managed tasks in that worktree before pulling.
-Divergence and unfinished Git operations must be resolved in your Git tool.
+### Check your environment
 
-**Branches** lists local and remote branches and the worktrees using them.
-View worktree navigates Darsena without switching the checked-out Git branch.
-These controls work on the main checkout and linked worktrees alike.
+Expand **Environment** in a worktree and choose **Check environment** to inspect
+tool paths available to Darsena, including Java and Android platform-tools when
+relevant. Missing tools include guidance on what to configure. Finding an
+executable does not guarantee that its version is compatible with your project.
 
-## MCP for AI clients
+### Closing the app
 
-The development version includes a local MCP server under **Preferences → MCP**.
-Enable it, share selected projects and copy the client configuration. Clients
-can inspect worktrees, tasks, runs, recent logs and associated listening ports.
-Favorites in shared projects are automatically authorized for starting and stopping.
-Use the MCP menu beside a task to authorize non-favorites as well. Removing a
-favorite revokes its access without stopping an existing run.
+Closing the window leaves Darsena and its tasks running. Reopen it from the Dock.
+**Quit Darsena (⌘Q)** stops tasks managed by Darsena before exiting. External
+processes and independent services remain separate. Completed runs and their
+output are kept for the current app session.
 
-MCP and the interface share the same runner and conflict checks. Agent-started
-runs appear in Activity with an **MCP** label. Closing the window keeps the
-connection and tasks available; Quit stops both. Access starts disabled, uses a
-private token and stays local to your Mac.
+## Git at a glance
 
-See [MCP setup, tools and permissions](docs/mcp.md). MCP is included in **v0.1.1** and later.
+See branches, upstream tracking and local changes for the main checkout and
+linked worktrees. **Branches** shows local and remote branches and the worktrees
+using them.
 
-## First-version scope
+- **Fetch** refreshes remote references without changing working files.
+- **Pull (ff-only)** updates the selected worktree only when it can fast-forward.
+  Commit or stash local changes and stop its running tasks first.
 
-No worktree creation/deletion, Git diff viewer, automatic worktree preparation,
-shared `.darsena.json` import, interactive PTY or portless hostname management.
-The file in `examples/` is an earlier design example, not a supported import format.
+Darsena does not automatically merge, rebase or stash changes. Resolve divergent
+branches and unfinished Git operations in your usual Git tool. Worktree creation,
+deletion and diff viewing are not part of Darsena.
 
-The commands you run require their own toolchains on your Mac. Darsena does not
-install dependencies, Node, Java, or environment files. Interactive commands
-should be run in the external Terminal for now.
+## Android
 
-Tasks should stay attached to their launching process group. Independent,
-detached daemons and shared services such as a Gradle daemon are not claimed
-as managed just because a task contacted or started them.
+Choose **Run on Android** in a folder containing a Gradle wrapper. Load the
+available modules and build variants, select an authorized device or an already
+running emulator, then **Build, install & launch**.
 
-The release candidate targets macOS on Apple Silicon and Intel. Distribution builds require Developer ID signing and notarization.
+Darsena remembers the last variant and device for that project folder across
+worktrees. If either is unavailable, you choose a replacement explicitly.
+Deployment logs appear in Activity. After deployment succeeds, the Android app
+runs independently on the device; stopping the deployment task does not close
+an already installed app.
 
-## Run on Android
+Use the device actions to start, stop or restart an installed app. Clearing app
+data and uninstalling require confirmation. **Follow Logcat** shows app logs with
+search, severity filtering and text export; stopping Logcat leaves the app running.
 
-For a saved folder containing a Gradle wrapper, the **Run on Android** task appears
-in that folder’s task group and supports favorites and search. Its **Run** button lets you load
-module/variant choices, choose an authorized device or an already running emulator,
-and build, install and launch the app. Darsena finds ADB through local.properties,
-ANDROID_HOME / ANDROID_SDK_ROOT, the standard macOS SDK location or PATH.
+Installing the same application ID from another worktree updates the existing
+app on that device. Darsena supports a single universal APK; use Android Studio
+for split-only APKs, starting emulators and attaching a debugger.
 
-Deployment appears in Activity with build/install/launch logs. A successful run
-means deployment finished; the Android app then runs independently. Stopping a
-run cancels deployment and does not stop an app already installed on the device.
-Installing the same application ID from another worktree updates that device’s
-existing app. No uninstall or app-data clearing is performed.
+## Connect an AI client
 
-This first implementation supports a single universal APK from Android Gradle
-Plugin output metadata, including custom module build directories inside the
-worktree. Split-only APKs, emulator startup, debugger attachment and Logcat remain
-in Android Studio. Variant discovery evaluates the Gradle build explicitly.
+Darsena includes an optional local **MCP server**, so a compatible AI client can
+inspect your worktrees, tasks, runs and logs, and run commands you authorize.
 
-## Development and checks
+1. Open **Preferences → MCP** and enable the server.
+2. Share the projects the client may access.
+3. Copy the generated connection configuration into your client.
 
-From a checkout of this repository, use Node 24+ and the pnpm version declared
-in `package.json`:
+Favorites in shared projects are also authorized for execution through MCP.
+Use the MCP menu beside a task to grant access to other tasks. Agent-started runs
+appear in Activity with an **MCP** label and use the same runner and port-conflict
+checks as tasks started from the interface.
 
-```sh
-pnpm install --frozen-lockfile
-pnpm dev
-```
+MCP is disabled by default, stays local to your Mac and uses a private access
+token. Closing the window keeps the connection available; quitting stops it.
+See [MCP connection and permissions](docs/mcp.md) for client setup and available tools.
 
-Available development and build commands:
+## Your projects, your tools
 
-```sh
-pnpm dev                 # Nuxt + Electron; frontend HMR
-pnpm typecheck           # UI and desktop TypeScript
-pnpm test                # Real Git, filesystem and process tests
-pnpm build               # Static Nuxt UI + bundled desktop backend
-pnpm start               # Run the built app
-node --import tsx tests/ui-smoke.mjs
-node --import tsx tests/tooltip-smoke.mjs
-node --import tsx tests/folder-smoke.mjs
-node --import tsx tests/task-sources-smoke.mjs
-node --import tsx tests/task-readability-smoke.mjs
-node --import tsx tests/project-removal-smoke.mjs
-node --import tsx tests/mcp-smoke.mjs
-node --import tsx tests/preferences-smoke.mjs
-pnpm pack:mac            # Generate a local Apple Silicon .app
-pnpm dist:mac            # Generate Apple Silicon DMG and ZIP; never uploads/publishes
-node scripts/icons.mjs   # Regenerate Dock PNG and ICNS from the SVG master
-```
+Darsena saves project shortcuts and preferences locally. It does not copy your
+repositories or install project dependencies automatically. Configure preferred
+applications in **Preferences** and continue using the tools you already know.
 
-`pnpm pack:mac` writes `release/mac-arm64/Darsena.app`. `pnpm dist:mac` also
-creates versioned DMG and ZIP installers under `release/`. These commands build
-locally; they do not upload files or create a GitHub Release.
+Commands needing interactive input, password prompts or a terminal interface
+should run in the external Terminal. Detached daemons and shared services are
+not treated as managed tasks merely because a command started or contacted them.
 
-The desktop smoke test uses isolated repositories and settings.
-`DARSENA_DATA_DIR` selects a separate settings profile, including in packaged builds. It verifies
-execution, a cross-worktree port conflict, transfer, window close and cleanup
-on quit. It never runs mago-app tasks.
+## Why the name?
 
-An optional real Gradle smoke test takes a local distribution and compatible
-JDK, creates its own tiny multiproject build, and removes it afterward:
+Milan’s Darsena is a harbor at the meeting of the Navigli: a place of arrivals,
+departures and work in progress. Darsena brings that idea to your projects.
 
-```sh
-DARSENA_TEST_GRADLE=/path/to/gradle/bin/gradle JAVA_HOME=/path/to/jdk \
-  node --import tsx tests/gradle-smoke.mjs
-```
-
-Backend edits require restarting `pnpm dev`. Frontend edits hot reload.
-The development server uses `127.0.0.1:3141`.
-
-## Builds and releases
-
-The [v0.1.2 macOS preview](https://github.com/emavitta/darsena/releases/tag/v0.1.2)
-was built and tested on GitHub Actions and is publicly downloadable. The
-following workflows are already active:
-
-| Workflow                                                                             | Trigger                                                 | Result                                                                                                                           |
-| ------------------------------------------------------------------------------------ | ------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------- |
-| [CI](https://github.com/emavitta/darsena/actions/workflows/ci.yml)                   | PRs targeting `main`, pushes to `main`, or a manual run | Type checks, backend tests, application build and desktop checks. **Validate macOS** must pass before a PR can merge.            |
-| [Build macOS](https://github.com/emavitta/darsena/actions/workflows/build-macos.yml) | Manual run, or called by the release workflow           | Tested Apple Silicon DMG and ZIP, checksums and source manifest in the `darsena-macos-arm64` artifact. Retained for **14 days**. |
-| [Prepare release](https://github.com/emavitta/darsena/actions/workflows/release.yml) | Push a `v*` version tag                                 | Runs Build macOS, verifies the downloaded checksums and creates a **draft pre-release** with the installers and release notes.   |
-
-Build macOS tests the **packaged application**, including task execution, port
-conflicts, window close, cleanup on Quit and project removal. Tests use
-disposable repositories and isolated settings.
-
-To publish the next version:
-
-1. Update `package.json` and add `docs/releases/vX.Y.Z.md` through a PR to `main`.
-2. After merging, tag the release commit and push the tag. The tag must match
-   the package version, for example `v0.1.1` for version `0.1.1`.
-3. Wait for **Prepare release** to finish, then review the notes and try the
-   installers attached to its draft.
-4. Publish the draft from [GitHub Releases](https://github.com/emavitta/darsena/releases).
-   A published pre-release is publicly downloadable; a draft is not.
-
-Actions artifacts are temporary and require a GitHub login to download. Use
-published Releases for public download links. Changed installers get a new
-version: the workflow refuses to replace an already published release.
-
-Local `pnpm dist:mac` builds can also be attached to a release draft. See the
-[distribution guide](docs/distribution.md) for the commands, checksum generation
-and both distribution paths.
-
-Windows is deferred; the unfinished port is preserved on
-[`feat/windows-preview`](https://github.com/emavitta/darsena/tree/feat/windows-preview).
-It is not part of the current downloads.
-
-## Structure and design
-
-- `app/`: Vue components and the workspace composable.
-- `desktop/`: Git, discovery, process supervision, listeners and Electron bridge.
-- `shared/`: typed bridge contracts.
-- `public/brand/`: desktop icon master, small vector mark and harbor illustration.
-- `docs/branding.md`: artwork sources and icon regeneration instructions.
-- `tests/`: isolated behavioral and desktop tests.
-
-The app icon is a flat map of the Darsena basin and its two canals,
-using ultramarine, off-white and neutral city blocks. It has gently curved banks,
-no labels and three progressively shorter canal segments at each end. The basin
-extends northwest; the canals join at its southeast end. A darker gray rectangle
-marks Porta Ticinese, a green crown represents the oak, and a small yellow-orange
-rectangle recalls Milan’s tram. The welcome and About
-screens share an illustrated view of the basin, Porta Ticinese and a historic
-Milan tram, in blue and pale gray. The working UI uses neutral surfaces in light/dark
-appearance. See [artwork sources and maintenance](docs/branding.md).
-Click **Darsena** at the top of the sidebar to view the illustration and app identity
-at any time, including when projects are already present.
-
-Implementation notes: [task discovery](docs/task-discovery.md) and
-[component boundaries](docs/components.md).
-
-
-### Android app logs (development version)
-
-After an Android deployment, choose **Follow Logcat** in Activity to inspect the
-installed app's logs. Search, minimum severity, follow-scroll and text export are
-available alongside sampled app-process status. The reader follows PID changes;
-**Stop Logcat** stops collection without closing the device app. Agents can use
-`start_logcat`, `read_logcat` and `stop_logcat` for shared projects.
-
-### Update notifications
-
-Darsena checks public GitHub Releases at startup without authentication. About
-shows the installed version and offers a manual check. A newer release adds a
-small notification with plain-text notes, a matching macOS DMG when available,
-and the GitHub release page. Download and installation are manual. No task is
-stopped and nothing is installed automatically. Version 0.x and semver
-prerelease builds include prereleases; stable 1.x+ builds accept stable releases
-only. Drafts and equal/older versions are ignored. Checks are cached in memory
-for an hour (manual retries at most once per minute), with a ten-second timeout.
-Network errors do not interrupt work.
+The icon depicts the basin and canals from above, with Porta Ticinese, the oak
+and a small Milanese tram. Click **Darsena** in the sidebar to see the illustration
+and explore the story behind the name and its landmarks.
