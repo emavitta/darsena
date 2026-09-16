@@ -11,3 +11,12 @@ build/*.iconset/
 !.env.example
 test-results/
 playwright-report/
+
+# Local signing material and credentials
+*.p12
+*.pfx
+*.p8
+*.key
+*.pem
+*.mobileprovision
+*.password

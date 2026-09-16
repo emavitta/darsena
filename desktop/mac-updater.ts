@@ -19,7 +19,7 @@ export function createMacInstaller(check: () => Promise<UpdateStatus>, onError: 
         '--verify',
         '--deep',
         '--strict',
-        '-R=anchor apple generic and certificate leaf[subject.OU] = "78RVT54LX5"',
+        '-R=identifier "app.darsena.desktop" and anchor apple generic and certificate leaf[field.1.2.840.113635.100.6.1.13] exists and certificate leaf[subject.OU] = "78RVT54LX5"',
         bundle,
       ])
       const status = await check()
