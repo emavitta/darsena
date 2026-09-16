@@ -46,7 +46,6 @@ your place.
 | Apple Silicon (M-series) | [Download DMG](https://github.com/emavitta/darsena/releases/download/v1.0.0-rc.2/Darsena-1.0.0-rc.2-arm64.dmg) |
 | Intel | [Download DMG](https://github.com/emavitta/darsena/releases/download/v1.0.0-rc.2/Darsena-1.0.0-rc.2-x64.dmg) |
 
-Both installers are signed with Developer ID and notarized by Apple.
 Open the DMG and drag Darsena into **Applications**. If you already have Darsena,
 quit it completely before replacing it; your saved projects and settings are kept.
 ZIP downloads are also available on the release page.
