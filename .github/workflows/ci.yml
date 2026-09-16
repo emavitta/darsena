@@ -33,6 +33,8 @@ jobs:
           run_install: false
       - name: Install locked dependencies
         run: pnpm install --frozen-lockfile
+      - name: Audit dependency vulnerabilities
+        run: pnpm audit --audit-level high
       - name: Check types
         run: pnpm typecheck
       - name: Test Git, folders, task discovery and process cleanup

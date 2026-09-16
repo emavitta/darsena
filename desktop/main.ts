@@ -13,6 +13,7 @@ import {
   nativeImage,
   net,
   protocol,
+  session,
   shell,
 } from 'electron'
 import { realpath, writeFile } from 'node:fs/promises'
@@ -506,6 +507,8 @@ if (gotLock)
   void app
     .whenReady()
     .then(async () => {
+      session.defaultSession.setPermissionRequestHandler((_contents, _permission, callback) => callback(false))
+      session.defaultSession.setPermissionCheckHandler(() => false)
       await store.load()
       await importShellEnvironment()
       await mcp.initialize()
