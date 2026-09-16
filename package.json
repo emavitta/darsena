@@ -25,7 +25,7 @@
     "@modelcontextprotocol/node": "2.0.0",
     "@modelcontextprotocol/server": "2.0.0",
     "@nuxt/ui": "4.11.1",
-    "@types/node": "^24.0.0",
+    "@types/node": "^26.5.0",
     "@types/picomatch": "^4.0.3",
     "@vueuse/core": "14.4.0",
     "electron": "44.3.0",
