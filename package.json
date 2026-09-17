@@ -1,6 +1,6 @@
 {
   "name": "darsena",
-  "version": "1.0.0-rc.2",
+  "version": "1.0.0-rc.3",
   "description": "A local harbor for your Git worktrees and development tasks.",
   "private": true,
   "type": "module",
