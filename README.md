@@ -39,12 +39,12 @@ your place.
 
 ## Download
 
-**[Download Darsena 1.0.0-rc.2](https://github.com/emavitta/darsena/releases/tag/v1.0.0-rc.2)** — a macOS release candidate.
+**[Download Darsena 1.0.0-rc.3](https://github.com/emavitta/darsena/releases/tag/v1.0.0-rc.3)** — a macOS release candidate.
 
 | Your Mac | Installer |
 | --- | --- |
-| Apple Silicon (M-series) | [Download DMG](https://github.com/emavitta/darsena/releases/download/v1.0.0-rc.2/Darsena-1.0.0-rc.2-arm64.dmg) |
-| Intel | [Download DMG](https://github.com/emavitta/darsena/releases/download/v1.0.0-rc.2/Darsena-1.0.0-rc.2-x64.dmg) |
+| Apple Silicon (M-series) | [Download DMG](https://github.com/emavitta/darsena/releases/download/v1.0.0-rc.3/Darsena-1.0.0-rc.3-arm64.dmg) |
+| Intel | [Download DMG](https://github.com/emavitta/darsena/releases/download/v1.0.0-rc.3/Darsena-1.0.0-rc.3-x64.dmg) |
 
 Open the DMG and drag Darsena into **Applications**. If you already have Darsena,
 quit it completely before replacing it; your saved projects and settings are kept.
@@ -57,8 +57,8 @@ installers are not currently available.
 ### Updates
 
 Darsena checks GitHub Releases for newer versions. Open **About** to check manually
-and read release notes. The RC2 download above uses manual installation: download
-the matching DMG, quit Darsena and replace the app in Applications.
+and read release notes. From RC3, you can download updates inside Darsena and choose when to install and
+restart. Stop running tasks before installing. Manual DMG downloads remain available.
 
 Release candidates also check for newer prereleases. Stable versions check for
 stable releases. Checking for updates does not interrupt running tasks.
