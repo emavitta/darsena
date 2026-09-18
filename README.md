@@ -39,12 +39,12 @@ your place.
 
 ## Download
 
-**[Download Darsena 1.0.0-rc.3](https://github.com/emavitta/darsena/releases/tag/v1.0.0-rc.3)** — a macOS release candidate.
+**[Download Darsena 1.0.0-rc.4](https://github.com/emavitta/darsena/releases/tag/v1.0.0-rc.4)** — a macOS release candidate.
 
 | Your Mac | Installer |
 | --- | --- |
-| Apple Silicon (M-series) | [Download DMG](https://github.com/emavitta/darsena/releases/download/v1.0.0-rc.3/Darsena-1.0.0-rc.3-arm64.dmg) |
-| Intel | [Download DMG](https://github.com/emavitta/darsena/releases/download/v1.0.0-rc.3/Darsena-1.0.0-rc.3-x64.dmg) |
+| Apple Silicon (M-series) | [Download DMG](https://github.com/emavitta/darsena/releases/download/v1.0.0-rc.4/Darsena-1.0.0-rc.4-arm64.dmg) |
+| Intel | [Download DMG](https://github.com/emavitta/darsena/releases/download/v1.0.0-rc.4/Darsena-1.0.0-rc.4-x64.dmg) |
 
 Open the DMG and drag Darsena into **Applications**. If you already have Darsena,
 quit it completely before replacing it; your saved projects and settings are kept.
