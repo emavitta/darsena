@@ -43,7 +43,7 @@
     "vue": "^3.5.0",
     "vue-tsc": "^3.0.0",
     "yaml": "^2.9.0",
-    "zod": "^4.0.0"
+    "zod": "^4.6.5"
   },
   "build": {
     "appId": "app.darsena.desktop",
