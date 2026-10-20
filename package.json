@@ -23,7 +23,7 @@
     "@lucide/vue": "1.43.0",
     "@modelcontextprotocol/client": "2.0.0",
     "@modelcontextprotocol/node": "2.0.0",
-    "@modelcontextprotocol/server": "2.0.0",
+    "@modelcontextprotocol/server": "2.3.0",
     "@nuxt/ui": "4.11.1",
     "@types/node": "^24.0.0",
     "@types/picomatch": "^4.0.3",
