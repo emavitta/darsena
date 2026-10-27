@@ -28,7 +28,7 @@
     "@types/node": "^24.0.0",
     "@types/picomatch": "^4.0.3",
     "@vueuse/core": "14.4.0",
-    "electron": "44.3.0",
+    "electron": "44.9.1",
     "electron-builder": "26.15.3",
     "electron-updater": "6.8.9",
     "esbuild": "^0.28.2",
