@@ -105,6 +105,13 @@ token never appears in a command line (on a host without `hidepid`, other
 users can read every process's arguments) nor in Claude's config. Grants
 are the ones set with `darsena share` / `darsena allow`.
 
+Claude Code runs a `headersHelper` only in a **trusted** workspace (the
+folder trust dialog accepted once). In an untrusted folder the connection
+fails with «A valid Darsena connection token is required» — correct
+behaviour, not a token problem: open the folder interactively once, or use
+a folder you already trust. Verified on magolab 2026-11-16 (✔ Connected
+from a trusted checkout, refused from an untrusted one).
+
 ## darsena.json
 
 Committed at a repository's root, read from each project's main worktree.

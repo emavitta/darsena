@@ -74,5 +74,11 @@ echo "Running daemons keep the old code until: systemctl --user restart darsena 
 )
 await chmod(path.join(out, 'install.sh'), 0o755)
 
-execFileSync('tar', ['-czf', `${name}.tar.gz`, name], { cwd: 'dist-server' })
+// macOS bsdtar would add com.apple.* xattrs and ._ files that GNU tar on
+// the server warns about; keep the archive plain.
+const macTar = process.platform === 'darwin' ? ['--no-xattrs', '--no-mac-metadata'] : []
+execFileSync('tar', [...macTar, '-czf', `${name}.tar.gz`, name], {
+  cwd: 'dist-server',
+  env: { ...process.env, COPYFILE_DISABLE: '1' },
+})
 console.log(`dist-server/${name}.tar.gz`)
