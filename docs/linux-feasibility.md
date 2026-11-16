@@ -1,7 +1,10 @@
 # Darsena on Linux — feasibility note
 
 Answer to `darsena-linux-requirements.md` (Mago lab session, 2026-11-16).
-Spike delivered the same day: see § The spike, running on `magolab` now.
+Spike delivered the same day (§ The spike). **Superseded the same day by
+v1** (vitta's go): `desktop/server.ts`, guide in `docs/linux.md`. The
+spike files (`headless-spike.ts`, `build-spike.mjs`) are gone; this note
+stays as the record of the study and of the lab's decisions.
 
 ## Verdict
 
