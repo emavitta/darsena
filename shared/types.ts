@@ -127,6 +127,8 @@ export interface Listener {
    * user»); url is set only when served.
    */
   portless?: { hostnames: string[]; served: boolean; url?: string }
+  /** Name of the darsena.json port pool this port belongs to, if any. */
+  pool?: string
   cwd?: string
   projectId?: string
   worktree?: string
@@ -136,6 +138,8 @@ export interface Listener {
 export interface ListenerReport {
   listeners: Listener[]
   error?: string
+  /** Non-fatal problems, e.g. an unreadable darsena.json. */
+  warnings?: string[]
   checkedAt: number
 }
 export type StartResult =

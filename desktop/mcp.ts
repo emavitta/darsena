@@ -40,7 +40,7 @@ const runInput = z.object({ runId: identifier }).strict()
 const listenersInput = z.object({ scope: z.enum(['shared', 'all']).optional() }).strict()
 /** A listener outside the shared projects: who holds the port, never where it lives. */
 function unattributed(listener: Listener): Listener {
-  const { pid, command, port, address, uid, user, ipv6Only } = listener
+  const { pid, command, port, address, uid, user, ipv6Only, pool } = listener
   return {
     pid,
     command,
@@ -49,6 +49,7 @@ function unattributed(listener: Listener): Listener {
     ...(uid === undefined ? {} : { uid }),
     ...(user === undefined ? {} : { user }),
     ...(ipv6Only ? { ipv6Only } : {}),
+    ...(pool ? { pool } : {}),
   }
 }
 const newToken = () => randomBytes(32).toString('hex')

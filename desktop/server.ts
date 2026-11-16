@@ -382,7 +382,8 @@ function portRow(row: Listener) {
     ? ` · ${row.portless.hostnames.join(', ')}${row.portless.served ? '' : ' (registered, no proxy for this user)'}`
     : ''
   const reach = row.ipv6Only ? ' · only ::1, unreachable through an IPv4 forward' : ''
-  return `${String(row.port).padEnd(6)}${owner} · ${holder}${where}${runId}${names}${reach}`
+  const pool = row.pool ? `[${row.pool}] ` : ''
+  return `${String(row.port).padEnd(6)}${pool}${owner} · ${holder}${where}${runId}${names}${reach}`
 }
 
 function runRow(r: Run) {
@@ -459,7 +460,10 @@ async function main(argv: string[]) {
     case 'ports': {
       const data = await tool('list_listeners', { scope: 'all' })
       const rows = (data.listeners as Listener[]).sort((x, y) => x.port - y.port)
-      return output({ ...data, listeners: rows }, json, () => rows.map(portRow))
+      return output({ ...data, listeners: rows }, json, () => [
+        ...((data.warnings as string[] | undefined) ?? []).map((w) => `warning: ${w}`),
+        ...rows.map(portRow),
+      ])
     }
     case 'start': {
       if (!a || !b || !c) break
