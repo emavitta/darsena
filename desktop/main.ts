@@ -82,7 +82,7 @@ const taskInput = treeInput.extend({ taskId: string })
 const folderInput = treeInput.extend({ folder: string })
 const checkUpdates = createUpdateChecker(app.getVersion(), process.arch, process.platform)
 const installer = createMacInstaller(() => checkUpdates(true), () => {
-  if (quitting && !quitReady) { quitting = false; void mcp.resumeAfterFailedQuit() }
+  if (quitting) { quitReady = false; quitting = false; void mcp.resumeAfterFailedQuit() }
 })
 const schemas: Record<keyof Methods, z.ZodType> = {
   environment: treeInput,
@@ -176,8 +176,12 @@ const handlers: {
     try {
       await mcp.shutdown()
       if (runner.list().some(active)) throw new Error('A task started. Stop it before installing.')
+      // Squirrel closes windows before before-quit; allow that close only after cleanup.
+      await runner.shutdown()
+      quitReady = true
       installer.install(0)
     } catch (error) {
+      quitReady = false
       quitting = false
       await mcp.resumeAfterFailedQuit()
       throw error
