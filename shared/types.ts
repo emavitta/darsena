@@ -108,10 +108,19 @@ export interface Run {
   urls: string[]
 }
 export interface Listener {
+  /** 0 when the platform shows the socket but not its process (another user's socket on Linux). */
   pid: number
+  /** '' when the process is not readable. */
   command: string
   port: number
+  /** Bind address; multiple sockets of one server are merged as a comma-separated list. */
   address: string
+  /** Socket owner's uid (Linux `ss -e`); absent where the platform does not report it (macOS). */
+  uid?: number
+  /** Owner's user name resolved from uid; absent when unknown. */
+  user?: string
+  /** true when every socket of this row binds only ::1 — an IPv4 forward to 127.0.0.1 cannot reach it. */
+  ipv6Only?: boolean
   cwd?: string
   projectId?: string
   worktree?: string
