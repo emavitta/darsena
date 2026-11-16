@@ -349,6 +349,20 @@ test('unshared projects never appear in runs, logs, listeners or cross-project p
   )
   assert.deepEqual((await call(client, 'list_runs')).runs, [])
   assert.deepEqual((await call(client, 'list_listeners')).listeners, [])
+  assert.deepEqual(
+    (await call(client, 'list_listeners', { scope: 'shared' })).listeners,
+    [],
+  )
+  // scope 'all' shows who holds the hidden project's port, never where it lives.
+  const everything = (await call(client, 'list_listeners', { scope: 'all' })).listeners
+  const hiddenRow = everything.find((listener: any) => listener.port === port)
+  assert.ok(hiddenRow, 'the hidden project listener is listed with scope all')
+  for (const key of ['projectId', 'worktree', 'worktreeName', 'runId', 'cwd'])
+    assert.equal(hiddenRow[key], undefined, `${key} must not leak from an unshared project`)
+  assert.equal(
+    (await client.callTool({ name: 'list_listeners', arguments: { scope: 'mine' } })).isError,
+    true,
+  )
   assert.equal(
     (await client.callTool({ name: 'read_logs', arguments: { runId: started.run.id } })).isError,
     true,
