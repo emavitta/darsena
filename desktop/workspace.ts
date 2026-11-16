@@ -10,6 +10,7 @@ import { TaskDiscovery } from './tasks.js'
 import { Runner, active } from './runner.js'
 import { listWorktrees, matchingWorktree, validateWorktree } from './git.js'
 import { listeners, processParents, processCwd, isDescendant } from './processes.js'
+import { readPortless, withPortless } from './portless.js'
 import { message, resolveFolder } from './io.js'
 import type { ListenerReport, StartResult, Run } from '../shared/types.js'
 
@@ -118,7 +119,7 @@ export class WorkspaceService {
           }
         }
       }
-      return { listeners: rows, checkedAt: Date.now() }
+      return { listeners: withPortless(rows, await readPortless()), checkedAt: Date.now() }
     } catch (error) {
       return { listeners: [], error: message(error), checkedAt: Date.now() }
     }

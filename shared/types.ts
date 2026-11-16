@@ -121,6 +121,12 @@ export interface Listener {
   user?: string
   /** true when every socket of this row binds only ::1 — an IPv4 forward to 127.0.0.1 cannot reach it. */
   ipv6Only?: boolean
+  /**
+   * portless routes pointing at this port. served is false when this user's
+   * portless proxy is not the one listening («registered, no proxy for this
+   * user»); url is set only when served.
+   */
+  portless?: { hostnames: string[]; served: boolean; url?: string }
   cwd?: string
   projectId?: string
   worktree?: string
