@@ -10,6 +10,8 @@ import { TaskDiscovery } from './tasks.js'
 import { Runner, active } from './runner.js'
 import { listWorktrees, matchingWorktree, validateWorktree } from './git.js'
 import { listeners, processParents, processCwd, isDescendant } from './processes.js'
+import { readPortless, withPortless } from './portless.js'
+import { poolOf, readRepoConfig, type PortPool } from './repo-config.js'
 import { message, resolveFolder } from './io.js'
 import type { ListenerReport, StartResult, Run } from '../shared/types.js'
 
@@ -118,7 +120,24 @@ export class WorkspaceService {
           }
         }
       }
-      return { listeners: rows, checkedAt: Date.now() }
+      // Pools are repo-level (darsena.json in each project's main worktree); a
+      // pool names any holder's port, including other users'.
+      const warnings: string[] = []
+      const pools: PortPool[] = []
+      for (const project of this.store.state.projects) {
+        const config = await readRepoConfig(project.root)
+        if (config.error) warnings.push(`${project.name}: ${config.error}`)
+        pools.push(...config.pools)
+      }
+      for (const row of rows) {
+        const pool = poolOf(row.port, pools)
+        if (pool) row.pool = pool
+      }
+      return {
+        listeners: withPortless(rows, await readPortless()),
+        ...(warnings.length ? { warnings } : {}),
+        checkedAt: Date.now(),
+      }
     } catch (error) {
       return { listeners: [], error: message(error), checkedAt: Date.now() }
     }

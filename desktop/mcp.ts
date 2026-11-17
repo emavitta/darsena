@@ -16,7 +16,7 @@ import { z } from 'zod'
 import { listWorktrees } from './git.js'
 import { message } from './io.js'
 import type { WorkspaceService } from './workspace.js'
-import type { McpStatus } from '../shared/types.js'
+import type { Listener, McpStatus } from '../shared/types.js'
 
 const identifier = z
   .string()
@@ -37,6 +37,21 @@ const empty = z.object({}).strict()
 const projectInput = z.object({ projectId: identifier }).strict()
 const treeInput = projectInput.extend({ worktree: identifier })
 const runInput = z.object({ runId: identifier }).strict()
+const listenersInput = z.object({ scope: z.enum(['shared', 'all']).optional() }).strict()
+/** A listener outside the shared projects: who holds the port, never where it lives. */
+function unattributed(listener: Listener): Listener {
+  const { pid, command, port, address, uid, user, ipv6Only, pool } = listener
+  return {
+    pid,
+    command,
+    port,
+    address,
+    ...(uid === undefined ? {} : { uid }),
+    ...(user === undefined ? {} : { user }),
+    ...(ipv6Only ? { ipv6Only } : {}),
+    ...(pool ? { pool } : {}),
+  }
+}
 const newToken = () => randomBytes(32).toString('hex')
 const readAnnotations = {
   readOnlyHint: true,
@@ -426,18 +441,23 @@ export class McpController {
       'list_listeners',
       {
         description:
-          'Inspect TCP listeners associated with shared projects, including external servers when their worktree can be identified. External processes cannot be stopped through MCP.',
-        inputSchema: empty,
+          "Inspect TCP listeners. scope 'shared' (default) returns listeners associated with shared projects, including external servers when their worktree can be identified. scope 'all' returns every listener this user can see, with its owner (uid/user where the platform reports it); project, worktree, run and folder are filled in only for shared projects, and other users' processes are reported as not readable (pid 0, empty command). External processes cannot be stopped through MCP.",
+        inputSchema: listenersInput,
         annotations: readAnnotations,
       },
-      () =>
+      (input) =>
         respond(async () => {
           const report = await this.workspace.scanListeners()
+          const shared = (listener: Listener) =>
+            !!listener.projectId && this.hasProject(listener.projectId)
           return {
             ...report,
-            listeners: report.listeners.filter(
-              (listener) => listener.projectId && this.hasProject(listener.projectId),
-            ),
+            listeners:
+              input.scope === 'all'
+                ? report.listeners.map((listener) =>
+                    shared(listener) ? listener : unattributed(listener),
+                  )
+                : report.listeners.filter(shared),
           }
         }),
     )

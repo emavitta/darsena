@@ -16,7 +16,8 @@
     "test": "node --import tsx --test tests/*.test.ts",
     "pack:mac": "pnpm build && electron-builder --mac --dir",
     "dist:mac": "pnpm build && electron-builder --mac dmg zip --arm64 --publish never",
-    "postinstall": "nuxt prepare"
+    "postinstall": "nuxt prepare",
+    "build:server": "node scripts/build-server.mjs"
   },
   "devDependencies": {
     "@iconify-json/lucide": "1.2.130",

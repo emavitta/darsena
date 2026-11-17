@@ -20,3 +20,4 @@ playwright-report/
 *.pem
 *.mobileprovision
 *.password
+/dist-server
