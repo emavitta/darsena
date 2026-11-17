@@ -82,7 +82,7 @@ const taskInput = treeInput.extend({ taskId: string })
 const folderInput = treeInput.extend({ folder: string })
 const checkUpdates = createUpdateChecker(app.getVersion(), process.arch, process.platform)
 const installer = createMacInstaller(() => checkUpdates(true), () => {
-  if (quitting) { quitReady = false; quitting = false; void mcp.resumeAfterFailedQuit() }
+  if (quitting) { quitReady = false; quitting = false; runner.resume(); void mcp.resumeAfterFailedQuit() }
 })
 const schemas: Record<keyof Methods, z.ZodType> = {
   environment: treeInput,
@@ -183,6 +183,7 @@ const handlers: {
     } catch (error) {
       quitReady = false
       quitting = false
+      runner.resume()
       await mcp.resumeAfterFailedQuit()
       throw error
     }
@@ -500,6 +501,7 @@ app.on('before-quit', (event) => {
     })
     .catch(async (error) => {
       quitting = false
+      runner.resume()
       await mcp.resumeAfterFailedQuit()
       createWindow()
       await dialog.showMessageBox({ type: 'error', message: message(error) })

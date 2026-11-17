@@ -74,3 +74,27 @@ test('stop and shutdown terminate managed server descendants and release listeni
   assert.ok(runner.list().every((r) => !active(r)))
   assert.throws(() => runner.start(f.project, tree, task, f.root), /shutting down/)
 })
+
+test('resume lets the runner start tasks again after a shutdown that did not quit', async (t) => {
+  const f = await fixture()
+  t.after(f.cleanup)
+  const runner = new Runner()
+  t.after(() => runner.shutdown())
+  const tree = (await listWorktrees(f.root)).find((w) => w.path === f.root)!
+  const task = {
+    id: 'noop',
+    name: 'No-op',
+    folder: '.',
+    kind: 'custom' as const,
+    available: true,
+    command: process.execPath,
+    args: ['-e', ''],
+  }
+  // An update install that fails after cleanup: shutdown() with no active runs.
+  await runner.shutdown()
+  assert.throws(() => runner.start(f.project, tree, task, f.root), /shutting down/)
+  runner.resume()
+  const run = runner.start(f.project, tree, task, f.root)
+  await eventually(() => !active(runner.list().find((r) => r.id === run.id)!))
+  assert.equal(runner.list().find((r) => r.id === run.id)!.status, 'succeeded')
+})
