@@ -174,6 +174,10 @@ export class Runner extends EventEmitter {
     this.emit('changed')
     this.prune()
   }
+  /** Accept starts again after a shutdown whose quit or update install did not happen. */
+  resume() {
+    this.shuttingDown = false
+  }
   async shutdown() {
     this.shuttingDown = true
     const results = await Promise.allSettled(
